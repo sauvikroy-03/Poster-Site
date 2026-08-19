@@ -156,30 +156,47 @@ const handleEmailSubmit = (e: React.FormEvent) => {
 // 2. Password Step: Validate passwords, trigger sendOTP, and move to OTP step
 const handlePasswordSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
-  if (password.length < 6) return setError("Password needs at least 6 characters.");
-  if (password !== confirmPassword) return setError("Passwords don't match.");
+
+  if (password !== confirmPassword) {
+    return setError("Passwords don't match.");
+  }
 
   setError("");
   setLoading(true);
 
   try {
-    const res = await fetch("/api/auth/sendOTP", {
+    // 1. Validate password rules against the addPassword endpoint
+    const passwordRes = await fetch("/api/auth/addPassword", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: password.trim() }),
+    });
+
+    const passwordData = await passwordRes.json();
+
+    if (!passwordRes.ok || !passwordData.success) {
+      setError(passwordData.message || "Password does not meet the requirements.");
+      return;
+    }
+
+    // 2. Password is valid -> Trigger OTP dispatch
+    const otpRes = await fetch("/api/auth/sendOTP", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.trim().toLowerCase() }),
     });
 
-    const data = await res.json();
+    const otpData = await otpRes.json();
 
-    if (!res.ok || !data.success) {
-      setError(data.message || "Failed to send verification code.");
+    if (!otpRes.ok || !otpData.success) {
+      setError(otpData.message || "Failed to send verification code.");
       return;
     }
 
-    // OTP sent to email -> advance to OTP screen
+    // Both succeeded -> Navigate to OTP entry
     goTo("OTP", 1);
   } catch (err) {
-    setError("Network error while sending verification code.");
+    setError("Network error. Please check your connection.");
   } finally {
     setLoading(false);
   }
@@ -200,6 +217,7 @@ const handleVerifyOtp = async (code: string) => {
       body: JSON.stringify({
         email: email.trim().toLowerCase(),
         token: code.trim(),
+        password: password.trim(),
       }),
     });
 
@@ -211,18 +229,6 @@ const handleVerifyOtp = async (code: string) => {
     }
 
     // 2. Set the password on the newly authenticated session
-    const passRes = await fetch("/api/auth/addPassword", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: password.trim() }),
-    });
-
-    const passData = await passRes.json();
-
-    if (!passRes.ok || !passData.success) {
-      setError(passData.message || "Email verified, but failed to set password.");
-      return;
-    }
 
     // Both succeeded
     onSuccess?.(email);

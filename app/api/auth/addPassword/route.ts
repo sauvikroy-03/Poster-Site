@@ -1,72 +1,70 @@
 import { NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const password = body.password?.trim();
 
-    // 1. Password validation (min 8 chars standard)
-    if (!password || password.length < 8) {
+    if (!password) {
+      return NextResponse.json(
+        { success: false, message: "Password is required." },
+        { status: 400 }
+      );
+    }
+
+    // 1. Length check (min 8 chars)
+    if (password.length < 8) {
       return NextResponse.json(
         { success: false, message: "Password must be at least 8 characters long." },
         { status: 400 }
       );
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseAnonKey) {
+    // 2. Uppercase letter check
+    if (!/[A-Z]/.test(password)) {
       return NextResponse.json(
-        { success: false, message: "Server configuration error: Missing environment variables." },
-        { status: 500 }
-      );
-    }
-
-    // 2. Initialize Supabase SSR with the existing session cookies
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        cookies: {
-          getAll: () => cookieStore.getAll(),
-          setAll: (cookiesToSet) => {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          },
-        },
-      }
-    );
-
-    // 3. Attach password to the currently authenticated user
-    const { data, error } = await supabase.auth.updateUser({
-      password: password,
-    });
-
-    if (error) {
-      return NextResponse.json(
-        { success: false, message: error.message || "Failed to set password." },
+        { success: false, message: "Password must contain at least one uppercase letter." },
         { status: 400 }
       );
     }
 
+    // 3. Lowercase letter check
+    if (!/[a-z]/.test(password)) {
+      return NextResponse.json(
+        { success: false, message: "Password must contain at least one lowercase letter." },
+        { status: 400 }
+      );
+    }
+
+    // 4. Number check
+    if (!/[0-9]/.test(password)) {
+      return NextResponse.json(
+        { success: false, message: "Password must contain at least one number." },
+        { status: 400 }
+      );
+    }
+
+    // 5. Special character/symbol check
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      return NextResponse.json(
+        { success: false, message: "Password must contain at least one special character (!@#$%^&* etc.)." },
+        { status: 400 }
+      );
+    }
+
+    // All validation passed
     return NextResponse.json(
       {
         success: true,
-        message: "Password set successfully.",
-        user: { id: data.user?.id, email: data.user?.email },
+        message: "Password meets all security criteria.",
       },
       { status: 200 }
     );
   } catch (err: any) {
-    console.error("❌ Set Password Error:", err);
+    console.error("❌ Password Validation Error:", err);
     return NextResponse.json(
-      { success: false, message: err.message || "Internal server error." },
-      { status: 500 }
+      { success: false, message: "Invalid request format or payload." },
+      { status: 400 }
     );
   }
 }
