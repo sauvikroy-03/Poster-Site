@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { json } from "stream/consumers";
 import { s } from "framer-motion/client";
 
+
 type Step = "EMAIL" | "OTP" | "PASSWORD" | "SUCCESS";
 
 interface AuthModalProps {
@@ -142,15 +143,36 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
 
 
 // 1. Email Step: Validate & proceed to Password step
-const handleEmailSubmit = (e: React.FormEvent) => {
+const handleEmailSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!email.trim() || !emailRegex.test(email)) {
-    return setError("That email address doesn't look right.");
+    return setError("Please enter a valid email address.");
   }
-
   setError("");
-  goTo("PASSWORD", 1);
+  setLoading(true);
+  try{
+    const response=await fetch("/api/auth/checkExistingUser", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+  })
+  const data=await response.json()
+  if(data.success){
+goTo("PASSWORD", 1);
+}
+else{
+setError(data.message || "User already exists. Please login.");
+
+}
+
+}
+  catch(err){
+setError("Network error. Please check your connection.");
+  }
+  finally{
+    setLoading(false);
+  }
 };
 
 // 2. Password Step: Validate passwords, trigger sendOTP, and move to OTP step
@@ -160,30 +182,29 @@ const handlePasswordSubmit = async (e: React.FormEvent) => {
   if (password !== confirmPassword) {
     return setError("Passwords don't match.");
   }
-
+  else if (password.length < 8) {
+    return setError("Password must be at least 8 characters long.");
+  }
+  else if (!/[A-Z]/.test(password)) {
+    return setError("Password must contain at least one uppercase letter.");
+  }
+  else if (!/[a-z]/.test(password)) {
+    return setError("Password must contain at least one lowercase letter.");
+  }
+  else if (!/[0-9]/.test(password)) {
+    return setError("Password must contain at least one number.");
+  }
+  else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    return setError("Password must contain at least one special character (!@#$%^&* etc.).");
+  }
   setError("");
   setLoading(true);
-
   try {
-    // 1. Validate password rules against the addPassword endpoint
-    const passwordRes = await fetch("/api/auth/addPassword", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: password.trim() }),
-    });
-
-    const passwordData = await passwordRes.json();
-
-    if (!passwordRes.ok || !passwordData.success) {
-      setError(passwordData.message || "Password does not meet the requirements.");
-      return;
-    }
-
     // 2. Password is valid -> Trigger OTP dispatch
     const otpRes = await fetch("/api/auth/sendOTP", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      body: JSON.stringify({ email: email.trim().toLowerCase(),password:password.trim()}),
     });
 
     const otpData = await otpRes.json();
@@ -208,10 +229,9 @@ const handleVerifyOtp = async (code: string) => {
 
   setError("");
   setLoading(true);
-
   try {
     // 1. Verify OTP & establish session cookie
-    const verifyRes = await fetch("/api/auth/verifyOTP", {
+    const verifyRes = await fetch("/api/auth/createUser", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -229,7 +249,6 @@ const handleVerifyOtp = async (code: string) => {
     }
 
     // 2. Set the password on the newly authenticated session
-
     // Both succeeded
     onSuccess?.(email);
     goTo("SUCCESS", 1);
@@ -327,9 +346,9 @@ React.useEffect(() => {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="h-11 w-full rounded-lg bg-[#121212] text-sm font-medium text-[#FAF9F6] shadow-sm transition-all hover:bg-[#262626] active:scale-[0.99]"
+                  className="h-11 w-full rounded-lg bg-[#121212] text-sm font-medium text-[#FAF9F6] shadow-sm transition-all hover:bg-[#262626] active:scale-[0.99] cursor-pointer"
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send verification code"}
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Continue"}
                 </Button>
               </form>
 
@@ -366,7 +385,7 @@ React.useEffect(() => {
                   <span className="text-[#121212] font-medium">{email}</span>.{" "}
                   <button
                     type="button"
-                    onClick={() => goTo("EMAIL", -1)}
+                    onClick={() =>{ goTo("EMAIL", -1),setPassword(""); setConfirmPassword(""); setOtp(["", "", "", "", "", ""]); setError(""); }}
                     className="underline underline-offset-2 text-[#121212] hover:opacity-75"
                   >
                     Edit
@@ -415,6 +434,9 @@ React.useEffect(() => {
               transition={{ duration: 0.18, ease: "easeOut" }}
               className="space-y-5"
             >
+              <div>
+                <ArrowLeft className="hover:cursor-pointer" onClick={() => goTo("EMAIL",-1)} />
+              </div>
               <div className="space-y-1">
                 <h2 className="text-[22px] font-semibold tracking-[-0.025em] text-[#121212]">
                   Set your password
@@ -477,9 +499,9 @@ React.useEffect(() => {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="h-11 w-full rounded-lg bg-[#121212] text-sm font-medium text-[#FAF9F6] shadow-sm transition-all hover:bg-[#262626] active:scale-[0.99]"
+                  className="h-11 w-full rounded-lg bg-[#121212] text-sm font-medium text-[#FAF9F6] shadow-sm transition-all hover:bg-[#262626] active:scale-[0.99] cursor-pointer"
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Complete signup"}
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send OTP"}
                 </Button>
               </form>
             </motion.div>
