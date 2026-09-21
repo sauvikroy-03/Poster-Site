@@ -52,9 +52,14 @@ export async function POST(request: Request) {
       { success: true, message: "User does not exist" },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error
+        ? err.message
+        : "An error occurred while checking user existence.";
+
     return NextResponse.json(
-      { success: false, message: err.message || "An error occurred while checking user existence." },
+      { success: false, message },
       { status: 500 }
     );
   }

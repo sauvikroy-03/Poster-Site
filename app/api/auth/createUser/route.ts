@@ -44,8 +44,6 @@ export async function POST(request: Request) {
       type: "signup",
     });
 
-    
-
     if (error) {
       console.error("❌ Supabase verifyOtp Error details:", {
         message: error.message,
@@ -76,10 +74,11 @@ export async function POST(request: Request) {
       },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("❌ Uncaught Verification Exception:", err);
+    const message = err instanceof Error ? err.message : "Internal server error.";
     return NextResponse.json(
-      { success: false, message: err.message || "Internal server error." },
+      { success: false, message },
       { status: 500 }
     );
   }

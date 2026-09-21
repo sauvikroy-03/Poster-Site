@@ -91,10 +91,11 @@ export async function POST(request: Request) {
       { success: true, message: "Verification code sent successfully." },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("❌ Send OTP Route Catch:", err);
+    const message = err instanceof Error ? err.message : "Internal server error.";
     return NextResponse.json(
-      { success: false, message: err.message || "Internal server error." },
+      { success: false, message },
       { status: 500 }
     );
   }

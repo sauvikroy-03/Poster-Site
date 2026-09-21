@@ -7,9 +7,6 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { json } from "stream/consumers";
-import { s } from "framer-motion/client";
-
 
 type Step = "EMAIL" | "OTP" | "PASSWORD" | "SUCCESS";
 
@@ -114,7 +111,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
 
   React.useEffect(() => {
     if (!isOpen) {
-      setTimeout(() => {
+      const resetTimeout = setTimeout(() => {
         setStep("EMAIL");
         setEmail("");
         setOtp(["", "", "", "", "", ""]);
@@ -123,6 +120,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         setError("");
         setTimer(60);
       }, 200);
+      return () => clearTimeout(resetTimeout);
     }
   }, [isOpen]);
 
@@ -132,148 +130,126 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     return () => clearInterval(interval);
   }, [step, timer]);
 
-  const goTo = (next: Step, dir: number) => {
+  const goTo = React.useCallback((next: Step, dir: number) => {
     setError("");
     setDirection(dir);
     setStep(next);
+  }, []);
+
+  // 1. Email Step: Validate & proceed to Password step
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim() || !emailRegex.test(email)) {
+      return setError("Please enter a valid email address.");
+    }
+    setError("");
+    setLoading(true);
+    try {
+      const response = await fetch("/api/auth/checkExistingUser", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        goTo("PASSWORD", 1);
+      } else {
+        setError(data.message || "User already exists. Please login.");
+      }
+    } catch {
+      setError("Network error. Please check your connection.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  ////////////////////////
+  // 2. Password Step: Validate passwords, trigger sendOTP, and move to OTP step
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-
-
-// 1. Email Step: Validate & proceed to Password step
-const handleEmailSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!email.trim() || !emailRegex.test(email)) {
-    return setError("Please enter a valid email address.");
-  }
-  setError("");
-  setLoading(true);
-  try{
-    const response=await fetch("/api/auth/checkExistingUser", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email.trim().toLowerCase() }),
-  })
-  const data=await response.json()
-  if(data.success){
-goTo("PASSWORD", 1);
-}
-else{
-setError(data.message || "User already exists. Please login.");
-
-}
-
-}
-  catch(err){
-setError("Network error. Please check your connection.");
-  }
-  finally{
-    setLoading(false);
-  }
-};
-
-// 2. Password Step: Validate passwords, trigger sendOTP, and move to OTP step
-const handlePasswordSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-
-  if (password !== confirmPassword) {
-    return setError("Passwords don't match.");
-  }
-  else if (password.length < 8) {
-    return setError("Password must be at least 8 characters long.");
-  }
-  else if (!/[A-Z]/.test(password)) {
-    return setError("Password must contain at least one uppercase letter.");
-  }
-  else if (!/[a-z]/.test(password)) {
-    return setError("Password must contain at least one lowercase letter.");
-  }
-  else if (!/[0-9]/.test(password)) {
-    return setError("Password must contain at least one number.");
-  }
-  else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-    return setError("Password must contain at least one special character (!@#$%^&* etc.).");
-  }
-  setError("");
-  setLoading(true);
-  try {
-    // 2. Password is valid -> Trigger OTP dispatch
-    const otpRes = await fetch("/api/auth/sendOTP", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email.trim().toLowerCase(),password:password.trim()}),
-    });
-
-    const otpData = await otpRes.json();
-
-    if (!otpRes.ok || !otpData.success) {
-      setError(otpData.message || "Failed to send verification code.");
-      return;
+    if (password !== confirmPassword) {
+      return setError("Passwords do not match.");
+    } else if (password.length < 8) {
+      return setError("Password must be at least 8 characters long.");
+    } else if (!/[A-Z]/.test(password)) {
+      return setError("Password must contain at least one uppercase letter.");
+    } else if (!/[a-z]/.test(password)) {
+      return setError("Password must contain at least one lowercase letter.");
+    } else if (!/[0-9]/.test(password)) {
+      return setError("Password must contain at least one number.");
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      return setError("Password must contain at least one special character (!@#$%^&* etc.).");
     }
+    setError("");
+    setLoading(true);
+    try {
+      const otpRes = await fetch("/api/auth/sendOTP", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password: password.trim() }),
+      });
 
-    // Both succeeded -> Navigate to OTP entry
-    goTo("OTP", 1);
-  } catch (err) {
-    setError("Network error. Please check your connection.");
-  } finally {
-    setLoading(false);
-  }
-};
+      const otpData = await otpRes.json();
 
-// 3. OTP Step: Verify code and then attach password
-const handleVerifyOtp = async (code: string) => {
-  if (code.length < 6) return setError("Please enter the complete 6-digit code.");
+      if (!otpRes.ok || !otpData.success) {
+        setError(otpData.message || "Failed to send verification code.");
+        return;
+      }
 
-  setError("");
-  setLoading(true);
-  try {
-    // 1. Verify OTP & establish session cookie
-    const verifyRes = await fetch("/api/auth/createUser", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: email.trim().toLowerCase(),
-        token: code.trim(),
-        password: password.trim(),
-      }),
-    });
-
-    const verifyData = await verifyRes.json();
-
-    if (!verifyRes.ok || !verifyData.success) {
-      setError(verifyData.message || "Invalid or expired verification code.");
-      return;
+      goTo("OTP", 1);
+    } catch {
+      setError("Network error. Please check your connection.");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // 2. Set the password on the newly authenticated session
-    // Both succeeded
-    onSuccess?.(email);
-    goTo("SUCCESS", 1);
-    setTimeout(() => {
-      onClose();
-    }, 1200);
-  } catch (err) {
-    setError("Something went wrong during verification. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+  // 3. OTP Step: Verify code and then attach password
+  const handleVerifyOtp = React.useCallback(async (code: string) => {
+    if (code.length < 6) return setError("Please enter the complete 6-digit code.");
 
-// Auto-trigger when 6 digits are typed
-React.useEffect(() => {
-  if (otpCode.length === 6 && step === "OTP" && !loading) {
-    handleVerifyOtp(otpCode);
-  }
-}, [otpCode, step]);
+    setError("");
+    setLoading(true);
+    try {
+      const verifyRes = await fetch("/api/auth/createUser", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          token: code.trim(),
+          password: password.trim(),
+        }),
+      });
 
+      const verifyData = await verifyRes.json();
 
+      if (!verifyRes.ok || !verifyData.success) {
+        setError(verifyData.message || "Invalid or expired verification code.");
+        return;
+      }
 
+      onSuccess?.(email);
+      goTo("SUCCESS", 1);
+      setTimeout(() => {
+        onClose();
+      }, 1200);
+    } catch {
+      setError("Something went wrong during verification. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, [email, password, onSuccess, goTo, onClose]);
 
-
-  ////////////////////////////
+  // Auto-trigger when 6 digits are typed
+  React.useEffect(() => {
+    if (otpCode.length === 6 && step === "OTP" && !loading) {
+      const timerId = setTimeout(() => {
+        handleVerifyOtp(otpCode);
+      }, 0);
+      return () => clearTimeout(timerId);
+    }
+  }, [otpCode, step, loading, handleVerifyOtp]);
 
   return (
     <Dialog
@@ -353,7 +329,7 @@ React.useEffect(() => {
               </form>
 
               <p className="text-center text-[11px] leading-relaxed text-[#A1A1AA] pt-1">
-                By continuing, you agree to Postercult's Terms and Privacy Policy.
+                By continuing, you agree to Postercult&apos;s Terms and Privacy Policy.
               </p>
             </motion.div>
           )}
@@ -385,7 +361,13 @@ React.useEffect(() => {
                   <span className="text-[#121212] font-medium">{email}</span>.{" "}
                   <button
                     type="button"
-                    onClick={() =>{ goTo("EMAIL", -1),setPassword(""); setConfirmPassword(""); setOtp(["", "", "", "", "", ""]); setError(""); }}
+                    onClick={() => {
+                      goTo("EMAIL", -1);
+                      setPassword("");
+                      setConfirmPassword("");
+                      setOtp(["", "", "", "", "", ""]);
+                      setError("");
+                    }}
                     className="underline underline-offset-2 text-[#121212] hover:opacity-75"
                   >
                     Edit
@@ -435,7 +417,7 @@ React.useEffect(() => {
               className="space-y-5"
             >
               <div>
-                <ArrowLeft className="hover:cursor-pointer" onClick={() => goTo("EMAIL",-1)} />
+                <ArrowLeft className="hover:cursor-pointer" onClick={() => goTo("EMAIL", -1)} />
               </div>
               <div className="space-y-1">
                 <h2 className="text-[22px] font-semibold tracking-[-0.025em] text-[#121212]">
@@ -517,7 +499,7 @@ React.useEffect(() => {
             >
               <CheckCircle2 className="h-10 w-10 text-[#121212]" />
               <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-[#121212]">
-                You're all set
+                You&apos;re all set
               </h2>
               <p className="text-xs text-[#71717A]">Welcome to Postercult.</p>
             </motion.div>
