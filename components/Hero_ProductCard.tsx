@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -38,10 +39,10 @@ export default function HeroProductCard({ product }: ProductCardProps) {
   const hasDiscount = comparePrice !== null && price !== null && comparePrice > price;
 
   return (
-    <div className="group flex h-full w-full flex-col overflow-hidden border-2 border-black bg-[#f7f5f0] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform duration-300 ease-out hover:-translate-y-1.5">
-      {/* Image frame */}
-      <div className="flex-1 min-h-0 overflow-hidden p-2 pb-1.5 sm:p-3 sm:pb-2">
-        <div className="relative flex h-full w-full items-center justify-center overflow-hidden border border-black/10 bg-[#eeece7]">
+    <div className="group flex w-full flex-col overflow-hidden border-2 border-black bg-[#f7f5f0] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform duration-300 ease-out hover:-translate-y-1.5">
+      {/* Image frame: Locks to 3/4 aspect ratio naturally across all screen widths */}
+      <div className="p-2 pb-1.5 sm:p-3 sm:pb-2">
+        <div className="relative aspect-[3/4] w-full overflow-hidden border border-black/10 bg-[#eeece7]">
           {/* Bestseller badge */}
           <span className="absolute left-2 top-2 z-10 border border-black bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-black sm:text-[10px]">
             Bestseller
@@ -51,7 +52,7 @@ export default function HeroProductCard({ product }: ProductCardProps) {
             src={images[activeIndex]}
             alt={`${prod_name} - image ${activeIndex + 1}`}
             fill
-   className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+ className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
             sizes="(max-width: 640px) 160px, (max-width: 768px) 200px, (max-width: 1024px) 240px, 280px"
           />
 
@@ -91,9 +92,9 @@ export default function HeroProductCard({ product }: ProductCardProps) {
         </div>
       </div>
 
-      {/* Text block */}
-      <div className="flex flex-shrink-0 flex-row items-start justify-between gap-2 border-t border-black/10 px-2.5 py-2 sm:gap-4 sm:px-4 sm:py-3">
-        {/* Row 1: name (left) + category */}
+      {/* Text block: Content dictates natural height with truncation */}
+      <div className="flex items-start justify-between gap-2 border-t border-black/10 px-2.5 py-2 sm:gap-4 sm:px-4 sm:py-3">
+        {/* Row 1: Title & Category */}
         <div className="flex min-w-0 flex-1 flex-col items-start justify-between gap-1">
           <h3
             title={prod_name}
@@ -110,7 +111,7 @@ export default function HeroProductCard({ product }: ProductCardProps) {
           </p>
         </div>
 
-        {/* Row 2: price stack (right only) */}
+        {/* Row 2: Price stack */}
         <div className="flex flex-shrink-0 flex-col items-end leading-none">
           {price !== null && (
             <span className="whitespace-nowrap text-sm font-bold text-black sm:text-base md:text-lg">

@@ -25,7 +25,7 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="bg-[#f7f5f0] w-full">
+    <section className="w-full bg-[#f7f5f0]">
       <div className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6">
         <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
           <div>
@@ -58,38 +58,38 @@ export default function Hero() {
         <hr className="mt-12 border-t border-black/20" />
 
         {/* 2 columns on mobile, 4 columns on desktop */}
-        <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4 md:[grid-auto-rows:400px]">
-          {/* Row 1 (Mobile): Product 0 alone across full width (2 cols) */}
-          <div className="col-span-2 h-[500px] sm:h-[500px] md:row-span-2 md:h-full">
+        <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4 ">
+          {/* Card 0: Full width on mobile, 2x2 grid cell on desktop */}
+          <div className="col-span-2 md:col-span-2 md:row-span-2 md:h-full">
             {products[0] ? (
               <HeroProductCard product={products[0]} />
             ) : (
-              <div className="h-full w-full animate-pulse border-2 border-black bg-black/5" />
+              <div className="aspect-[4/5] w-full animate-pulse border-2 border-black bg-black/5 md:aspect-auto md:h-full" />
             )}
           </div>
 
-          {/* Row 2 (Mobile): Product 1 side-by-side */}
-          <div className="col-span-1 h-[250px] sm:h-[250px] md:h-full">
+          {/* Card 1: 1 col on mobile, 1 col on desktop */}
+          <div className="col-span-1 md:h-full">
             {products[1] ? (
               <HeroProductCard product={products[1]} />
             ) : (
-              <div className="h-full w-full animate-pulse border-2 border-black bg-black/5" />
+              <div className="aspect-[3/4] w-full animate-pulse border-2 border-black bg-black/5 md:aspect-auto md:h-full" />
             )}
           </div>
 
-          {/* Row 2 (Mobile): Product 2 side-by-side */}
-          <div className="col-span-1 h-[250px] sm:h-[250px] md:h-full">
+          {/* Card 2: 1 col on mobile, 1 col on desktop */}
+          <div className="col-span-1 md:h-full">
             {products[2] ? (
               <HeroProductCard product={products[2]} />
             ) : (
-              <div className="h-full w-full animate-pulse border-2 border-black bg-black/5" />
+              <div className="aspect-[3/4] w-full animate-pulse border-2 border-black bg-black/5 md:aspect-auto md:h-full" />
             )}
           </div>
 
-          {/* Archive Series banner spans 2 cols across mobile & desktop */}
+          {/* Archive Series banner */}
           <a
             href="#"
-            className="col-span-2 flex gap-6 overflow-hidden border-2 border-black border-l-4 border-l-red-600 bg-black p-6 md:col-span-2"
+            className="col-span-2 flex min-h-[160px] gap-6 overflow-hidden border-2 border-black border-l-4 border-l-red-600 bg-black p-6 md:col-span-2 md:h-full md:min-h-0"
           >
             <img
               src="https://picsum.photos/seed/archive-series/300/300"
@@ -114,14 +114,14 @@ export default function Hero() {
             </div>
           </a>
 
-          {/* Bottom small blocks share row 4 side-by-side on mobile */}
-          <div className="col-span-1 flex min-h-[140px] items-center justify-center border-2 border-black bg-black/5 md:min-h-0">
+          {/* Bottom small blocks */}
+          <div className="col-span-1 flex min-h-[120px] items-center justify-center border-2 border-black bg-black/5 md:h-full md:min-h-0">
             <span className="text-xs font-bold uppercase tracking-wide text-black/30">
               Coming Soon
             </span>
           </div>
 
-          <div className="col-span-1 flex min-h-[140px] flex-col justify-between border-2 border-black bg-yellow-400 p-5 md:min-h-0">
+          <div className="col-span-1 flex min-h-[120px] flex-col justify-between border-2 border-black bg-yellow-400 p-5 md:h-full md:min-h-0">
             <span className="text-xs font-bold uppercase tracking-[0.2em] text-black">
               Market Status
             </span>
