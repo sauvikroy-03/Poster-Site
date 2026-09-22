@@ -1,10 +1,32 @@
+"use client";
+
 import { ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import ProjectDataInterface from "@/types/ItemDetails";
+import HeroProductCard from "./Hero_ProductCard";
 
 export default function Hero() {
+  const [products, setProducts] = useState<ProjectDataInterface[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("/api/product");
+
+        if (response.ok) {
+          const data = (await response.json()) as ProjectDataInterface[];
+          setProducts(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
   return (
     <section className="bg-[#f7f5f0] w-full">
       <div className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6">
-        {/* Eyebrow + headline + CTA */}
         <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
           <div>
             <div className="mb-6 flex items-center gap-3">
@@ -24,8 +46,7 @@ export default function Hero() {
 
           <div className="flex flex-col items-start gap-4 md:items-end md:text-right">
             <p className="max-w-xs text-sm font-semibold uppercase tracking-wide text-black/70">
-              A curated selection of pop-culture artifacts for the modern
-              Indian dwelling.
+              A curated selection of pop-culture artifacts for the modern Indian dwelling.
             </p>
             <button className="group inline-flex items-center gap-2 rounded-md bg-black px-6 py-3 text-sm font-bold uppercase tracking-wide text-white transition-transform hover:-translate-y-0.5">
               Shop the Drop
@@ -36,71 +57,39 @@ export default function Hero() {
 
         <hr className="mt-12 border-t border-black/20" />
 
-        {/* Bento poster grid */}
-        <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3 md:[grid-auto-rows:300px]">
-          {/* Midnight Reel — tall featured card */}
-          <a
-            href="#"
-            className="group col-span-1 row-span-2 overflow-hidden border-2 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-          >
-            <img
-              src="https://picsum.photos/seed/midnight-reel/700/900"
-              alt="Midnight Reel poster"
-              className="h-[calc(100%-72px)] w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-            />
-            <div className="flex items-center justify-between border-t-2 border-black px-4 py-3">
-              <div>
-                <h3 className="text-lg font-extrabold uppercase tracking-tight text-black">
-                  Midnight Reel
-                </h3>
-                <p className="text-xs font-medium uppercase tracking-wide text-black/50">
-                  Ref: P-2024-001 / Limited Edition
-                </p>
-              </div>
-              <span className="text-lg font-bold text-black">₹1,299</span>
-            </div>
-          </a>
+        {/* 2 columns on mobile, 4 columns on desktop */}
+        <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4 md:[grid-auto-rows:400px]">
+          {/* Row 1 (Mobile): Product 0 alone across full width (2 cols) */}
+          <div className="col-span-2 h-[500px] sm:h-[500px] md:row-span-2 md:h-full">
+            {products[0] ? (
+              <HeroProductCard product={products[0]} />
+            ) : (
+              <div className="h-full w-full animate-pulse border-2 border-black bg-black/5" />
+            )}
+          </div>
 
-          {/* Neon District */}
-          <a
-            href="#"
-            className="group overflow-hidden border-2 border-black bg-white"
-          >
-            <img
-              src="https://picsum.photos/seed/neon-district/600/400"
-              alt="Neon District poster"
-              className="h-[calc(100%-52px)] w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-            />
-            <div className="flex items-center justify-between border-t-2 border-black px-4 py-2.5">
-              <h3 className="text-sm font-extrabold uppercase tracking-tight text-black">
-                Neon District
-              </h3>
-              <span className="text-sm font-bold text-black">₹1,499</span>
-            </div>
-          </a>
+          {/* Row 2 (Mobile): Product 1 side-by-side */}
+          <div className="col-span-1 h-[250px] sm:h-[250px] md:h-full">
+            {products[1] ? (
+              <HeroProductCard product={products[1]} />
+            ) : (
+              <div className="h-full w-full animate-pulse border-2 border-black bg-black/5" />
+            )}
+          </div>
 
-          {/* Final Boss */}
-          <a
-            href="#"
-            className="group overflow-hidden border-2 border-black bg-white"
-          >
-            <img
-              src="https://picsum.photos/seed/final-boss/600/400"
-              alt="Final Boss poster"
-              className="h-[calc(100%-52px)] w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-            />
-            <div className="flex items-center justify-between border-t-2 border-black px-4 py-2.5">
-              <h3 className="text-sm font-extrabold uppercase tracking-tight text-black">
-                Final Boss
-              </h3>
-              <span className="text-sm font-bold text-black">₹1,399</span>
-            </div>
-          </a>
+          {/* Row 2 (Mobile): Product 2 side-by-side */}
+          <div className="col-span-1 h-[250px] sm:h-[250px] md:h-full">
+            {products[2] ? (
+              <HeroProductCard product={products[2]} />
+            ) : (
+              <div className="h-full w-full animate-pulse border-2 border-black bg-black/5" />
+            )}
+          </div>
 
-          {/* The Archive Series — wide dark banner */}
+          {/* Archive Series banner spans 2 cols across mobile & desktop */}
           <a
             href="#"
-            className="col-span-1 flex gap-6 overflow-hidden border-2 border-black border-l-4 border-l-red-600 bg-black p-6 md:col-span-2"
+            className="col-span-2 flex gap-6 overflow-hidden border-2 border-black border-l-4 border-l-red-600 bg-black p-6 md:col-span-2"
           >
             <img
               src="https://picsum.photos/seed/archive-series/300/300"
@@ -113,8 +102,7 @@ export default function Hero() {
                   The Archive Series
                 </h3>
                 <p className="mt-2 max-w-sm text-sm text-white/70">
-                  Premium 300 GSM gallery-grade matte paper. Acid-free for
-                  archival longevity.
+                  Premium 300 GSM gallery-grade matte paper. Acid-free for archival longevity.
                 </p>
               </div>
               <div className="flex items-center justify-between">
@@ -126,20 +114,14 @@ export default function Hero() {
             </div>
           </a>
 
-          {/* Bottom left — plain image card */}
-          <a
-            href="#"
-            className="group overflow-hidden border-2 border-black bg-white"
-          >
-            <img
-              src="https://picsum.photos/seed/roadside-jars/600/400"
-              alt="Roadside poster"
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-            />
-          </a>
+          {/* Bottom small blocks share row 4 side-by-side on mobile */}
+          <div className="col-span-1 flex min-h-[140px] items-center justify-center border-2 border-black bg-black/5 md:min-h-0">
+            <span className="text-xs font-bold uppercase tracking-wide text-black/30">
+              Coming Soon
+            </span>
+          </div>
 
-          {/* Market Status — highlight card */}
-          <div className="flex flex-col justify-between border-2 border-black bg-yellow-400 p-5">
+          <div className="col-span-1 flex min-h-[140px] flex-col justify-between border-2 border-black bg-yellow-400 p-5 md:min-h-0">
             <span className="text-xs font-bold uppercase tracking-[0.2em] text-black">
               Market Status
             </span>

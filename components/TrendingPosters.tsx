@@ -7,7 +7,7 @@ import FeaturedCard from "./FeaturedCard";
 import ProductCard from "./ProductCard";
 
 export default function TrendingPosters() {
-const[categories,setCategories]=useState<ProjectDataInterface[]>([])
+const[products,setProducts]=useState<ProjectDataInterface[]>([])
 
 useEffect(()=>{
 const fetchCategories=async ()=>{
@@ -15,7 +15,7 @@ const fetchCategories=async ()=>{
 
     if(response.ok){
         const data=await response.json()
-        setCategories(data)
+        setProducts(data)
     }
 
 }
@@ -49,8 +49,8 @@ fetchCategories()
         
         </div>
 <div className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4">
-          {categories.slice(0,4).map((c)=>(
-            <ProductCard key={c.prod_id} product={c}/>
+          {products.slice(0,4).map((p)=>(
+            <ProductCard key={p.prod_id} product={p}/>
           ))}
         </div>
       </div>

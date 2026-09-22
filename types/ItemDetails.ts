@@ -4,6 +4,8 @@
     prod_slug:string,
     prod_category:string,
     prod_images:string[],
+    is_trending:boolean,
+    hero_visible:boolean,
     product_variants: {
       variant_id:string,
       prod_size:string,
