@@ -42,7 +42,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     <div className="group flex w-full flex-col overflow-hidden border-2 border-black bg-[#f7f5f0] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform duration-300 ease-out hover:-translate-y-1.5">
       {/* Image frame: Locks to 3/4 or 4/5 proportional aspect ratio with neutral containment background */}
       <div className="p-2 pb-1.5 sm:p-3 sm:pb-2">
-        <div className="relative aspect-[3/4] w-full overflow-hidden border border-black/10 bg-[#eeece7]">
+        <div className="relative aspect-[5/6] w-full overflow-hidden border border-black/10 bg-[#eeece7]">
           {/* Bestseller badge */}
           <span className="absolute left-2 top-2 z-10 border border-black bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-black sm:text-[10px]">
             Bestseller

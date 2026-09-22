@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import ProjectDataInterface from "@/types/ItemDetails";
 import HeroProductCard from "./Hero_ProductCard";
+import ProductCard from "./ProductCard";
 
 export default function Hero() {
   const [products, setProducts] = useState<ProjectDataInterface[]>([]);
@@ -62,7 +63,7 @@ export default function Hero() {
           {/* Card 0: Full width on mobile, 2x2 grid cell on desktop */}
           <div className="col-span-2 md:col-span-2 md:row-span-2 md:h-full">
             {products[0] ? (
-              <HeroProductCard product={products[0]} />
+              <ProductCard product={products[0]} />
             ) : (
               <div className="aspect-[4/5] w-full animate-pulse border-2 border-black bg-black/5 md:aspect-auto md:h-full" />
             )}
@@ -71,7 +72,7 @@ export default function Hero() {
           {/* Card 1: 1 col on mobile, 1 col on desktop */}
           <div className="col-span-1 md:h-full">
             {products[1] ? (
-              <HeroProductCard product={products[1]} />
+              <ProductCard product={products[1]} />
             ) : (
               <div className="aspect-[3/4] w-full animate-pulse border-2 border-black bg-black/5 md:aspect-auto md:h-full" />
             )}
@@ -80,7 +81,7 @@ export default function Hero() {
           {/* Card 2: 1 col on mobile, 1 col on desktop */}
           <div className="col-span-1 md:h-full">
             {products[2] ? (
-              <HeroProductCard product={products[2]} />
+              <ProductCard product={products[2]} />
             ) : (
               <div className="aspect-[3/4] w-full animate-pulse border-2 border-black bg-black/5 md:aspect-auto md:h-full" />
             )}
