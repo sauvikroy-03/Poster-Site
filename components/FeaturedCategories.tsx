@@ -4,12 +4,13 @@ import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CategoryInterface } from "@/types/categoryDetails";
 import FeaturedCard from "./FeaturedCard";
-
+import FeaturedCardSkeleton from "./skeletons/SK_FeaturedCard";
 export default function FeaturedCategories() {
 const[categories,setCategories]=useState<CategoryInterface[]>([])
-
+const [loading, setLoading] = useState(true);
 useEffect(()=>{
 const fetchCategories=async ()=>{
+  try{
     const response=await fetch("/api/category")
 
     if(response.ok){
@@ -17,8 +18,14 @@ const fetchCategories=async ()=>{
         setCategories(data)
     }
 
+} catch (error) {
+    console.error("Failed to fetch categories:", error);
+} finally {
+    setLoading(false);
 }
 
+
+}
 fetchCategories()
 },[])
   return (
@@ -49,9 +56,13 @@ fetchCategories()
         
         </div>
 <div className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4">
-          {categories.slice(0,4).map((c)=>(
-            <FeaturedCard key={c.id} category={c}/>
-          ))}
+             {loading
+                      ? Array.from({ length: 4 }).map((_, i) => (
+                          <FeaturedCardSkeleton key={i} />
+                        ))
+                      : categories
+                          .slice(0, 4)
+                          .map((c) => <FeaturedCard key={c.id} category={c} />)}
         </div>
       </div>
     </div>

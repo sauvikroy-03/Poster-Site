@@ -20,7 +20,7 @@ export default function FeaturedCard({ category }: categoriesProps) {
             src={placeholderImg}
             alt="CategoryImage"
             fill
-            className="object-cover grayscale transition-all duration-500 ease-out group-hover:scale-110 group-hover:grayscale-0"
+            className="object-cover md:grayscale transition-all duration-500 ease-out group-hover:scale-110 group-hover:grayscale-0"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 280px"
           />
         </div>

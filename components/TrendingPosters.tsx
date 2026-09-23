@@ -5,23 +5,26 @@ import { useEffect, useState } from "react";
 import ProjectDataInterface from "@/types/ItemDetails";
 import FeaturedCard from "./FeaturedCard";
 import ProductCard from "./ProductCard";
-
+import ProductCardSkeleton from "./skeletons/SK_ProductCard";
 export default function TrendingPosters() {
 const[products,setProducts]=useState<ProjectDataInterface[]>([])
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("/api/product");
 
-useEffect(()=>{
-const fetchCategories=async ()=>{
-    const response=await fetch("/api/product")
+        if (response.ok) {
+          const data = (await response.json()) as ProjectDataInterface[];
+          setProducts(data);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    if(response.ok){
-        const data=await response.json()
-        setProducts(data)
-    }
-
-}
-
-fetchCategories()
-},[])
+    fetchCategories();
+  }, []);
   return (
     <div className="border-t-2 border-black bg-[#eeece7] w-full">
       <div className="mx-auto max-w-[1400px] px-6 py-16 sm:px-12">
@@ -49,9 +52,13 @@ fetchCategories()
         
         </div>
 <div className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4">
-          {products.slice(0,4).map((p)=>(
-            <ProductCard key={p.prod_id} product={p}/>
-          ))}
+             {loading
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <ProductCardSkeleton key={i} />
+              ))
+            : products
+                .slice(0, 4)
+                .map((p) => <ProductCard key={p.prod_id} product={p} />)}
         </div>
       </div>
     </div>
