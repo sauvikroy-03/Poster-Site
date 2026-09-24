@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { CategoryInterface } from "@/types/categoryDetails";
 import FeaturedCard from "./FeaturedCard";
 import FeaturedCardSkeleton from "./skeletons/SK_FeaturedCard";
+import Link from "next/link";
 export default function FeaturedCategories() {
 const[categories,setCategories]=useState<CategoryInterface[]>([])
 const [loading, setLoading] = useState(true);
@@ -45,13 +46,13 @@ fetchCategories()
             </p>
           </div>
 
-          <a
-            href="#"
+          <Link
+            href="/categories"
             className="group inline-flex items-center gap-2 whitespace-nowrap pb-1.5 text-[13px] font-bold uppercase tracking-[0.1em] text-black"
           >
             View all categories
             <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-          </a>
+          </Link>
 
         
         </div>

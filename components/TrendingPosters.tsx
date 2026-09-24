@@ -6,6 +6,7 @@ import ProjectDataInterface from "@/types/ItemDetails";
 import FeaturedCard from "./FeaturedCard";
 import ProductCard from "./ProductCard";
 import ProductCardSkeleton from "./skeletons/SK_ProductCard";
+import Link from "next/link";
 export default function TrendingPosters() {
 const[products,setProducts]=useState<ProjectDataInterface[]>([])
   const [loading, setLoading] = useState(true);
@@ -41,13 +42,13 @@ const[products,setProducts]=useState<ProjectDataInterface[]>([])
             </p>
           </div>
 
-          <a
-            href="#"
+          <Link
+            href="/categories"
             className="group inline-flex items-center gap-2 whitespace-nowrap pb-1.5 text-[13px] font-bold uppercase tracking-[0.1em] text-black"
           >
            Shop All
             <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-          </a>
+          </Link>
 
         
         </div>

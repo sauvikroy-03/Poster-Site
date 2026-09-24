@@ -59,7 +59,7 @@ useEffect(()=>{
       <TrendingPosters/>
       <WhyPosterly/>
       <ReviewsSection/>
-      <Footer/>
+      
     </div>
     </>
   )

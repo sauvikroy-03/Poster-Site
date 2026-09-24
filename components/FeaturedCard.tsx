@@ -15,7 +15,7 @@ export default function FeaturedCard({ category }: categoriesProps) {
     <div className="group flex h-full w-full flex-col border-2 border-black bg-[#f7f5f0] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform duration-300 ease-out hover:-translate-y-1.5 sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:cursor-pointer">
       {/* Image frame */}
       <div className="p-2 pb-1.5 sm:p-3 sm:pb-2">
-        <div className="relative aspect-[4/5] w-full overflow-hidden border border-black/10">
+        <div className="relative aspect-[5/6] w-full overflow-hidden border border-black/10">
           <Image
             src={placeholderImg}
             alt="CategoryImage"

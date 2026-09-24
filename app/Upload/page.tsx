@@ -212,7 +212,7 @@ export default function Page() {
             >
               <option value="">Select a Category</option>
               {productCategories.map((data) => (
-                <option key={data.id} value={data.id}>
+                <option key={data.id} value={data.category_name}>
                   {data.category_name}
                 </option>
               ))}
