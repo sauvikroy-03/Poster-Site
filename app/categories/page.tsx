@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import CategoriesFilter from "@/components/CategoryPage/CategoriesFilter";
 import PriceFilter from "@/components/CategoryPage/PriceFilter";
 import ProductCard from "@/components/ProductCard";
+import ProductCardSkeleton from "@/components/skeletons/SK_ProductCard";
 import ProjectDataInterface from "@/types/ItemDetails";
 import CategoryHero from "@/components/CategoryPage/CategoryHero";
 import Navbar from "@/components/Navbar";
@@ -85,17 +86,79 @@ async function getFilteredProducts({
   return products;
 }
 
+// Isolated async component that does the fetching + rendering,
+// so Suspense can show a fallback while THIS specific part awaits.
+async function ProductResults({
+  category,
+  maxPrice,
+  sort,
+}: {
+  category?: string;
+  maxPrice?: string;
+  sort?: string;
+}) {
+  const products = await getFilteredProducts({ category, maxPrice, sort });
+
+  return (
+    <>
+      <div className="mb-6 flex items-center justify-between border-b border-neutral-200 pb-4">
+        <span className="text-xs font-bold text-neutral-800">
+          {products.length} posters
+        </span>
+
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-neutral-500">Sort by</span>
+          <select className="cursor-pointer rounded-md border border-neutral-200 bg-transparent px-2.5 py-1.5 font-semibold text-neutral-800 outline-none hover:border-black">
+            <option value="featured">Featured</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+          </select>
+        </div>
+      </div>
+
+      {products.length === 0 ? (
+        <div className="flex h-64 flex-col items-center justify-center border-2 border-dashed border-neutral-200 p-8 text-center">
+          <p className="text-sm font-bold uppercase text-neutral-400">
+            No posters found in this category
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+          {products.map((product) => (
+            <ProductCard key={product.prod_id} product={product} />
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+function ProductResultsSkeleton() {
+  return (
+    <>
+      <div className="mb-6 flex items-center justify-between border-b border-neutral-200 pb-4">
+        <div className="h-4 w-20 animate-pulse rounded bg-neutral-200" />
+        <div className="h-4 w-32 animate-pulse rounded bg-neutral-200" />
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <ProductCardSkeleton key={i} />
+        ))}
+      </div>
+    </>
+  );
+}
+
 export default async function ShopPage({
   searchParams,
 }: {
   searchParams: Promise<{ category?: string; sort?: string; maxPrice?: string }>;
 }) {
   const { category, maxPrice, sort } = await searchParams;
-  const products = await getFilteredProducts({ category, maxPrice, sort });
 
   return (
     <div className="min-h-screen w-full bg-[#fbfaf8]">
-    <Navbar/>
+      <Navbar />
       <CategoryHero />
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-start gap-10 md:grid-cols-4">
@@ -129,34 +192,9 @@ export default async function ShopPage({
           </aside>
 
           <main className="col-span-1 md:col-span-3">
-            <div className="mb-6 flex items-center justify-between border-b border-neutral-200 pb-4">
-              <span className="text-xs font-bold text-neutral-800">
-                {products.length} posters
-              </span>
-
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-neutral-500">Sort by</span>
-                <select className="cursor-pointer rounded-md border border-neutral-200 bg-transparent px-2.5 py-1.5 font-semibold text-neutral-800 outline-none hover:border-black">
-                  <option value="featured">Featured</option>
-                  <option value="price-asc">Price: Low to High</option>
-                  <option value="price-desc">Price: High to Low</option>
-                </select>
-              </div>
-            </div>
-
-            {products.length === 0 ? (
-              <div className="flex h-64 flex-col items-center justify-center border-2 border-dashed border-neutral-200 p-8 text-center">
-                <p className="text-sm font-bold uppercase text-neutral-400">
-                  No posters found in this category
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
-                {products.map((product) => (
-                  <ProductCard key={product.prod_id} product={product} />
-                ))}
-              </div>
-            )}
+            <Suspense fallback={<ProductResultsSkeleton />}>
+              <ProductResults category={category} maxPrice={maxPrice} sort={sort} />
+            </Suspense>
           </main>
         </div>
       </div>
