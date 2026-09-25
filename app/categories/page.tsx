@@ -149,7 +149,7 @@ function ProductResultsSkeleton() {
   );
 }
 
-export default async function ShopPage({
+export default async function page({
   searchParams,
 }: {
   searchParams: Promise<{ category?: string; sort?: string; maxPrice?: string }>;
@@ -158,7 +158,7 @@ export default async function ShopPage({
 
   return (
     <div className="min-h-screen w-full bg-[#fbfaf8]">
-      <Navbar />
+    
       <CategoryHero />
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-start gap-10 md:grid-cols-4">

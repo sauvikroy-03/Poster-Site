@@ -39,7 +39,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const hasDiscount = comparePrice !== null && price !== null && comparePrice > price;
 
   return (
-    <div className="group flex w-full flex-col overflow-hidden border-2 border-black bg-[#f7f5f0] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform duration-300 ease-out hover:-translate-y-1.5 hover:cursor-pointer">
+    <div className="group flex w-full flex-col overflow-hidden border-2 border-black bg-[#f7f5f0] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform duration-300 ease-out  hover:cursor-pointer">
       {/* Image frame: Locks to 3/4 or 4/5 proportional aspect ratio with neutral containment background */}
       <div className="p-2 pb-1.5 sm:p-3 sm:pb-2">
         <div className="relative aspect-[5/6] w-full overflow-hidden border border-black/10 bg-[#eeece7]">
@@ -52,7 +52,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             src={images[activeIndex]}
             alt={`${prod_name} - image ${activeIndex + 1}`}
             fill
-           className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+           className="object-cover transition-transform duration-500 ease-out group-hover:scale-130"
             sizes="(max-width: 640px) 160px, (max-width: 768px) 200px, (max-width: 1024px) 240px, 280px"
           />
 

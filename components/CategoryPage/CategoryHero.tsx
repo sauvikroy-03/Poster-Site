@@ -15,7 +15,7 @@ export default function CategoryHero() {
             Home
           </Link>
           <ChevronRight size={14} className="text-neutral-400" />
-          <span className="font-semibold text-black">Shop</span>
+          <span className="font-semibold text-black">Categories</span>
         </div>
 
         {/* Eyebrow */}

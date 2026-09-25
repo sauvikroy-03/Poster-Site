@@ -27,7 +27,7 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="w-full bg-[#f7f5f0]">
+    <section className="w-full bg-[#f7f5f0] "> 
       <div className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6">
         <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
           <div>
@@ -91,7 +91,7 @@ export default function Hero() {
           {/* Archive Series banner */}
           <a
             href="#"
-            className="col-span-2 flex min-h-[160px] gap-6 overflow-hidden border-2 border-black border-l-4 border-l-red-600 bg-black p-6 md:col-span-2 md:h-full md:min-h-0"
+            className="col-span-2 flex min-h-[160px] gap-6 overflow-hidden border-2 border-black  bg-[#f7f5f0] shadow-[6px_6px_0px_0px_rgba(208,0,0,1)]  bg-black p-6 md:col-span-2 md:h-full md:min-h-0  "
           >
             <img
               src="https://picsum.photos/seed/archive-series/300/300"
@@ -117,10 +117,12 @@ export default function Hero() {
           </a>
 
           {/* Bottom small blocks */}
-          <div className="col-span-1 flex min-h-[120px] items-center justify-center border-2 border-black bg-black/5 md:h-full md:min-h-0">
-            <span className="text-xs font-bold uppercase tracking-wide text-black/30">
-              Coming Soon
-            </span>
+          <div className="col-span-1 flex items-center justify-center  bg-black/5 md:h-full md:min-h-0">
+            {products[3] ? (
+              <ProductCard product={products[3]} />
+            ) : (
+              <ProductCardSkeleton/>
+            )}
           </div>
 
           <div className="col-span-1 flex min-h-[120px] flex-col justify-between border-2 border-black bg-yellow-400 p-5 md:h-full md:min-h-0">
