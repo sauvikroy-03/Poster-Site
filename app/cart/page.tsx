@@ -162,7 +162,7 @@ export default async function CartPage() {
 
               <button
                 type="button"
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-black py-3.5 text-sm font-bold text-white transition-opacity hover:opacity-90"
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-black py-3.5 text-sm font-bold text-white transition-all hover:opacity-90  duration-300 ease-out hover:scale-105 cursor-pointer"
               >
                 Go to Checkout
                 <ChevronRight size={16} />

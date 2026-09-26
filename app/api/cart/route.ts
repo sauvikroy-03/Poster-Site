@@ -4,6 +4,27 @@ import { cookies } from "next/headers";
 
 const MAX_QUANTITY = 99;
 
+async function getSupabaseServerClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return null;
+  }
+
+  const cookieStore = await cookies();
+  return createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll: () => cookieStore.getAll(),
+      setAll: (cookiesToSet) => {
+        cookiesToSet.forEach(({ name, value, options }) =>
+          cookieStore.set(name, value, options)
+        );
+      },
+    },
+  });
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -18,30 +39,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+    const supabase = await getSupabaseServerClient();
 
-    if (!supabaseUrl || !supabaseAnonKey) {
+    if (!supabase) {
       return NextResponse.json(
         { success: false, message: "Server configuration error: Missing environment variables." },
         { status: 500 }
       );
     }
 
-    const cookieStore = await cookies();
-    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          );
-        },
-      },
-    });
-
-    // user_id comes from the session, never the request body — otherwise
-    // anyone could add items to another person's cart by editing the payload.
     const {
       data: { user },
       error: authError,
@@ -54,8 +60,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check for an existing line for this exact (user, product, variant)
-    // combination so we can increment rather than overwrite quantity.
     const { data: existing, error: fetchError } = await supabase
       .from("cart_items")
       .select("cart_id, quantity")
@@ -103,7 +107,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // No existing line — insert a fresh one.
     const { data, error } = await supabase
       .from("cart_items")
       .insert({
@@ -129,6 +132,149 @@ export async function POST(request: Request) {
     );
   } catch (err: unknown) {
     console.error("❌ Add To Cart Route Catch:", err);
+    const message = err instanceof Error ? err.message : "Internal server error.";
+    return NextResponse.json(
+      { success: false, message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const body = await request.json();
+    const cart_id = body.cart_id ? String(body.cart_id).trim() : null;
+
+    if (!cart_id) {
+      return NextResponse.json(
+        { success: false, message: "cart_id is required." },
+        { status: 400 }
+      );
+    }
+
+    const supabase = await getSupabaseServerClient();
+
+    if (!supabase) {
+      return NextResponse.json(
+        { success: false, message: "Server configuration error: Missing environment variables." },
+        { status: 500 }
+      );
+    }
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, message: "You must be signed in to modify your cart." },
+        { status: 401 }
+      );
+    }
+
+    const { data, error } = await supabase
+      .from("cart_items")
+      .delete()
+      .eq("cart_id", cart_id)
+      .eq("user_id", user.id)
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      console.error("❌ Cart Delete Error:", error.message);
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 400 }
+      );
+    }
+
+    if (!data) {
+      return NextResponse.json(
+        { success: false, message: "Cart item not found." },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { success: true, message: "Item removed from cart." },
+      { status: 200 }
+    );
+  } catch (err: unknown) {
+    console.error("❌ Delete Cart Route Catch:", err);
+    const message = err instanceof Error ? err.message : "Internal server error.";
+    return NextResponse.json(
+      { success: false, message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const cart_id = body.cart_id ? String(body.cart_id).trim() : null;
+    const quantity = body.quantity ? Number(body.quantity) : null;
+
+    if (!cart_id || !Number.isFinite(quantity) || quantity! < 1 || quantity! > MAX_QUANTITY) {
+      return NextResponse.json(
+        { success: false, message: `cart_id and a quantity between 1 and ${MAX_QUANTITY} are required.` },
+        { status: 400 }
+      );
+    }
+
+    const supabase = await getSupabaseServerClient();
+
+    if (!supabase) {
+      return NextResponse.json(
+        { success: false, message: "Server configuration error: Missing environment variables." },
+        { status: 500 }
+      );
+    }
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, message: "You must be signed in to modify your cart." },
+        { status: 401 }
+      );
+    }
+
+    // Scoped to this user, same belt-and-suspenders reasoning as DELETE —
+    // don't rely on RLS alone to prevent updating someone else's row.
+    const { data, error } = await supabase
+      .from("cart_items")
+      .update({ quantity, updated_at: new Date().toISOString() })
+      .eq("cart_id", cart_id)
+      .eq("user_id", user.id)
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      console.error("❌ Cart Quantity Update Error:", error.message);
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 400 }
+      );
+    }
+
+    if (!data) {
+      return NextResponse.json(
+        { success: false, message: "Cart item not found." },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { success: true, message: "Quantity updated.", item: data },
+      { status: 200 }
+    );
+  } catch (err: unknown) {
+    console.error("❌ Update Cart Route Catch:", err);
     const message = err instanceof Error ? err.message : "Internal server error.";
     return NextResponse.json(
       { success: false, message },
