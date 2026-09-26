@@ -87,12 +87,14 @@ export default function Navbar() {
             >
               <Search className="h-[18px] w-[18px]" />
             </button>
+            <Link href="/cart">
             <button
               aria-label="Cart"
               className="flex h-9 w-9 items-center justify-center rounded-full text-black/70 transition-colors hover:bg-black/5 hover:text-black"
             >
               <ShoppingBag className="h-[18px] w-[18px]" />
             </button>
+            </Link>
 
             {user ? (
               <div className="relative" ref={dropdownRef}>

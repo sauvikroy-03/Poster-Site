@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { Heart, Minus, Plus, Truck, ShieldCheck } from "lucide-react";
+import { Heart, Minus, Plus, Truck, ShieldCheck, Loader2 } from "lucide-react";
+import { toast } from "react-hot-toast";
 import ProjectDataInterface from "@/types/ItemDetails";
 
 interface ProductCardProps {
@@ -22,8 +23,6 @@ const SPECIFICATIONS = [
 export default function AddToCartForm({ product }: ProductCardProps) {
   const { prod_id, prod_name, prod_category, product_variants, prod_description } = product;
 
-  // One representative variant per unique size — cheapest material for that size,
-  // since Frame/material selection is intentionally omitted from this UI.
   const sizeOptions = useMemo(() => {
     const bySize = new Map<string, ProjectDataInterface["product_variants"][number]>();
 
@@ -43,6 +42,7 @@ export default function AddToCartForm({ product }: ProductCardProps) {
     sizeOptions[0]?.variant_id
   );
   const [quantity, setQuantity] = useState(1);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   const selectedVariant = sizeOptions.find(
     (v) => v.variant_id === selectedVariantId
@@ -62,26 +62,36 @@ export default function AddToCartForm({ product }: ProductCardProps) {
     setQuantity((prev) => Math.max(1, prev + delta));
   };
 
-  const handleAddToCart = () => {
-    if (!selectedVariant) return;
+  const handleAddToCart = async () => {
+    if (!selectedVariant || isAddingToCart) return;
 
-    const payload = {
-      prod_id,
-      variant_id: selectedVariant.variant_id,
-      prod_size: selectedVariant.prod_size,
-      prod_material: selectedVariant.prod_material,
-      sku: selectedVariant.sku,
-      unit_price: price,
-      quantity,
-      line_total: price * quantity,
-    };
+    setIsAddingToCart(true);
+    try {
+      const res = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prod_id,
+          variant_id: selectedVariant.variant_id,
+          quantity,
+        }),
+      });
 
-    // TODO: wire this into your actual cart mutation (context/store/API call)
-    console.log("Add to cart:", payload);
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        toast.error(data.message || "Failed to add item to cart.");
+        return;
+      }
+
+      toast.success("Item added to cart");
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
-  // Pair specs two-at-a-time so each row renders as a 2-column grid,
-  // matching the reference layout (odd-length lists leave the last cell empty).
   const specRows = SPECIFICATIONS.reduce<typeof SPECIFICATIONS[]>((rows, item, i) => {
     if (i % 2 === 0) rows.push([item]);
     else rows[rows.length - 1].push(item);
@@ -95,7 +105,6 @@ export default function AddToCartForm({ product }: ProductCardProps) {
         {prod_name}
       </h1>
 
-      {/* Rating row — omitted: no rating/review fields on ProjectDataInterface yet */}
       <div className="flex items-center gap-3 text-sm">
         <span className="font-semibold uppercase tracking-wide text-neutral-500">
           {prod_category}
@@ -122,7 +131,6 @@ export default function AddToCartForm({ product }: ProductCardProps) {
         <span className="text-xs text-neutral-500">Inclusive of all taxes</span>
       </div>
 
-      {/* Description */}
       <div className="flex items-center gap-3 text-sm">
         <span className="tracking-wide text-neutral-500">{prod_description}</span>
       </div>
@@ -184,14 +192,18 @@ export default function AddToCartForm({ product }: ProductCardProps) {
           </button>
         </div>
 
-<button
-  type="button"
-  onClick={handleAddToCart}
-  disabled={!selectedVariant}
-  className="flex-1 cursor-pointer rounded-full bg-black py-3.5 text-sm font-bold text-white transition-all duration-300 ease-out hover:scale-y-110 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-y-100"
->
-  Add to Cart · ₹{(price * quantity).toLocaleString("en-IN")}
-</button>
+        <button
+          type="button"
+          onClick={handleAddToCart}
+          disabled={!selectedVariant || isAddingToCart}
+          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-black py-3.5 text-sm font-bold text-white transition-all duration-300 ease-out hover:scale-y-110 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-y-100"
+        >
+          {isAddingToCart ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            `Add to Cart · ₹${(price * quantity).toLocaleString("en-IN")}`
+          )}
+        </button>
 
         <button
           type="button"
