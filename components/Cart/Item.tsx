@@ -53,7 +53,7 @@ export default function Item({ item }: ItemProps) {
   return (
     <div className="flex w-full items-start gap-4 border-b border-neutral-200 py-5 last:border-b-0">
       {/* Image */}
-      <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-neutral-100 sm:h-24 sm:w-24">
+      <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md bg-neutral-100 sm:h-24 sm:w-24">
         <Image
           src={image}
           alt={products.prod_name}
