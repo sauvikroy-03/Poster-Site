@@ -2,13 +2,15 @@
 
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2, Eye, EyeOff, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Loader2, CheckCircle2, ArrowLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/client";
+import { useRouter } from "next/navigation";
 
-type Step = "EMAIL" | "OTP" | "PASSWORD" | "SUCCESS";
+type Step = "EMAIL" | "OTP" | "SUCCESS";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -99,15 +101,12 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   const [direction, setDirection] = React.useState(1);
   const [email, setEmail] = React.useState("");
   const [otp, setOtp] = React.useState<string[]>(["", "", "", "", "", ""]);
-  const [password, setPassword] = React.useState("");
-  const [confirmPassword, setConfirmPassword] = React.useState("");
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [showConfirm, setShowConfirm] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
   const [timer, setTimer] = React.useState(60);
-
   const otpCode = otp.join("");
+  const supabase = createClient();
+  const router = useRouter();
 
   React.useEffect(() => {
     if (!isOpen) {
@@ -115,8 +114,6 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         setStep("EMAIL");
         setEmail("");
         setOtp(["", "", "", "", "", ""]);
-        setPassword("");
-        setConfirmPassword("");
         setError("");
         setTimer(60);
       }, 200);
@@ -136,7 +133,20 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     setStep(next);
   }, []);
 
-  // 1. Email Step: Validate & proceed to Password step
+  const sendOtp = React.useCallback(async (targetEmail: string) => {
+    const otpRes = await fetch("/api/auth/sendOTP", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: targetEmail }),
+    });
+    const otpData = await otpRes.json();
+    if (!otpRes.ok || !otpData.success) {
+      throw new Error(otpData.message || "Failed to send verification code.");
+    }
+  }, []);
+
+  // 1. Email Step: Send the OTP directly — signInWithOtp with
+  // shouldCreateUser:true handles both new and existing accounts.
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -146,66 +156,16 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     setError("");
     setLoading(true);
     try {
-      const response = await fetch("/api/auth/checkExistingUser", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
-      });
-      const data = await response.json();
-      if (data.success) {
-        goTo("PASSWORD", 1);
-      } else {
-        setError(data.message || "User already exists. Please login.");
-      }
-    } catch {
-      setError("Network error. Please check your connection.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 2. Password Step: Validate passwords, trigger sendOTP, and move to OTP step
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (password !== confirmPassword) {
-      return setError("Passwords do not match.");
-    } else if (password.length < 8) {
-      return setError("Password must be at least 8 characters long.");
-    } else if (!/[A-Z]/.test(password)) {
-      return setError("Password must contain at least one uppercase letter.");
-    } else if (!/[a-z]/.test(password)) {
-      return setError("Password must contain at least one lowercase letter.");
-    } else if (!/[0-9]/.test(password)) {
-      return setError("Password must contain at least one number.");
-    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      return setError("Password must contain at least one special character (!@#$%^&* etc.).");
-    }
-    setError("");
-    setLoading(true);
-    try {
-      const otpRes = await fetch("/api/auth/sendOTP", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase(), password: password.trim() }),
-      });
-
-      const otpData = await otpRes.json();
-
-      if (!otpRes.ok || !otpData.success) {
-        setError(otpData.message || "Failed to send verification code.");
-        return;
-      }
-
+      await sendOtp(email.trim().toLowerCase());
       goTo("OTP", 1);
-    } catch {
-      setError("Network error. Please check your connection.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Network error. Please check your connection.");
     } finally {
       setLoading(false);
     }
   };
 
-  // 3. OTP Step: Verify code and then attach password
+  // 2. OTP Step: Verify code, then hydrate this browser client's session
   const handleVerifyOtp = React.useCallback(async (code: string) => {
     if (code.length < 6) return setError("Please enter the complete 6-digit code.");
 
@@ -218,7 +178,6 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         body: JSON.stringify({
           email: email.trim().toLowerCase(),
           token: code.trim(),
-          password: password.trim(),
         }),
       });
 
@@ -229,17 +188,37 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         return;
       }
 
+      // The server verified the OTP using a separate (server-side)
+      // Supabase client — this browser client has no idea a session
+      // now exists. getUser() can't fix that; it only re-validates a
+      // session already in this client's memory. setSession() is the
+      // real sync: it loads the tokens the server just created into
+      // THIS client, which is what fires onAuthStateChange for every
+      // subscriber sharing this singleton (e.g. Navbar).
+      if (verifyData.session?.access_token && verifyData.session?.refresh_token) {
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: verifyData.session.access_token,
+          refresh_token: verifyData.session.refresh_token,
+        });
+        if (sessionError) {
+          console.error("Failed to hydrate client session:", sessionError.message);
+        }
+      } else {
+        console.error("Server response missing session tokens — check /api/auth/createUser.");
+      }
+
       onSuccess?.(email);
       goTo("SUCCESS", 1);
       setTimeout(() => {
         onClose();
+        router.refresh(); // re-run server components with the new session
       }, 1200);
     } catch {
       setError("Something went wrong during verification. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, [email, password, onSuccess, goTo, onClose]);
+  }, [email, onSuccess, goTo, onClose, supabase, router]);
 
   // Auto-trigger when 6 digits are typed
   React.useEffect(() => {
@@ -255,7 +234,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open && (step === "OTP" || step === "PASSWORD")) return;
+        if (!open && step === "OTP") return;
         if (!open) onClose();
       }}
     >
@@ -363,8 +342,6 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                     type="button"
                     onClick={() => {
                       goTo("EMAIL", -1);
-                      setPassword("");
-                      setConfirmPassword("");
                       setOtp(["", "", "", "", "", ""]);
                       setError("");
                     }}
@@ -395,97 +372,22 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                 ) : (
                   <button
                     type="button"
-                    onClick={() => { setOtp(["", "", "", "", "", ""]); setTimer(60); }}
+                    onClick={async () => {
+                      setOtp(["", "", "", "", "", ""]);
+                      setError("");
+                      setTimer(60);
+                      try {
+                        await sendOtp(email.trim().toLowerCase());
+                      } catch (err) {
+                        setError(err instanceof Error ? err.message : "Failed to resend code.");
+                      }
+                    }}
                     className="underline underline-offset-2 text-[#121212] font-medium"
                   >
                     Resend code
                   </button>
                 )}
               </div>
-            </motion.div>
-          )}
-
-          {step === "PASSWORD" && (
-            <motion.div
-              key="password"
-              custom={direction}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.18, ease: "easeOut" }}
-              className="space-y-5"
-            >
-              <div>
-                <ArrowLeft className="hover:cursor-pointer" onClick={() => goTo("EMAIL", -1)} />
-              </div>
-              <div className="space-y-1">
-                <h2 className="text-[22px] font-semibold tracking-[-0.025em] text-[#121212]">
-                  Set your password
-                </h2>
-                <p className="text-[13px] text-[#71717A]">
-                  Choose a secure password to finish setting up your account.
-                </p>
-              </div>
-
-              <form onSubmit={handlePasswordSubmit} noValidate className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-medium uppercase tracking-[0.05em] text-[#121212]">
-                    Create password
-                  </label>
-                  <div className="relative">
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => { setPassword(e.target.value); setError(""); }}
-                      placeholder="At least 6 characters"
-                      className="h-11 rounded-lg border-[#E8E6DF] bg-[#FAF9F6] px-3.5 pr-10 text-sm text-[#121212] placeholder:text-[#A1A1AA] transition-all focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#121212] focus-visible:border-[#121212]"
-                      autoFocus
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A1A1AA] hover:text-[#121212] transition-colors"
-                      tabIndex={-1}
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-medium uppercase tracking-[0.05em] text-[#121212]">
-                    Confirm password
-                  </label>
-                  <div className="relative">
-                    <Input
-                      type={showConfirm ? "text" : "password"}
-                      value={confirmPassword}
-                      onChange={(e) => { setConfirmPassword(e.target.value); setError(""); }}
-                      placeholder="Re-enter password"
-                      className="h-11 rounded-lg border-[#E8E6DF] bg-[#FAF9F6] px-3.5 pr-10 text-sm text-[#121212] placeholder:text-[#A1A1AA] transition-all focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#121212] focus-visible:border-[#121212]"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirm(!showConfirm)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A1A1AA] hover:text-[#121212] transition-colors"
-                      tabIndex={-1}
-                    >
-                      {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                {error && <p className="text-xs text-[#B3261E]">{error}</p>}
-
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="h-11 w-full rounded-lg bg-[#121212] text-sm font-medium text-[#FAF9F6] shadow-sm transition-all hover:bg-[#262626] active:scale-[0.99] cursor-pointer"
-                >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send OTP"}
-                </Button>
-              </form>
             </motion.div>
           )}
 

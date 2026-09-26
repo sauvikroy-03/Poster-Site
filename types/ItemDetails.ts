@@ -3,6 +3,7 @@
     prod_name:string,
     prod_slug:string,
     prod_category:string,
+    prod_description:string,
     prod_images:string[],
     is_trending:boolean,
     hero_visible:boolean,
