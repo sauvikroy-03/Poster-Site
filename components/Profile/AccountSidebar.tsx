@@ -27,7 +27,7 @@ export default function AccountSidebar({ activeTab }: AccountSidebarProps) {
   return (
     <>
       {/* Mobile: horizontal scrollable pill tabs */}
-      <nav className="flex gap-2 overflow-x-auto pb-1 md:hidden">
+      <nav className="flex gap-2 overflow-x-auto px-0.5 py-1 md:hidden">
         {TABS.map(({ key, label, icon: Icon }) => {
           const isActive = activeTab === key;
           return (
