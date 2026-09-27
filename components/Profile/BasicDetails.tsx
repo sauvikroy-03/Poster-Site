@@ -152,7 +152,7 @@ export default function BasicDetails({ open, onOpenChange, onSubmit }: BasicDeta
         <DialogHeader>
           <DialogTitle>Shipping Details</DialogTitle>
           <DialogDescription>
-            We'll use this to deliver your order and send updates.
+            We&apos;ll use this to deliver your order and send updates.
           </DialogDescription>
         </DialogHeader>
 

@@ -38,8 +38,8 @@ export default function CategoriesFilter() {
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  const getSlug = (c: any): string =>
-    (c.slug ?? c.category_slug ?? c.category_name ?? "")
+  const getSlug = (c: CategoryInterface): string =>
+    (c.slug ?? c.category_name ?? "")
       .toString()
       .trim()
       .toLowerCase()
@@ -74,7 +74,7 @@ export default function CategoriesFilter() {
           ))}
 
         {!loading &&
-          categories.map((c: any, idx) => {
+          categories.map((c, idx) => {
             const slug = getSlug(c);
             const isActive =
               !!currentCategory && currentCategory.toLowerCase() === slug;

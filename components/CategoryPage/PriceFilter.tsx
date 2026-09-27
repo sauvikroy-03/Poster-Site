@@ -14,9 +14,14 @@ export default function PriceFilter() {
   const initial = Number(searchParams.get("maxPrice")) || MAX_PRICE;
   const [value, setValue] = useState(initial);
 
-  // keep local slider in sync if URL changes externally (e.g. reset)
+  // Keep local slider in sync if URL changes externally (e.g. reset),
+  // but only trigger a re-render when the URL value actually differs
+  // from current state — otherwise every searchParams change (including
+  // ones this component itself caused via commitToUrl) re-invokes
+  // setValue needlessly, risking a cascading render.
   useEffect(() => {
-    setValue(Number(searchParams.get("maxPrice")) || MAX_PRICE);
+    const urlValue = Number(searchParams.get("maxPrice")) || MAX_PRICE;
+    setValue((prev) => (prev === urlValue ? prev : urlValue));
   }, [searchParams]);
 
   const commitToUrl = useCallback(
