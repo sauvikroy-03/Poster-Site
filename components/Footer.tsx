@@ -6,7 +6,7 @@ import Link from "next/link";
 export default function Footer() {
   return (
     <footer className="w-full border-t-2 border-black bg-[#f0efeb]">
-      <div className="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-16 lg:px-12">
+      <div className="mx-auto max-w-7xl  py-14  sm:py-16 ">
         <div className="flex flex-col gap-10 sm:flex-row sm:justify-between sm:gap-8">
 
           <div className="max-w-xs">

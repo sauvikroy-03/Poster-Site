@@ -1,9 +1,10 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Moon, Search, ShoppingBag, LogOut, ChevronDown } from "lucide-react";
+import { Moon, Search, ShoppingBag, ChevronDown } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
-import {createClient} from "@/lib/client";
+import AccountMenu from "@/components/Profile/AccountMenu";
+import { createClient } from "@/lib/client";
 import type { User } from "@supabase/supabase-js";
 
 export default function Navbar() {
@@ -15,10 +16,8 @@ export default function Navbar() {
   const supabase = createClient();
 
   useEffect(() => {
-    // Get whatever session already exists on mount (e.g. page refresh)
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
 
-    // React live to sign-in/sign-out without needing a page reload
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
@@ -26,7 +25,6 @@ export default function Navbar() {
     return () => listener.subscription.unsubscribe();
   }, [supabase]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     if (!isDropdownOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
@@ -41,7 +39,6 @@ export default function Navbar() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setIsDropdownOpen(false);
-    // onAuthStateChange above will fire and clear `user` automatically
   };
 
   const initial = user?.email ? user.email.charAt(0).toUpperCase() : null;
@@ -50,7 +47,6 @@ export default function Navbar() {
     <>
       <header className="sticky top-0 z-50 border-b border-black/10 bg-[#f7f5f0]/90 backdrop-blur-lg">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
-          {/* Logo / Brand */}
           <Link href="/" className="flex items-center gap-2.5">
             <span className="flex h-8 w-8 items-center justify-center rounded-md bg-black text-sm font-extrabold text-white">
               P
@@ -60,7 +56,6 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* Nav links — hidden on small screens */}
           <nav className="hidden items-center gap-8 md:flex">
             <Link href="/shop" className="text-sm font-medium text-black/70 transition-colors hover:text-black">
               Shop
@@ -73,7 +68,6 @@ export default function Navbar() {
             </Link>
           </nav>
 
-          {/* Right side: icons + login/account */}
           <div className="flex items-center gap-2 sm:gap-4">
             <button
               aria-label="Toggle theme"
@@ -88,12 +82,12 @@ export default function Navbar() {
               <Search className="h-[18px] w-[18px]" />
             </button>
             <Link href="/cart">
-            <button
-              aria-label="Cart"
-              className="flex h-9 w-9 items-center justify-center rounded-full text-black/70 transition-colors hover:bg-black/5 hover:text-black"
-            >
-              <ShoppingBag className="h-[18px] w-[18px]" />
-            </button>
+              <button
+                aria-label="Cart"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-black/70 transition-colors hover:bg-black/5 hover:text-black"
+              >
+                <ShoppingBag className="h-[18px] w-[18px]" />
+              </button>
             </Link>
 
             {user ? (
@@ -111,17 +105,12 @@ export default function Navbar() {
                 </button>
 
                 {isDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-xl border border-black/10 bg-white shadow-lg">
-                    <div className="border-b border-black/10 px-4 py-3">
-                      <p className="truncate text-sm font-medium text-black">{user.email}</p>
-                    </div>
-                    <button
-                      onClick={handleLogout}
-                      className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-black/70 transition-colors hover:bg-black/5 hover:text-black"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Log out
-                    </button>
+                  <div className="absolute right-0 top-full mt-2">
+                    <AccountMenu
+                      user={user}
+                      onClose={() => setIsDropdownOpen(false)}
+                      onLogout={handleLogout}
+                    />
                   </div>
                 )}
               </div>
@@ -143,8 +132,6 @@ export default function Navbar() {
         onSuccess={(email) => {
           console.log("Authenticated as:", email);
           setIsAuthOpen(false);
-          // no manual user-setting needed — onAuthStateChange picks up
-          // the new session automatically once cookies are set
         }}
       />
     </>

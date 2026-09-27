@@ -3,16 +3,19 @@ import React from "react";
 import Image from "next/image";
 import { CategoryInterface } from "@/types/categoryDetails";
 import placeholderImg from "@/public/placeholder.jpg";
+import Link from "next/link";
 
 interface categoriesProps {
   category: CategoryInterface;
 }
 
 export default function FeaturedCard({ category }: categoriesProps) {
-  const { category_name } = category;
+  const { category_name, slug } = category;
+  
 
   return (
-    <div className="group flex h-full w-full flex-col border-2 border-black bg-[#f7f5f0] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform duration-300 ease-out hover:-translate-y-1.5 sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:cursor-pointer">
+    
+    <Link href={`/categories?category=${slug}`} className="group flex h-full w-full flex-col border-2 border-black bg-[#f7f5f0] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform duration-300 ease-out hover:-translate-y-1.5 sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:cursor-pointer">
       {/* Image frame */}
       <div className="p-2 pb-1.5 sm:p-3 sm:pb-2">
         <div className="relative aspect-[5/6] w-full overflow-hidden border border-black/10">
@@ -33,6 +36,6 @@ export default function FeaturedCard({ category }: categoriesProps) {
         </h3>
         <div className="mt-1.5 flex items-baseline gap-1.5 sm:mt-2 sm:gap-2"></div>
       </div>
-    </div>
+    </Link>
   );
 }

@@ -9,7 +9,7 @@ const supabase = createClient(
 );
 try{
 
-    const {data,error}=await supabase.from('categories').select("id,category_name").order("category_name", { ascending: true });
+    const {data,error}=await supabase.from('categories').select("id,category_name,slug").order("category_name", { ascending: true });
 
     if(error){
         return(NextResponse.json({error:error},{status:400}))
