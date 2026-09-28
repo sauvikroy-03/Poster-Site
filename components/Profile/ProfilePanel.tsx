@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
-import { MapPin, Mail, LogOut, Pencil, Plus } from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
+import { MapPin, Mail, LogOut, Pencil, Plus, Loader2 } from "lucide-react";
+import { toast } from "react-hot-toast";
 import BasicDetails from "@/components/Profile/BasicDetails";
+import AddressList, { SavedAddress } from "@/components/Profile/AddressListCard";
 import { createClient } from "@/lib/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,10 +21,75 @@ interface ProfilePanelProps {
 
 export default function ProfilePanel({ email }: ProfilePanelProps) {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [addresses, setAddresses] = useState<SavedAddress[]>([]);
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
+  const [editingAddress, setEditingAddress] = useState<SavedAddress | null>(null);
   const supabase = createClient();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+  };
+
+  // ---------- Load saved addresses ----------
+  const loadAddresses = useCallback(async () => {
+    try {
+      const res = await fetch("/api/address");
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        // 401 (logged out) or any error: show the empty state
+        setAddresses([]);
+        return;
+      }
+
+      setAddresses(data.addresses as SavedAddress[]);
+    } catch {
+      setAddresses([]);
+    } finally {
+      setIsLoadingAddresses(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadAddresses();
+  }, [loadAddresses]);
+
+  // ---------- Actions ----------
+  const handleAddNew = () => {
+    setEditingAddress(null);
+    setIsAddressModalOpen(true);
+  };
+
+  const handleEdit = (address: SavedAddress) => {
+    setEditingAddress(address);
+    setIsAddressModalOpen(true);
+  };
+
+  const handleSetDefault = async (id: string) => {
+    const previous = addresses;
+
+    // Optimistic update
+    setAddresses((prev) => prev.map((a) => ({ ...a, is_default: a.id === id })));
+
+    try {
+      const res = await fetch("/api/address", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, setDefault: true }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setAddresses(previous);
+        toast.error(data.message || "Failed to update default address.");
+        return;
+      }
+
+      toast.success("Default address updated");
+    } catch {
+      setAddresses(previous);
+      toast.error("Something went wrong. Please try again.");
+    }
   };
 
   return (
@@ -58,7 +125,7 @@ export default function ProfilePanel({ email }: ProfilePanelProps) {
           <CardAction>
             <Button
               size="sm"
-              onClick={() => setIsAddressModalOpen(true)}
+              onClick={handleAddNew}
               className="gap-1.5 bg-black text-xs font-semibold text-white hover:bg-black/85"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -67,12 +134,24 @@ export default function ProfilePanel({ email }: ProfilePanelProps) {
           </CardAction>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-3 rounded-xl border border-dashed border-black/15 bg-neutral-50 px-4 py-5">
-            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-neutral-100">
-              <MapPin className="h-4 w-4 text-neutral-400" />
-            </span>
-            <p className="text-sm text-neutral-400">No addresses added yet</p>
-          </div>
+          {isLoadingAddresses ? (
+            <div className="flex h-20 items-center justify-center">
+              <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
+            </div>
+          ) : addresses.length > 0 ? (
+            <AddressList
+              addresses={addresses}
+              onEdit={handleEdit}
+              onSetDefault={handleSetDefault}
+            />
+          ) : (
+            <div className="flex items-center gap-3 rounded-xl border border-dashed border-black/15 bg-neutral-50 px-4 py-5">
+              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-neutral-100">
+                <MapPin className="h-4 w-4 text-neutral-400" />
+              </span>
+              <p className="text-sm text-neutral-400">No addresses added yet</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -91,6 +170,8 @@ export default function ProfilePanel({ email }: ProfilePanelProps) {
       <BasicDetails
         open={isAddressModalOpen}
         onOpenChange={setIsAddressModalOpen}
+        editingAddress={editingAddress}
+        onSaved={loadAddresses}
         onSubmit={(details) => {
           console.log("Address submitted:", details);
         }}

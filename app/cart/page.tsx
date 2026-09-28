@@ -4,6 +4,7 @@ import { ChevronRight, Tag } from "lucide-react";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Item, { CartItemData } from "@/components/Cart/Item";
+import DefaultAddress from "@/components/Cart/DefaultAddress";
 
 async function getCartItems(): Promise<CartItemData[]> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -113,60 +114,69 @@ export default async function CartPage() {
               ))}
             </div>
 
-            {/* Summary */}
-            <div className="flex flex-col gap-5 rounded-2xl border border-neutral-200 bg-white p-6">
-              <h2 className="text-xl font-extrabold text-black">Order Summary</h2>
+            {/* Right column: Address + Summary */}
+            <div className="flex flex-col gap-6">
+              {/* Delivery address */}
+              <div className="flex flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-6">
+  <h2 className="text-xl font-extrabold text-black">Deliver To</h2>
+  <DefaultAddress />
+</div>
 
-              <div className="flex flex-col gap-3 text-sm">
-                <div className="flex items-center justify-between text-neutral-600">
-                  <span>Subtotal</span>
-                  <span className="font-semibold text-black">
-                    ₹{subtotal.toLocaleString("en-IN")}
+              {/* Summary */}
+              <div className="flex flex-col gap-5 rounded-2xl border border-neutral-200 bg-white p-6">
+                <h2 className="text-xl font-extrabold text-black">Order Summary</h2>
+
+                <div className="flex flex-col gap-3 text-sm">
+                  <div className="flex items-center justify-between text-neutral-600">
+                    <span>Subtotal</span>
+                    <span className="font-semibold text-black">
+                      ₹{subtotal.toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-neutral-600">
+                    <span>Delivery Fee</span>
+                    <span className="font-semibold text-black">
+                      {deliveryCharge === 0 ? "Free" : `₹${deliveryCharge}`}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between border-t border-neutral-200 pt-4">
+                  <span className="text-base font-bold text-black">Total</span>
+                  <span className="text-xl font-extrabold text-black">
+                    ₹{total.toLocaleString("en-IN")}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-neutral-600">
-                  <span>Delivery Fee</span>
-                  <span className="font-semibold text-black">
-                    {deliveryCharge === 0 ? "Free" : `₹${deliveryCharge}`}
-                  </span>
-                </div>
-              </div>
 
-              <div className="flex items-center justify-between border-t border-neutral-200 pt-4">
-                <span className="text-base font-bold text-black">Total</span>
-                <span className="text-xl font-extrabold text-black">
-                  ₹{total.toLocaleString("en-IN")}
-                </span>
-              </div>
-
-              {/* Promo code */}
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <Tag
-                    size={16}
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Add promo code"
-                    className="w-full rounded-full border border-neutral-200 bg-neutral-50 py-2.5 pl-10 pr-4 text-sm outline-none transition-colors focus:border-black"
-                  />
+                {/* Promo code */}
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Tag
+                      size={16}
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Add promo code"
+                      className="w-full rounded-full border border-neutral-200 bg-neutral-50 py-2.5 pl-10 pr-4 text-sm outline-none transition-colors focus:border-black"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="flex-shrink-0 rounded-xl bg-black px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                  >
+                    Apply
+                  </button>
                 </div>
+
                 <button
                   type="button"
-                  className="flex-shrink-0 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-black py-3.5 text-sm font-bold text-white transition-all hover:opacity-90  duration-300 ease-out hover:scale-105 cursor-pointer"
                 >
-                  Apply
+                  Go to Checkout
+                  <ChevronRight size={16} />
                 </button>
               </div>
-
-              <button
-                type="button"
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-black py-3.5 text-sm font-bold text-white transition-all hover:opacity-90  duration-300 ease-out hover:scale-105 cursor-pointer"
-              >
-                Go to Checkout
-                <ChevronRight size={16} />
-              </button>
             </div>
           </div>
         )}

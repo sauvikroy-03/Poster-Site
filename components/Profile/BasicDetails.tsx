@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Building2, Check, ChevronsUpDown, Home, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -42,12 +43,20 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { countries, isoToFlagEmoji } from "@/lib/countries";
+import { toast } from "react-hot-toast";
+import type { SavedAddress } from "@/components/Profile/AddressListCard";
 
 interface BasicDetailsProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Pass an address to edit it; pass null/undefined to add a new one. */
+  editingAddress?: SavedAddress | null;
+  /** Called after a successful add/update so the parent can refetch. */
+  onSaved?: () => void;
   onSubmit?: (details: BasicDetailsForm) => void;
 }
+
+export type AddressType = "home" | "office";
 
 export interface BasicDetailsForm {
   firstName: string;
@@ -61,7 +70,13 @@ export interface BasicDetailsForm {
   city: string;
   state: string;
   country: string;
+  addressType: AddressType;
 }
+
+const ADDRESS_TYPES: { value: AddressType; label: string; icon: typeof Home }[] = [
+  { value: "home", label: "Home", icon: Home },
+  { value: "office", label: "Office", icon: Building2 },
+];
 
 const defaultForm: BasicDetailsForm = {
   firstName: "",
@@ -75,14 +90,39 @@ const defaultForm: BasicDetailsForm = {
   city: "",
   state: "",
   country: "India",
+  addressType: "home",
 };
 
-export default function BasicDetails({ open, onOpenChange, onSubmit }: BasicDetailsProps) {
+const formFromAddress = (a: SavedAddress): BasicDetailsForm => ({
+  firstName: a.first_name,
+  lastName: a.last_name,
+  email: a.email,
+  phoneCountryIso2: a.phone_country_iso2,
+  phoneNumber: a.phone_number,
+  address: a.address_line1,
+  landmark: a.landmark ?? "",
+  pincode: a.pincode,
+  city: a.city,
+  state: a.state,
+  country: a.country,
+  addressType: a.address_type,
+});
+
+export default function BasicDetails({
+  open,
+  onOpenChange,
+  editingAddress = null,
+  onSaved,
+  onSubmit,
+}: BasicDetailsProps) {
   const [form, setForm] = useState<BasicDetailsForm>(defaultForm);
   const [errors, setErrors] = useState<Partial<Record<keyof BasicDetailsForm, string>>>({});
   const [isPhonePopoverOpen, setIsPhonePopoverOpen] = useState(false);
   const [isPincodeLoading, setIsPincodeLoading] = useState(false);
   const [pincodeError, setPincodeError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const editingId = editingAddress?.id ?? null;
 
   const selectedPhoneCountry =
     countries.find((c) => c.iso2 === form.phoneCountryIso2) ?? countries[0];
@@ -92,6 +132,16 @@ export default function BasicDetails({ open, onOpenChange, onSubmit }: BasicDeta
     setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
 
+  // Reset / prefill whenever the modal opens
+  useEffect(() => {
+    if (open) {
+      setErrors({});
+      setPincodeError("");
+      setForm(editingAddress ? formFromAddress(editingAddress) : defaultForm);
+    }
+  }, [open, editingAddress]);
+
+  // ---------- Form logic ----------
   const handlePincodeChange = async (value: string) => {
     const digitsOnly = value.replace(/\D/g, "").slice(0, 6);
     updateField("pincode", digitsOnly);
@@ -140,17 +190,64 @@ export default function BasicDetails({ open, onOpenChange, onSubmit }: BasicDeta
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const buildPayload = () => ({
+    firstName: form.firstName.trim(),
+    lastName: form.lastName.trim(),
+    email: form.email.trim().toLowerCase(),
+    phone: {
+      countryIso2: selectedPhoneCountry.iso2,
+      dialCode: selectedPhoneCountry.dialCode,
+      number: form.phoneNumber.trim(),
+      full: `${selectedPhoneCountry.dialCode}${form.phoneNumber.trim()}`,
+    },
+    address: {
+      type: form.addressType,
+      line1: form.address.trim(),
+      landmark: form.landmark.trim() || null,
+      pincode: form.pincode.trim(),
+      city: form.city.trim(),
+      state: form.state.trim(),
+      country: form.country.trim(),
+    },
+  });
+
+  const handleSubmit = async () => {
     if (!validate()) return;
-    onSubmit?.(form);
-    onOpenChange(false);
+
+    const payload = buildPayload();
+    const isEditing = editingId !== null;
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch("/api/address", {
+        method: isEditing ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(isEditing ? { id: editingId, ...payload } : payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        toast.error(data.message || (isEditing ? "Failed to update address." : "Failed to add address."));
+        return;
+      }
+
+      toast.success(isEditing ? "Address updated" : "Address added");
+      onSubmit?.(form);
+      onSaved?.();
+      onOpenChange(false);
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[620px]">
         <DialogHeader>
-          <DialogTitle>Shipping Details</DialogTitle>
+          <DialogTitle>{editingId ? "Edit Address" : "Shipping Details"}</DialogTitle>
           <DialogDescription>
             We&apos;ll use this to deliver your order and send updates.
           </DialogDescription>
@@ -182,13 +279,13 @@ export default function BasicDetails({ open, onOpenChange, onSubmit }: BasicDeta
                   value={form.lastName}
                   onChange={(e) => updateField("lastName", e.target.value)}
                   aria-invalid={!!errors.lastName}
-                  placeholder="Sharma"
+                  placeholder="Roy"
                 />
                 {errors.lastName && <FieldError>{errors.lastName}</FieldError>}
               </Field>
             </div>
 
-            {/* Email + Phone side by side */}
+            {/* Email + Phone: stacked on mobile, side by side from sm: up */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Field data-invalid={!!errors.email}>
                 <FieldLabel htmlFor="email">Email address</FieldLabel>
@@ -278,7 +375,7 @@ export default function BasicDetails({ open, onOpenChange, onSubmit }: BasicDeta
                 value={form.address}
                 onChange={(e) => updateField("address", e.target.value)}
                 aria-invalid={!!errors.address}
-                placeholder="House no., street, area"
+                placeholder="Flat / house no., building, street, area"
               />
               {errors.address && <FieldError>{errors.address}</FieldError>}
             </Field>
@@ -366,15 +463,62 @@ export default function BasicDetails({ open, onOpenChange, onSubmit }: BasicDeta
                 {errors.state && <FieldError>{errors.state}</FieldError>}
               </Field>
             </div>
+
+            {/* Address type */}
+            <Field>
+              <FieldLabel id="address-type-label">Address type</FieldLabel>
+              <RadioGroup
+                aria-labelledby="address-type-label"
+                value={form.addressType}
+                onValueChange={(value) => {
+                  // Narrow explicitly: this Base UI-based RadioGroup can hand
+                  // back a wider type than our two-value union.
+                  if (value === "home" || value === "office") {
+                    updateField("addressType", value);
+                  }
+                }}
+                className="grid grid-cols-2 gap-3"
+              >
+                {ADDRESS_TYPES.map(({ value, label, icon: Icon }) => {
+                  const isSelected = form.addressType === value;
+                  return (
+                    <label
+                      key={value}
+                      htmlFor={`address-type-${value}`}
+                      className={cn(
+                        "flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 transition-colors",
+                        isSelected
+                          ? "border-black bg-neutral-50"
+                          : "border-input hover:border-black/40"
+                      )}
+                    >
+                      <RadioGroupItem value={value} id={`address-type-${value}`} />
+                      <Icon className="h-4 w-4 text-neutral-600" />
+                      <span className="text-sm font-semibold text-black">{label}</span>
+                    </label>
+                  );
+                })}
+              </RadioGroup>
+            </Field>
           </FieldGroup>
         </FieldSet>
 
         <Button
           type="button"
           onClick={handleSubmit}
-          className="mt-2 w-full rounded-full bg-black py-5 text-sm font-bold text-white hover:bg-neutral-800"
+          disabled={isSubmitting}
+          className="mt-2 w-full rounded-xl bg-black py-5 text-sm font-bold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Save Details
+          {isSubmitting ? (
+            <span className="flex items-center justify-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Saving...
+            </span>
+          ) : editingId ? (
+            "Update Address"
+          ) : (
+            "Save Details"
+          )}
         </Button>
       </DialogContent>
     </Dialog>
