@@ -5,7 +5,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Item, { CartItemData } from "@/components/Cart/Item";
 import DefaultAddress from "@/components/Cart/DefaultAddress";
-
+import CheckoutButton from "@/components/Cart/CheckoutButton";
 async function getCartItems(): Promise<CartItemData[]> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
@@ -169,13 +169,7 @@ export default async function CartPage() {
                   </button>
                 </div>
 
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-black py-3.5 text-sm font-bold text-white transition-all hover:opacity-90  duration-300 ease-out hover:scale-105 cursor-pointer"
-                >
-                  Go to Checkout
-                  <ChevronRight size={16} />
-                </button>
+                <CheckoutButton  />
               </div>
             </div>
           </div>
