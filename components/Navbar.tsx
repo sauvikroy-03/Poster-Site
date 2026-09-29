@@ -1,13 +1,17 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { Moon, Search, ShoppingBag, ChevronDown } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Moon, Search, ShoppingBag, ChevronDown, Loader2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import AccountMenu from "@/components/Profile/AccountMenu";
 import { createClient } from "@/lib/client";
 import type { User } from "@supabase/supabase-js";
 
 export default function Navbar() {
+  const router = useRouter();
+  const [isCartPending, startCartTransition] = useTransition();
+
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -39,6 +43,13 @@ export default function Navbar() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setIsDropdownOpen(false);
+  };
+
+  const handleCartClick = () => {
+    if (isCartPending) return;
+    startCartTransition(() => {
+      router.push("/cart");
+    });
   };
 
   const initial = user?.email ? user.email.charAt(0).toUpperCase() : null;
@@ -81,14 +92,21 @@ export default function Navbar() {
             >
               <Search className="h-[18px] w-[18px]" />
             </button>
-            <Link href="/cart">
-              <button
-                aria-label="Cart"
-                className="flex h-9 w-9 items-center justify-center rounded-full text-black/70 transition-colors hover:bg-black/5 hover:text-black"
-              >
+
+            {/* Cart Button with Transition Loader */}
+            <button
+              type="button"
+              onClick={handleCartClick}
+              disabled={isCartPending}
+              aria-label="Cart"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-black/70 transition-colors hover:bg-black/5 hover:text-black disabled:cursor-not-allowed"
+            >
+              {isCartPending ? (
+                <Loader2 className="h-[18px] w-[18px] animate-spin text-black" />
+              ) : (
                 <ShoppingBag className="h-[18px] w-[18px]" />
-              </button>
-            </Link>
+              )}
+            </button>
 
             {user ? (
               <div className="relative" ref={dropdownRef}>
