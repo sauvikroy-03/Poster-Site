@@ -60,6 +60,28 @@ export default function CheckoutButton() {
         description: `Order ${createData.orderNumber}`,
         prefill: createData.prefill,
         theme: { color: "#000000" },
+
+        // 👇 UPI-ONLY CONFIGURATION ADDED HERE 👇
+        config: {
+          display: {
+            blocks: {
+              upi: {
+                name: "Pay via UPI",
+                instruments: [
+                  {
+                    method: "upi", // Forces the modal to show ONLY UPI (QR, apps, VPA)
+                  },
+                ],
+              },
+            },
+            sequence: ["block.upi"],
+            preferences: {
+              show_default_blocks: false, // Hides Cards, Netbanking, Wallets
+            },
+          },
+        },
+        // 👆 --------------------------------- 👆
+
         handler: async (response: {
           razorpay_order_id: string;
           razorpay_payment_id: string;
