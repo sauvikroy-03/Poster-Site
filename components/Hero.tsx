@@ -50,7 +50,7 @@ export default function Hero() {
             <p className="max-w-xs text-sm font-semibold uppercase tracking-wide text-black/70">
               A curated selection of pop-culture artifacts for the modern Indian dwelling.
             </p>
-            <button className="group inline-flex items-center gap-2 rounded-md bg-black px-6 py-3 text-sm font-bold uppercase tracking-wide text-white transition-transform hover:-translate-y-0.5">
+            <button className="group inline-flex items-center gap-2 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:cursor-pointer bg-black px-6 py-3 text-sm font-bold uppercase tracking-wide text-white transition-transform hover:-translate-y-0.5">
               Shop the Drop
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </button>

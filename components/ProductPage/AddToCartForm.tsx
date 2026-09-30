@@ -196,7 +196,7 @@ export default function AddToCartForm({ product }: ProductCardProps) {
           type="button"
           onClick={handleAddToCart}
           disabled={!selectedVariant || isAddingToCart}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-black py-3.5 text-sm font-bold text-white transition-all duration-300 ease-out hover:scale-y-110 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-y-100"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-black py-3.5 text-sm font-bold text-white transition-all duration-300 ease-out hover:scale-y-110 cursor-pointer hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-y-100"
         >
           {isAddingToCart ? (
             <Loader2 size={16} className="animate-spin" />

@@ -50,16 +50,15 @@ export default function ProductCard({ product }: ProductCardProps) {
           </span>
 
           <Image
-            src={images[activeIndex]}
-            alt={`${prod_name} - image ${activeIndex + 1}`}
+            src={images[0]}
+            alt={`${prod_name} - image 1`}
             fill
            className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
             sizes="(max-width: 640px) 160px, (max-width: 768px) 200px, (max-width: 1024px) 240px, 280px"
           />
 
-          {hasMultipleImages && (
+          {/* {hasMultipleImages && (
             <>
-              {/* Prev button */}
               <button
                 onClick={goPrev}
                 aria-label="Previous image"
@@ -68,7 +67,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                 <ChevronLeft size={14} className="text-black" />
               </button>
 
-              {/* Next button */}
               <button
                 onClick={goNext}
                 aria-label="Next image"
@@ -77,7 +75,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                 <ChevronRight size={14} className="text-black" />
               </button>
 
-              {/* Dots */}
               <div className="absolute bottom-1.5 left-1/2 z-10 flex -translate-x-1/2 gap-1">
                 {images.map((_, i) => (
                   <span
@@ -89,7 +86,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 ))}
               </div>
             </>
-          )}
+          )} */}
         </div>
       </div>
 
