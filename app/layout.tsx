@@ -25,7 +25,20 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Posterly - Posters for Every Wall",
-  
+  description:
+    "Discover a world of captivating posters at Posterly. Explore our curated collection of high-quality posters, perfect for adding personality and style to any space. From iconic movie prints to stunning artwork, find the perfect poster to express yourself and transform your walls.",
+  keywords: [
+    "posters",
+    "wall art",
+    "home decor",
+    "art prints",
+    "movie posters",
+    "music posters",
+    "vintage posters",
+    "modern art",
+    "graphic design",
+    "poster collection",
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
