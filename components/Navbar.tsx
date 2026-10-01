@@ -1,16 +1,24 @@
 "use client";
-import React, { useEffect, useRef, useState, useTransition } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Moon, Search, ShoppingBag, ChevronDown, Loader2 } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Moon, Search, ShoppingBag, ChevronDown } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import AccountMenu from "@/components/Profile/AccountMenu";
 import { createClient } from "@/lib/client";
 import type { User } from "@supabase/supabase-js";
 
+const FOCUS =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+
+const NAV_LINKS = [
+  { href: "/shop", label: "Shop" },
+  { href: "/categories", label: "Categories" },
+  { href: "/about", label: "About" },
+];
+
 export default function Navbar() {
-  const router = useRouter();
-  const [isCartPending, startCartTransition] = useTransition();
+  const pathname = usePathname();
 
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -45,78 +53,68 @@ export default function Navbar() {
     setIsDropdownOpen(false);
   };
 
-  const handleCartClick = () => {
-    if (isCartPending) return;
-    startCartTransition(() => {
-      router.push("/cart");
-    });
-  };
-
   const initial = user?.email ? user.email.charAt(0).toUpperCase() : null;
+
+  // Flat icon buttons: no border until hover, uses semantic hover states
+  const iconBtn = `${FOCUS} flex h-10 w-10 cursor-pointer items-center justify-center border-2 border-transparent text-foreground transition-colors hover:border-border hover:bg-muted`;
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-black/10 bg-[#f7f5f0]/90 backdrop-blur-lg">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-black text-sm font-extrabold text-white">
+      <header className="sticky top-0 z-50 border-b-2 border-border bg-card/90 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
+          {/* Logo */}
+          <Link href="/" className={`${FOCUS} flex items-center gap-2.5`}>
+            <span className="flex h-8 w-8 items-center justify-center border-2 border-border bg-primary text-sm font-extrabold text-primary-foreground">
               P
             </span>
-            <span className="text-lg font-extrabold tracking-tight text-black">
+            <span className="text-lg font-extrabold tracking-tight text-foreground">
               Posterly
             </span>
           </Link>
 
+          {/* Links */}
           <nav className="hidden items-center gap-8 md:flex">
-            <Link href="/shop" className="text-sm font-medium text-black/70 transition-colors hover:text-black">
-              Shop
-            </Link>
-            <Link href="/categories" className="text-sm font-medium text-black/70 transition-colors hover:text-black">
-              Categories
-            </Link>
-            <Link href="/about" className="text-sm font-medium text-black/70 transition-colors hover:text-black">
-              About
-            </Link>
+            {NAV_LINKS.map(({ href, label }) => {
+              const isActive = pathname === href || pathname.startsWith(`${href}/`);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`${FOCUS} border-b-2 py-1 text-sm font-semibold text-foreground transition-colors ${
+                    isActive
+                      ? "border-border"
+                      : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                </Link>
+              );
+            })}
           </nav>
 
-          <div className="flex items-center gap-2 sm:gap-4">
-            <button
-              aria-label="Toggle theme"
-              className="hidden h-9 w-9 items-center justify-center rounded-full text-black/70 transition-colors hover:bg-black/5 hover:text-black sm:flex"
-            >
+          {/* Actions */}
+          <div className="flex items-center gap-1 sm:gap-2">
+            <button aria-label="Toggle theme" className={`${iconBtn} hidden sm:flex`}>
               <Moon className="h-[18px] w-[18px]" />
             </button>
-            <button
-              aria-label="Search"
-              className="hidden h-9 w-9 items-center justify-center rounded-full text-black/70 transition-colors hover:bg-black/5 hover:text-black sm:flex"
-            >
+            <button aria-label="Search" className={`${iconBtn} hidden sm:flex`}>
               <Search className="h-[18px] w-[18px]" />
             </button>
 
-            {/* Cart Button with Transition Loader */}
-            <Link
-            href={'/cart'}
-            prefetch={true}
-              type="button"
-              // onClick={handleCartClick}
-              // disabled={isCartPending}
-              aria-label="Cart"
-              className="flex h-9 w-9 items-center justify-center rounded-full text-black/70 transition-colors hover:bg-black/5 hover:text-black disabled:cursor-not-allowed"
-            >
-              {isCartPending ? (
-                <Loader2 className="h-[18px] w-[18px] animate-spin text-black" />
-              ) : (
-                <ShoppingBag className="h-[18px] w-[18px]" />
-              )}
+            <Link href="/cart" prefetch={true} aria-label="Cart" className={iconBtn}>
+              <ShoppingBag className="h-[18px] w-[18px]" />
             </Link>
 
             {user ? (
-              <div className="relative" ref={dropdownRef}>
+              <div className="relative ml-2" ref={dropdownRef}>
                 <button
                   onClick={() => setIsDropdownOpen((prev) => !prev)}
-                  className="flex items-center gap-2 rounded-full bg-black py-2 pl-2 pr-3 text-sm font-semibold text-white transition-colors hover:bg-black/85"
+                  aria-label="Account menu"
+                  aria-expanded={isDropdownOpen}
+                  className={`${FOCUS} flex h-10 cursor-pointer items-center gap-2 border-2 border-border bg-card pl-1.5 pr-2.5 text-foreground transition-colors hover:bg-muted`}
                 >
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-xs font-bold">
+                  <span className="flex h-6 w-6 items-center justify-center bg-primary text-xs font-bold text-primary-foreground">
                     {initial}
                   </span>
                   <ChevronDown
@@ -125,7 +123,7 @@ export default function Navbar() {
                 </button>
 
                 {isDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-2">
+                  <div className="absolute right-0 top-full z-50 mt-2">
                     <AccountMenu
                       user={user}
                       onClose={() => setIsDropdownOpen(false)}
@@ -137,7 +135,7 @@ export default function Navbar() {
             ) : (
               <button
                 onClick={() => setIsAuthOpen(true)}
-                className="rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-black/85"
+                className={`${FOCUS} ml-2 h-10 cursor-pointer border-2 border-border bg-primary px-5 text-sm font-bold text-primary-foreground shadow-[3px_3px_0_0_var(--border)] transition-[transform,box-shadow] duration-100 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_var(--border)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none`}
               >
                 Login
               </button>

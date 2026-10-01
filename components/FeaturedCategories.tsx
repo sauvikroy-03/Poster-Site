@@ -8,22 +8,27 @@ interface FeaturedCategoriesProps {
   initialCategories?: CategoryInterface[];
 }
 
-export default function FeaturedCategories({ initialCategories = [] }: FeaturedCategoriesProps) {
+export default function FeaturedCategories({
+  initialCategories = [],
+}: FeaturedCategoriesProps) {
   const categories = initialCategories;
   const loading = !categories || categories.length === 0;
 
   return (
-    <div className="border-t-2 border-black bg-[#eeece7] w-full">
+    // border-y-2 keeps the top and bottom borders at the exact same uniform 2px thickness
+    // bg-muted steps the tone into a deeper oatmeal/kraft beige to break monotony
+    <section className="w-full border-y-2 border-border bg-muted">
       <div className="mx-auto max-w-[1400px] px-6 py-16 sm:px-12">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="max-w-xl">
-            <p className="mb-4 text-[13px] font-bold uppercase tracking-[0.14em] text-black">
-              Browse by Mood
-            </p>
-            <h1 className="mb-5 text-4xl font-extrabold leading-[1.05] tracking-tight text-black sm:text-5xl lg:text-[56px]">
+            <div className="mb-4 inline-flex items-center gap-2 border-2 border-border bg-card px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-foreground shadow-[2px_2px_0_0_var(--border)]">
+              <span>✦</span>
+              <span>Browse by Mood</span>
+            </div>
+            <h2 className="mb-5 text-4xl font-black uppercase leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-[56px]">
               Featured Categories
-            </h1>
-            <p className="max-w-[520px] text-lg leading-relaxed text-neutral-600">
+            </h2>
+            <p className="max-w-[520px] text-lg leading-relaxed text-muted-foreground">
               Fifteen curated worlds of pop-culture wall art. Start with the
               ones people frame the most.
             </p>
@@ -31,7 +36,8 @@ export default function FeaturedCategories({ initialCategories = [] }: FeaturedC
 
           <Link
             href="/categories"
-            className="group inline-flex items-center gap-2 whitespace-nowrap pb-1.5 text-[13px] font-bold uppercase tracking-[0.1em] text-black"
+            prefetch={true}
+            className="group inline-flex items-center gap-2 border-2 border-border bg-card px-4 py-2.5 text-[13px] font-black uppercase tracking-[0.1em] text-foreground shadow-[3px_3px_0_0_var(--border)] transition-[transform,box-shadow] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_0_var(--border)]"
           >
             View all categories
             <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
@@ -48,6 +54,6 @@ export default function FeaturedCategories({ initialCategories = [] }: FeaturedC
                 .map((c) => <FeaturedCard key={c.id} category={c} />)}
         </div>
       </div>
-    </div>
+    </section>
   );
 }

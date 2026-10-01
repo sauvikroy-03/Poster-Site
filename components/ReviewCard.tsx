@@ -17,7 +17,7 @@ export default function ReviewCard({
   location,
 }: ReviewCardProps) {
   return (
-    <div className="flex w-[85vw] flex-shrink-0 flex-col border-2 border-black bg-white p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] sm:w-[45vw] sm:p-7 md:w-[380px] lg:w-[400px]">
+    <div className="flex w-[85vw] flex-shrink-0 flex-col border-2 border-black bg-card p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] sm:w-[45vw] sm:p-7 md:w-[380px] lg:w-[400px]">
       {/* Stars */}
       <div className="mb-4 flex gap-1">
         {Array.from({ length: 5 }).map((_, i) => (

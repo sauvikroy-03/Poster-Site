@@ -9,12 +9,17 @@ interface ProductCardProps {
   product: ProjectDataInterface;
 }
 
+const LINE = "border-2 border-border";
+const DASH = "border-2 border-dashed border-border";
+const FOCUS =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+
 const SPECIFICATIONS = [
   { label: "Paper", value: "260 GSM archival fine-art matte" },
   { label: "Ink", value: "12-colour pigment, fade-resistant" },
   { label: "Finish", value: "Non-glare textured matte" },
   { label: "Frame", value: "Matte Black" },
-  { label: "Size", value: "A2 · 16.5\" × 23.4\"" },
+  { label: "Size", value: 'A2 · 16.5" × 23.4"' },
   { label: "Packaging", value: "Rigid tube / double-wall carton" },
   { label: "Origin", value: "Printed in India" },
   { label: "Dispatch", value: "Ships within 24 hours" },
@@ -43,6 +48,7 @@ export default function AddToCartForm({ product }: ProductCardProps) {
   );
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [wishlisted, setWishlisted] = useState(false);
 
   const selectedVariant = sizeOptions.find(
     (v) => v.variant_id === selectedVariantId
@@ -104,52 +110,52 @@ export default function AddToCartForm({ product }: ProductCardProps) {
     }
   };
 
-  const specRows = SPECIFICATIONS.reduce<typeof SPECIFICATIONS[]>((rows, item, i) => {
+  const specRows = SPECIFICATIONS.reduce<(typeof SPECIFICATIONS)[]>((rows, item, i) => {
     if (i % 2 === 0) rows.push([item]);
     else rows[rows.length - 1].push(item);
     return rows;
   }, []);
 
   return (
-    <div className="flex w-full flex-col gap-6">
-      <h1 className="text-4xl font-extrabold uppercase leading-none tracking-tight text-black sm:text-5xl">
-        {prod_name}
-      </h1>
-
-      <div className="flex items-center gap-3 text-sm">
-        <span className="font-semibold uppercase tracking-wide text-neutral-500">
+    <div className="flex w-full flex-col gap-7 text-foreground">
+      {/* Title + category */}
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
           {prod_category}
         </span>
+        <h1 className="text-4xl font-black uppercase leading-[0.95] tracking-tight sm:text-5xl">
+          {prod_name}
+        </h1>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <div className="flex items-baseline gap-3">
-          <span className="text-3xl font-extrabold text-black sm:text-4xl">
+      {/* HOT SPOT 1: price + tilted discount tag */}
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+          <span className="text-5xl font-black leading-none sm:text-6xl">
             ₹{price.toLocaleString("en-IN")}
           </span>
           {hasDiscount && (
             <>
-              <span className="text-lg text-neutral-400 line-through">
+              <span className="text-xl line-through text-muted-foreground">
                 ₹{comparePrice.toLocaleString("en-IN")}
               </span>
-              <span className="text-sm font-bold text-red-600">
+              <span
+                className={`${LINE} -rotate-3 bg-secondary text-secondary-foreground px-3 py-0.5 text-sm font-extrabold shadow-[3px_3px_0_0_var(--border)]`}
+              >
                 {discountPercent}% off
               </span>
             </>
           )}
         </div>
-        <span className="text-xs text-neutral-500">Inclusive of all taxes</span>
+        <span className="text-sm text-muted-foreground">Inclusive of all taxes</span>
       </div>
 
-      <div className="flex items-center gap-3 text-sm">
-        <span className="tracking-wide text-neutral-500">{prod_description}</span>
-      </div>
+      {prod_description && <p className="max-w-prose text-base opacity-90">{prod_description}</p>}
 
+      {/* Size: flat, selected state fills with primary ink */}
       <div className="flex flex-col gap-3">
-        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-400">
-          Size
-        </span>
-        <div className="grid grid-cols-2 gap-3">
+        <span className="text-sm font-extrabold uppercase tracking-widest">Size</span>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {sizeOptions.map((variant) => {
             const isSelected = variant.variant_id === selectedVariantId;
             const extra = Number(variant.prod_price) - basePrice;
@@ -158,18 +164,17 @@ export default function AddToCartForm({ product }: ProductCardProps) {
               <button
                 key={variant.variant_id}
                 type="button"
+                aria-pressed={isSelected}
                 onClick={() => setSelectedVariantId(variant.variant_id)}
                 disabled={variant.is_in_stock === "false"}
-                className={`flex flex-col items-start gap-0.5  border px-4 py-3 text-left transition-colors hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 ${
+                className={`${LINE} ${FOCUS} flex cursor-pointer flex-col items-start gap-0.5 px-4 py-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                   isSelected
-                    ? "border-black bg-neutral-100"
-                    : "border-neutral-300 bg-white hover:border-black"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card text-card-foreground hover:bg-muted"
                 }`}
               >
-                <span className="text-sm font-bold text-black">
-                  {variant.prod_size}
-                </span>
-                <span className="text-xs text-neutral-500">
+                <span className="text-base font-extrabold">{variant.prod_size}</span>
+                <span className="text-xs opacity-75">
                   {extra === 0 ? "Included" : `+ ₹${extra.toLocaleString("en-IN")}`}
                 </span>
               </button>
@@ -178,78 +183,90 @@ export default function AddToCartForm({ product }: ProductCardProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-4 rounded-full border border-neutral-300 px-4 py-3">
+      {/* Quantity / HOT SPOT 2: Add to cart / Wishlist */}
+      <div className="flex items-stretch gap-3">
+        <div className={`${LINE} flex items-stretch bg-card`}>
           <button
             type="button"
             onClick={() => handleQuantityChange(-1)}
             aria-label="Decrease quantity"
-            className="text-black disabled:opacity-30"
             disabled={quantity <= 1}
+            className={`${FOCUS} flex w-10 cursor-pointer items-center justify-center hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent`}
           >
-            <Minus size={16} />
+            <Minus size={16} strokeWidth={2.5} />
           </button>
-          <span className="w-4 text-center text-sm font-bold">{quantity}</span>
+          <span className="flex w-10 items-center justify-center border-x-2 border-border text-sm font-extrabold">
+            {quantity}
+          </span>
           <button
             type="button"
             onClick={() => handleQuantityChange(1)}
             aria-label="Increase quantity"
-            className="text-black"
+            className={`${FOCUS} flex w-10 cursor-pointer items-center justify-center hover:bg-muted`}
           >
-            <Plus size={16} />
+            <Plus size={16} strokeWidth={2.5} />
           </button>
         </div>
 
+        {/* Primary CTA using --accent (Terracotta) */}
         <button
           type="button"
           onClick={handleAddToCart}
           disabled={!selectedVariant || isAddingToCart}
-          className="flex flex-1 items-center justify-center gap-2  shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]/90 bg-black py-3.5 text-sm font-bold text-white transition-all duration-300 ease-out hover:scale-y-110 cursor-pointer hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-y-100"
+          className={`${LINE} ${FOCUS} flex flex-1 cursor-pointer items-center justify-center gap-2 bg-accent text-accent-foreground py-3.5 text-base font-black uppercase shadow-[4px_4px_0_0_var(--border)] transition-[transform,box-shadow] duration-100 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_var(--border)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0_0_var(--border)] sm:py-4`}
         >
           {isAddingToCart ? (
-            <Loader2 size={16} className="animate-spin" />
+            <Loader2 size={18} className="animate-spin" />
           ) : (
-            `Add to Cart · ₹${(price * quantity).toLocaleString("en-IN")}`
+            `Add to cart · ₹${(price * quantity).toLocaleString("en-IN")}`
           )}
         </button>
 
+        {/* Wishlist button */}
         <button
           type="button"
-          aria-label="Add to wishlist"
-          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border border-neutral-300 transition-colors hover:border-black"
+          aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          aria-pressed={wishlisted}
+          onClick={() => setWishlisted((w) => !w)}
+          className={`${LINE} ${FOCUS} flex w-12 flex-shrink-0 cursor-pointer items-center justify-center bg-card transition-colors hover:bg-muted`}
         >
-          <Heart size={18} className="text-black" />
+          <Heart
+            size={20}
+            strokeWidth={2.5}
+            className="text-foreground"
+            fill={wishlisted ? "currentColor" : "none"}
+          />
         </button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-8 gap-y-3 rounded-2xl bg-neutral-100 px-6 py-5">
-        <div className="flex items-center gap-2 text-sm text-neutral-800">
-          <Truck size={18} className="text-red-500" />
+      {/* Perks: dashed "ticket" strip */}
+      <div className={`${DASH} flex flex-wrap items-center gap-x-8 gap-y-3 bg-card px-5 py-4`}>
+        <div className="flex items-center gap-2.5 text-sm font-semibold">
+          <Truck size={18} strokeWidth={2.5} />
           <span>Free delivery above ₹999</span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-neutral-800">
-          <ShieldCheck size={18} className="text-red-500" />
+        <div className="flex items-center gap-2.5 text-sm font-semibold">
+          <ShieldCheck size={18} strokeWidth={2.5} />
           <span>7-day easy returns</span>
         </div>
       </div>
 
-      <div className="flex flex-col gap-6 border-t border-neutral-200 pt-6">
-        <h2 className="text-2xl font-extrabold text-black">Specifications</h2>
+      {/* Specifications: printed spec-sheet with dashed row dividers */}
+      <div className="flex flex-col gap-3">
+        <h2 className="text-sm font-extrabold uppercase tracking-widest">Specifications</h2>
 
-        <dl className="flex flex-col">
+        <dl className={`${LINE} bg-card`}>
           {specRows.map((row, i) => (
             <div
               key={i}
-              className="grid grid-cols-2 gap-4 border-b border-neutral-200 py-4"
+              className={`grid grid-cols-1 gap-x-8 gap-y-3 px-4 py-3 sm:grid-cols-2 ${
+                i > 0 ? "border-t-2 border-dashed border-border/40" : ""
+              }`}
             >
               {row.map((item) => (
                 <div key={item.label} className="flex justify-between gap-4">
-                  <dt className="flex-shrink-0 text-sm text-neutral-500">
-                    {item.label}
-                  </dt>
-                  <dd className="text-right text-sm font-semibold text-black">
-                    {item.value}
-                  </dd>
+                  <dt className="flex-shrink-0 text-sm text-muted-foreground">{item.label}</dt>
+                  <dd className="text-right text-sm font-bold">{item.value}</dd>
                 </div>
               ))}
             </div>

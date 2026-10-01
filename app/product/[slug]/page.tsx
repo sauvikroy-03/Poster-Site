@@ -107,7 +107,7 @@ export default async function Page({ params }: PageProps) {
   const { slug } = await params;
 
   return (
-    <div className="sm:pl-10 sm:pr-10 md:pl-25 md:pr-25 lg:pl-30 lg:pr-30">
+    <div className="sm:pl-10 sm:pr-10 md:pl-25 md:pr-25 lg:pl-30 lg:pr-30 bg-background">
       <div className="flex flex-col gap-8 p-4 md:flex-row md:gap-12 md:p-8 lg:flex-row">
         <Suspense fallback={<ProductContentSkeleton />}>
           <ProductContent slug={slug} />

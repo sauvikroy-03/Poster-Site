@@ -2,6 +2,7 @@
 "use client";
 import React from "react";
 import ReviewCard from "./ReviewCard";
+import { Star } from "lucide-react";
 
 interface Review {
   rating: number;
@@ -39,20 +40,23 @@ export default function ReviewsSection() {
   const loopedReviews = [...reviews, ...reviews];
 
   return (
-    <section className=" border-t-2 border-black w-full overflow-hidden bg-[#f0efeb] px-5 py-16 sm:px-8 sm:py-20 lg:px-12">
+    // Steps to bg-muted to contrast with TrendingPosters' bg-background
+    // border-b-2 ensures a consistent 2px separation before the next section/footer
+    <section className="w-full overflow-hidden border-b-2 border-border bg-background px-5 py-16 sm:px-8 sm:py-20 lg:px-12">
       <div className="mx-auto max-w-7xl">
-        {/* Eyebrow */}
-        <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-black/50 sm:text-sm">
-          Customer Reviews
-        </p>
+        {/* Eyebrow badge */}
+        <div className="mb-4 inline-flex items-center gap-1.5 border-2 border-border bg-card px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-foreground shadow-[2px_2px_0_0_var(--border)]">
+          <Star className="h-3.5 w-3.5 fill-accent text-accent" />
+          <span>Customer Reviews</span>
+        </div>
 
         {/* Heading */}
-        <h2 className="mb-10 max-w-2xl text-4xl font-extrabold leading-[1.1] text-black sm:text-5xl sm:mb-14 lg:text-6xl">
+        <h2 className="mb-10 max-w-2xl text-4xl font-black uppercase leading-[1.05] tracking-tight text-foreground sm:mb-14 sm:text-5xl lg:text-6xl">
           4.8 average from 2,400+ orders.
         </h2>
       </div>
 
-      {/* Auto-scrolling row — full-bleed, not constrained to max-w container */}
+      {/* Auto-scrolling row — full-bleed */}
       <div className="group relative w-full">
         <div className="flex w-max animate-marquee gap-6 group-hover:[animation-play-state:paused]">
           {loopedReviews.map((review, i) => (
@@ -77,7 +81,7 @@ export default function ReviewsSection() {
           }
         }
         .animate-marquee {
-          animation: marquee 14s linear infinite;
+          animation: marquee 24s linear infinite;
         }
       `}</style>
     </section>
