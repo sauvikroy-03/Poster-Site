@@ -43,7 +43,7 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { countries, isoToFlagEmoji } from "@/lib/countries";
-import { toast } from "react-hot-toast";
+import { toast } from "@/components/ui/toast";
 import type { SavedAddress } from "@/components/Profile/AddressListCard";
 
 interface BasicDetailsProps {
@@ -228,16 +228,16 @@ export default function BasicDetails({
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || (isEditing ? "Failed to update address." : "Failed to add address."));
+        toast.add({type:"error",description:data.message || (isEditing ? "Failed to update address." : "Failed to add address.")});
         return;
       }
 
-      toast.success(isEditing ? "Address updated" : "Address added");
+      toast.add({type:"success",description:isEditing ? "Address updated" : "Address added"});
       onSubmit?.(form);
       onSaved?.();
       onOpenChange(false);
     } catch {
-      toast.error("Something went wrong. Please try again.");
+      toast.add({type:"error",description:"Something went wrong. Please try again."});
     } finally {
       setIsSubmitting(false);
     }

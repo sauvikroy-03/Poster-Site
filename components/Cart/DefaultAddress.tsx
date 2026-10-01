@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { Building2, Home, Loader2, MapPin, Plus } from "lucide-react";
-import { toast } from "react-hot-toast";
+import { toast } from "@/components/ui/toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import BasicDetails from "@/components/Profile/BasicDetails";
@@ -69,14 +69,14 @@ export default function DefaultAddress() {
 
       if (!res.ok || !data.success) {
         setAddresses(previous);
-        toast.error(data.message || "Failed to update delivery address.");
+        toast.add({type:"error",description:data.message || "Failed to update delivery address."});
         return;
       }
 
-      toast.success("Delivery address updated");
+      toast.add({type:"success",description:"Delivery address updated"});
     } catch {
       setAddresses(previous);
-      toast.error("Something went wrong. Please try again.");
+      toast.add({type:"error",description:"Something went wrong. Please try again."});
     }
   };
 

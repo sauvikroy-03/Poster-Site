@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Minus, Plus, Trash2, Loader2 } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "@/components/ui/toast";
 
 export interface CartItemData {
   cart_id: string;
@@ -62,7 +62,10 @@ export default function Item({ item }: ItemProps) {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Failed to update quantity.");
+        toast.add({
+          type: "error",
+          description: data.message || "Failed to update quantity.",
+        });
         // Roll back to the last known-good value on failure
         setLocalQuantity(lastSyncedQuantity.current);
         return;
@@ -71,7 +74,10 @@ export default function Item({ item }: ItemProps) {
       lastSyncedQuantity.current = newQuantity;
       router.refresh(); // keeps Order Summary totals in sync
     } catch {
-      toast.error("Something went wrong. Please try again.");
+      toast.add({
+        type: "error",
+        description: "Something went wrong. Please try again.",
+      });
       setLocalQuantity(lastSyncedQuantity.current);
     }
   };
@@ -121,15 +127,24 @@ export default function Item({ item }: ItemProps) {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Failed to remove item.");
+        toast.add({
+          type: "error",
+          description: data.message || "Failed to remove item.",
+        });
         setIsRemoving(false);
         return;
       }
 
-      toast.success("Item removed from cart");
+      toast.add({
+        type: "success",
+        description: "Item removed from cart",
+      });
       router.refresh();
     } catch {
-      toast.error("Something went wrong. Please try again.");
+      toast.add({
+        type: "error",
+        description: "Something went wrong. Please try again.",
+      });
       setIsRemoving(false);
     }
   };
@@ -185,7 +200,7 @@ export default function Item({ item }: ItemProps) {
               disabled={localQuantity <= 1}
               className="text-black transition-opacity disabled:opacity-30 hover:cursor-pointer "
             >
-              <Minus size={14}  />
+              <Minus size={14} />
             </button>
             <span className="w-4 text-center text-sm font-bold">{localQuantity}</span>
             <button

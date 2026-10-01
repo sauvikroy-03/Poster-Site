@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { ChevronRight, Loader2 } from "lucide-react";
-import { toast } from "react-hot-toast";
+import { toast } from "@/components/ui/toast";
 import { useRouter } from "next/navigation";
 
 declare global {
@@ -39,14 +39,14 @@ export default function CheckoutButton() {
       const createData = await createRes.json();
 
       if (!createRes.ok || !createData.success) {
-        toast.error(createData.message || "Failed to start checkout.");
+        toast.add({type:"error",description:createData.message || "Failed to start checkout."});
         setIsProcessing(false);
         return;
       }
 
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
-        toast.error("Failed to load payment gateway. Please try again.");
+        toast.add({type:"error",description:"Failed to load payment gateway. Please try again."});
         setIsProcessing(false);
         return;
       }
@@ -79,15 +79,15 @@ export default function CheckoutButton() {
             const verifyData = await verifyRes.json();
 
             if (!verifyRes.ok || !verifyData.success) {
-              toast.error(verifyData.message || "Payment verification failed.");
+              toast.add({type:"error",description:verifyData.message || "Payment verification failed."});
               return;
             }
 
-            toast.success("Order placed successfully!");
+            toast.add({type:"success",description:"Order placed successfully!"});
             router.push(`/account?tab=orders`);
             router.refresh();
           } catch {
-            toast.error("Something went wrong while verifying your payment.");
+            toast.add({type:"error",description:"Something went wrong while verifying your payment."});
           } finally {
             setIsProcessing(false);
           }
@@ -99,7 +99,7 @@ export default function CheckoutButton() {
 
       razorpay.open();
     } catch {
-      toast.error("Something went wrong. Please try again.");
+      toast.add({type:"error",description:"Something went wrong. Please try again."});
       setIsProcessing(false);
     }
   };

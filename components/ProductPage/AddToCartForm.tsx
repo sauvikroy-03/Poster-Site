@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { Heart, Minus, Plus, Truck, ShieldCheck, Loader2 } from "lucide-react";
-import { toast } from "react-hot-toast";
+import { toast } from "@/components/ui/toast";
 import ProjectDataInterface from "@/types/ItemDetails";
 
 interface ProductCardProps {
@@ -80,13 +80,25 @@ export default function AddToCartForm({ product }: ProductCardProps) {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Failed to add item to cart.");
+        toast.add({
+          type: "error",
+          title: "Failed to add item",
+          description: data.message || "Please try again.",
+        });
         return;
       }
 
-      toast.success("Item added to cart");
+      toast.add({
+        type: "success",
+        title: "Item added to cart",
+        description: `${prod_name} · ${selectedVariant.prod_size} · Qty ${quantity}`,
+      });
     } catch {
-      toast.error("Something went wrong. Please try again.");
+      toast.add({
+        type: "error",
+        title: "Something went wrong",
+        description: "Please try again.",
+      });
     } finally {
       setIsAddingToCart(false);
     }
@@ -99,8 +111,7 @@ export default function AddToCartForm({ product }: ProductCardProps) {
   }, []);
 
   return (
-    <div className="flex w-full flex-col gap-6 ">
-      {/* Title */}
+    <div className="flex w-full flex-col gap-6">
       <h1 className="text-4xl font-extrabold uppercase leading-none tracking-tight text-black sm:text-5xl">
         {prod_name}
       </h1>
@@ -111,7 +122,6 @@ export default function AddToCartForm({ product }: ProductCardProps) {
         </span>
       </div>
 
-      {/* Price */}
       <div className="flex flex-col gap-1">
         <div className="flex items-baseline gap-3">
           <span className="text-3xl font-extrabold text-black sm:text-4xl">
@@ -135,7 +145,6 @@ export default function AddToCartForm({ product }: ProductCardProps) {
         <span className="tracking-wide text-neutral-500">{prod_description}</span>
       </div>
 
-      {/* Size */}
       <div className="flex flex-col gap-3">
         <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-400">
           Size
@@ -169,7 +178,6 @@ export default function AddToCartForm({ product }: ProductCardProps) {
         </div>
       </div>
 
-      {/* Quantity + Add to Cart + Wishlist */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-4 rounded-full border border-neutral-300 px-4 py-3">
           <button
@@ -214,7 +222,6 @@ export default function AddToCartForm({ product }: ProductCardProps) {
         </button>
       </div>
 
-      {/* Trust badges */}
       <div className="flex flex-wrap items-center gap-x-8 gap-y-3 rounded-2xl bg-neutral-100 px-6 py-5">
         <div className="flex items-center gap-2 text-sm text-neutral-800">
           <Truck size={18} className="text-red-500" />
@@ -226,7 +233,6 @@ export default function AddToCartForm({ product }: ProductCardProps) {
         </div>
       </div>
 
-      {/* Specifications */}
       <div className="flex flex-col gap-6 border-t border-neutral-200 pt-6">
         <h2 className="text-2xl font-extrabold text-black">Specifications</h2>
 

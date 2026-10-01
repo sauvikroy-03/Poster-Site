@@ -4,7 +4,8 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "@/components/ui/toast";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,7 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       
       <body className="min-h-full flex flex-col">
 <Navbar/>
- <Toaster position="top-center" />
+ <Toaster />
 {children}
         <Footer />
       </body>
