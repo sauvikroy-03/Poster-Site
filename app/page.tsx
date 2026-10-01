@@ -1,6 +1,6 @@
 
 import ProjectDataInterface from "@/types/ItemDetails";
-import { useState,useEffect } from "react";
+
 import  AuthModal from "@/components/AuthModal";
 import ProductCard from "@/components/ProductCard";
 import Navbar from "@/components/Navbar";
