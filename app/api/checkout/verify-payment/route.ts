@@ -134,7 +134,7 @@ export async function POST(request: Request) {
       const { data: emailData, error: emailError } = await resend.emails.send({
         from: "Posterly <orders@posterly.co.in>",
         to: ["sauvikroy3@gmail.com"],
-        subject: `🎉 New Order Received! (#${orderId})`,
+        subject: `New Order Received! (#${orderId})`,
         html: `
           <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
             <h2>New Order Confirmed!</h2>
