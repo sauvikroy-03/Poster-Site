@@ -9,6 +9,9 @@ import ProjectDataInterface from "@/types/ItemDetails";
 import CategoryHero from "@/components/CategoryPage/CategoryHero";
 import Navbar from "@/components/Navbar";
 
+// Keep static/cached responses fast at the edge
+export const revalidate = 60;
+
 async function getFilteredProducts({
   category,
   maxPrice,
@@ -23,10 +26,6 @@ async function getFilteredProducts({
     (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)!
   );
 
-  // !inner forces Postgres to only return products that actually have
-  // a matching variant row when we filter on price — without it, a
-  // price filter on the embedded resource just trims which variants
-  // show up per product, not which products come back at all.
   const variantsRelation = maxPrice ? "product_variants!inner" : "product_variants";
 
   let query = supabase
@@ -52,9 +51,6 @@ async function getFilteredProducts({
     .eq("prod_is_active", true);
 
   if (category) {
-    // Matches "tv-shows" -> "tv shows" against a display-name category
-    // column. If you add a real category_slug column later, swap this
-    // for .eq("category_slug", category) — it's more reliable.
     query = query.ilike("prod_category", category.replace(/-/g, " "));
   }
 
@@ -71,9 +67,6 @@ async function getFilteredProducts({
 
   let products = (data ?? []) as unknown as ProjectDataInterface[];
 
-  // Sorting by "cheapest variant" can't be expressed as a PostgREST
-  // .order() on an embedded resource, so sort the already-filtered
-  // (small) result in memory here.
   if (sort === "price-asc" || sort === "price-desc") {
     const minPrice = (p: ProjectDataInterface) =>
       Math.min(...p.product_variants.map((v) => Number(v.prod_price)));
@@ -86,17 +79,12 @@ async function getFilteredProducts({
   return products;
 }
 
-// Isolated async component that does the fetching + rendering,
-// so Suspense can show a fallback while THIS specific part awaits.
 async function ProductResults({
-  category,
-  maxPrice,
-  sort,
+  searchParamsPromise,
 }: {
-  category?: string;
-  maxPrice?: string;
-  sort?: string;
+  searchParamsPromise: Promise<{ category?: string; sort?: string; maxPrice?: string }>;
 }) {
+  const { category, maxPrice, sort } = await searchParamsPromise;
   const products = await getFilteredProducts({ category, maxPrice, sort });
 
   return (
@@ -149,16 +137,13 @@ function ProductResultsSkeleton() {
   );
 }
 
-export default async function page({
+export default function Page({
   searchParams,
 }: {
   searchParams: Promise<{ category?: string; sort?: string; maxPrice?: string }>;
 }) {
-  const { category, maxPrice, sort } = await searchParams;
-
   return (
     <div className="min-h-screen w-full bg-[#fbfaf8]">
-    
       <CategoryHero />
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-start gap-10 md:grid-cols-4">
@@ -192,8 +177,9 @@ export default async function page({
           </aside>
 
           <main className="col-span-1 md:col-span-3">
+            {/* searchParams passed as an unawaited promise directly into Suspense */}
             <Suspense fallback={<ProductResultsSkeleton />}>
-              <ProductResults category={category} maxPrice={maxPrice} sort={sort} />
+              <ProductResults searchParamsPromise={searchParams} />
             </Suspense>
           </main>
         </div>

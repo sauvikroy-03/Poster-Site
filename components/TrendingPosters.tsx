@@ -1,31 +1,16 @@
-"use client"
-
 import { ArrowRight } from "lucide-react";
-import { useEffect, useState } from "react";
 import ProjectDataInterface from "@/types/ItemDetails";
-import FeaturedCard from "./FeaturedCard";
 import ProductCard from "./ProductCard";
 import ProductCardSkeleton from "./skeletons/SK_ProductCard";
 import Link from "next/link";
-export default function TrendingPosters() {
-const[products,setProducts]=useState<ProjectDataInterface[]>([])
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch("/api/product");
 
-        if (response.ok) {
-          const data = (await response.json()) as ProjectDataInterface[];
-          setProducts(data);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
+interface TrendingPostersProps {
+  products?: ProjectDataInterface[];
+}
 
-    fetchCategories();
-  }, []);
+export default function TrendingPosters({ products = [] }: TrendingPostersProps) {
+  const loading = !products || products.length === 0;
+
   return (
     <div className="border-t-2 border-black bg-[#eeece7] w-full">
       <div className="mx-auto max-w-[1400px] px-6 py-16 sm:px-12">
@@ -46,14 +31,13 @@ const[products,setProducts]=useState<ProjectDataInterface[]>([])
             href="/categories"
             className="group inline-flex items-center gap-2 whitespace-nowrap pb-1.5 text-[13px] font-bold uppercase tracking-[0.1em] text-black"
           >
-           Shop All
+            Shop All
             <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
           </Link>
-
-        
         </div>
-<div className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4">
-             {loading
+
+        <div className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4">
+          {loading
             ? Array.from({ length: 4 }).map((_, i) => (
                 <ProductCardSkeleton key={i} />
               ))
