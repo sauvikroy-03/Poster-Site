@@ -12,6 +12,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import toast from "react-hot-toast";
+// Adjust this path to wherever you save OrderTracker.tsx
+import OrderTracker, { type StatusHistoryRow } from "@/components/Profile/OrderTracker";
 
 interface OrderItem {
   order_item_id: string;
@@ -57,21 +59,13 @@ export interface Order {
   discount_details: Record<string, unknown> | null;
   placed_at: string;
   order_items: OrderItem[];
+  /** Joined from order_status_history — see the select() in your orders query */
+  order_status_history?: StatusHistoryRow[];
 }
 
 interface OrderCardProps {
   order: Order;
 }
-
-const STATUS_STYLES: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-700",
-  confirmed: "bg-blue-100 text-blue-700",
-  processing: "bg-blue-100 text-blue-700",
-  shipped: "bg-purple-100 text-purple-700",
-  delivered: "bg-green-100 text-green-700",
-  cancelled: "bg-red-100 text-red-700",
-  refunded: "bg-neutral-100 text-neutral-600",
-};
 
 export default function OrderCard({ order }: OrderCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -82,7 +76,7 @@ export default function OrderCard({ order }: OrderCardProps) {
     year: "numeric",
   });
 
-  const statusStyle = STATUS_STYLES[order.status] ?? "bg-neutral-100 text-neutral-600";
+  const totalItems = order.order_items.reduce((sum, item) => sum + item.quantity, 0);
 
   const handleDownloadReceipt = () => {
     // TODO: wire to a real receipt-generation endpoint
@@ -97,32 +91,43 @@ export default function OrderCard({ order }: OrderCardProps) {
   return (
     <div className="w-full overflow-hidden rounded-2xl border border-black/10 bg-white">
       {/* Summary row — always visible */}
-      <button
-        type="button"
-        onClick={() => setIsExpanded((prev) => !prev)}
-        className="flex w-full flex-wrap items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-black/[0.02]"
-      >
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-neutral-400">Order #{order.order_number}</span>
+      <div className="flex w-full items-center justify-between gap-4 px-5 py-4">
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="truncate text-xs text-neutral-400">Order #{order.order_number}</span>
           <span className="text-sm font-semibold text-black">{placedDate}</span>
         </div>
 
-        <div className="flex items-center gap-4">
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusStyle}`}
+        <div className="flex flex-shrink-0 items-center gap-3 sm:gap-4">
+          <button
+            type="button"
+            onClick={() => setIsExpanded((prev) => !prev)}
+            aria-expanded={isExpanded}
+            className="flex cursor-pointer items-center gap-1 rounded-md bg-black px-3 py-1.5 text-xs font-bold text-white transition-opacity hover:opacity-90"
           >
-            {order.status}
-          </span>
-          <span className="text-sm font-bold text-black">
-            ₹{order.total_amount.toLocaleString("en-IN")}
-          </span>
-          <ChevronDown
-            className={`h-4 w-4 flex-shrink-0 text-neutral-400 transition-transform ${
-              isExpanded ? "rotate-180" : ""
-            }`}
-          />
+            {isExpanded ? "Hide Details" : "View Details"}
+            <ChevronDown
+              className={`h-3.5 w-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-sm font-bold text-black">
+              ₹{order.total_amount.toLocaleString("en-IN")}
+            </span>
+            <span className="text-xs text-neutral-400">
+              {totalItems} {totalItems === 1 ? "item" : "items"}
+            </span>
+          </div>
         </div>
-      </button>
+      </div>
+
+      {/* Order tracking — always visible */}
+      <div className="px-5 pb-5 pt-1">
+        <OrderTracker
+          status={order.status}
+          history={order.order_status_history ?? []}
+        />
+      </div>
 
       {/* Expanded detail panel */}
       {isExpanded && (

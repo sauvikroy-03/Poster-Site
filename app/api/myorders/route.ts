@@ -1,3 +1,4 @@
+// app/api/myorders/route.ts
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
@@ -71,9 +72,14 @@ export async function GET() {
           unit_price,
           quantity,
           line_total
+        ),
+        order_status_history (
+          status,
+          changed_at
         )
       `)
-      .eq("user_id", user.id).eq("status", "confirmed")
+      .eq("user_id", user.id)
+      .eq("payment_status", "paid")
       .order("placed_at", { ascending: false });
 
     if (error) {

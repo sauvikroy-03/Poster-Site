@@ -41,7 +41,7 @@ export default function OrdersPanel() {
 
   if (error) {
     return (
-      <div className="flex h-72 w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-red-200 bg-white text-center">
+      <div className="flex h-72 w-full  flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-red-200 bg-white text-center">
         <p className="text-sm font-semibold text-red-600">{error}</p>
       </div>
     );
