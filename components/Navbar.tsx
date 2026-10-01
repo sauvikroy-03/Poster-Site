@@ -94,10 +94,12 @@ export default function Navbar() {
             </button>
 
             {/* Cart Button with Transition Loader */}
-            <button
+            <Link
+            href={'/cart'}
+            prefetch={true}
               type="button"
-              onClick={handleCartClick}
-              disabled={isCartPending}
+              // onClick={handleCartClick}
+              // disabled={isCartPending}
               aria-label="Cart"
               className="flex h-9 w-9 items-center justify-center rounded-full text-black/70 transition-colors hover:bg-black/5 hover:text-black disabled:cursor-not-allowed"
             >
@@ -106,7 +108,7 @@ export default function Navbar() {
               ) : (
                 <ShoppingBag className="h-[18px] w-[18px]" />
               )}
-            </button>
+            </Link>
 
             {user ? (
               <div className="relative" ref={dropdownRef}>

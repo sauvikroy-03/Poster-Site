@@ -1,19 +1,18 @@
-import React from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
-import { ChevronRight, Tag } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Item, { CartItemData } from "@/components/Cart/Item";
 import DefaultAddress from "@/components/Cart/DefaultAddress";
 import CheckoutButton from "@/components/Cart/CheckoutButton";
+import { Tag } from "lucide-react";
+
 async function getCartItems(): Promise<CartItemData[]> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("Missing Supabase environment variables.");
-    return [];
-  }
+  if (!supabaseUrl || !supabaseAnonKey) return [];
 
   const cookieStore = await cookies();
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -32,10 +31,7 @@ async function getCartItems(): Promise<CartItemData[]> {
     error: authError,
   } = await supabase.auth.getUser();
 
-  if (authError || !user) {
-    console.error("No authenticated user — cannot fetch cart.");
-    return [];
-  }
+  if (authError || !user) return [];
 
   const { data, error } = await supabase
     .from("cart_items")
@@ -74,7 +70,7 @@ async function getCartItems(): Promise<CartItemData[]> {
 
 const DELIVERY_CHARGE = 79;
 
-export default async function CartPage() {
+async function CartContent() {
   const cartItems = await getCartItems();
 
   const subtotal = cartItems.reduce((sum, item) => {
@@ -85,10 +81,89 @@ export default async function CartPage() {
   const deliveryCharge = cartItems.length === 0 ? 0 : DELIVERY_CHARGE;
   const total = subtotal + deliveryCharge;
 
+  if (cartItems.length === 0) {
+    return (
+      <div className="flex h-64 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-neutral-200 p-8 text-center">
+        <p className="text-sm font-bold uppercase text-neutral-400">
+          Your cart is empty
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+      {/* Item list */}
+      <div className="flex flex-col rounded-2xl border border-neutral-200 bg-white px-5 lg:col-span-2">
+        {cartItems.map((item) => (
+          <Item key={item.cart_id} item={item} />
+        ))}
+      </div>
+
+      {/* Right column: Address + Summary */}
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-6">
+          <h2 className="text-xl font-extrabold text-black">Deliver To</h2>
+          <DefaultAddress />
+        </div>
+
+        <div className="flex flex-col gap-5 rounded-2xl border border-neutral-200 bg-white p-6">
+          <h2 className="text-xl font-extrabold text-black">Order Summary</h2>
+
+          <div className="flex flex-col gap-3 text-sm">
+            <div className="flex items-center justify-between text-neutral-600">
+              <span>Subtotal</span>
+              <span className="font-semibold text-black">
+                ₹{subtotal.toLocaleString("en-IN")}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-neutral-600">
+              <span>Delivery Fee</span>
+              <span className="font-semibold text-black">
+                {deliveryCharge === 0 ? "Free" : `₹${deliveryCharge}`}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between border-t border-neutral-200 pt-4">
+            <span className="text-base font-bold text-black">Total</span>
+            <span className="text-xl font-extrabold text-black">
+              ₹{total.toLocaleString("en-IN")}
+            </span>
+          </div>
+
+          {/* Promo code */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Tag
+                size={16}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400"
+              />
+              <input
+                type="text"
+                placeholder="Add promo code"
+                className="w-full rounded-full border border-neutral-200 bg-neutral-50 py-2.5 pl-10 pr-4 text-sm outline-none transition-colors focus:border-black"
+              />
+            </div>
+            <button
+              type="button"
+              className="flex-shrink-0 rounded-xl bg-black px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            >
+              Apply
+            </button>
+          </div>
+
+          <CheckoutButton />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function CartPage() {
   return (
     <div className="min-h-screen w-full bg-[#fbfaf8]">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
         <div className="mb-4 flex items-center gap-1.5 text-sm text-neutral-500">
           <Link href="/" className="hover:text-black">Home</Link>
           <ChevronRight size={14} />
@@ -99,81 +174,16 @@ export default async function CartPage() {
           Your Cart
         </h1>
 
-        {cartItems.length === 0 ? (
-          <div className="flex h-64 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-neutral-200 p-8 text-center">
-            <p className="text-sm font-bold uppercase text-neutral-400">
-              Your cart is empty
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-            {/* Item list */}
-            <div className="flex flex-col rounded-2xl border border-neutral-200 bg-white px-5 lg:col-span-2">
-              {cartItems.map((item) => (
-                <Item key={item.cart_id} item={item} />
-              ))}
+        <Suspense
+          fallback={
+            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+              <div className="flex h-64 animate-pulse flex-col rounded-2xl bg-neutral-100 lg:col-span-2" />
+              <div className="flex h-64 animate-pulse flex-col rounded-2xl bg-neutral-100" />
             </div>
-
-            {/* Right column: Address + Summary */}
-            <div className="flex flex-col gap-6">
-              {/* Delivery address */}
-              <div className="flex flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-6">
-  <h2 className="text-xl font-extrabold text-black">Deliver To</h2>
-  <DefaultAddress />
-</div>
-
-              {/* Summary */}
-              <div className="flex flex-col gap-5 rounded-2xl border border-neutral-200 bg-white p-6">
-                <h2 className="text-xl font-extrabold text-black">Order Summary</h2>
-
-                <div className="flex flex-col gap-3 text-sm">
-                  <div className="flex items-center justify-between text-neutral-600">
-                    <span>Subtotal</span>
-                    <span className="font-semibold text-black">
-                      ₹{subtotal.toLocaleString("en-IN")}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-neutral-600">
-                    <span>Delivery Fee</span>
-                    <span className="font-semibold text-black">
-                      {deliveryCharge === 0 ? "Free" : `₹${deliveryCharge}`}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between border-t border-neutral-200 pt-4">
-                  <span className="text-base font-bold text-black">Total</span>
-                  <span className="text-xl font-extrabold text-black">
-                    ₹{total.toLocaleString("en-IN")}
-                  </span>
-                </div>
-
-                {/* Promo code */}
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <Tag
-                      size={16}
-                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Add promo code"
-                      className="w-full rounded-full border border-neutral-200 bg-neutral-50 py-2.5 pl-10 pr-4 text-sm outline-none transition-colors focus:border-black"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    className="flex-shrink-0 rounded-xl bg-black px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                  >
-                    Apply
-                  </button>
-                </div>
-
-                <CheckoutButton  />
-              </div>
-            </div>
-          </div>
-        )}
+          }
+        >
+          <CartContent />
+        </Suspense>
       </div>
     </div>
   );

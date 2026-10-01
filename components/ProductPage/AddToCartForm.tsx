@@ -160,7 +160,7 @@ export default function AddToCartForm({ product }: ProductCardProps) {
                 type="button"
                 onClick={() => setSelectedVariantId(variant.variant_id)}
                 disabled={variant.is_in_stock === "false"}
-                className={`flex flex-col items-start gap-0.5 rounded-lg border px-4 py-3 text-left transition-colors hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 ${
+                className={`flex flex-col items-start gap-0.5  border px-4 py-3 text-left transition-colors hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 ${
                   isSelected
                     ? "border-black bg-neutral-100"
                     : "border-neutral-300 bg-white hover:border-black"
@@ -204,7 +204,7 @@ export default function AddToCartForm({ product }: ProductCardProps) {
           type="button"
           onClick={handleAddToCart}
           disabled={!selectedVariant || isAddingToCart}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-black py-3.5 text-sm font-bold text-white transition-all duration-300 ease-out hover:scale-y-110 cursor-pointer hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-y-100"
+          className="flex flex-1 items-center justify-center gap-2  shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]/90 bg-black py-3.5 text-sm font-bold text-white transition-all duration-300 ease-out hover:scale-y-110 cursor-pointer hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-y-100"
         >
           {isAddingToCart ? (
             <Loader2 size={16} className="animate-spin" />
