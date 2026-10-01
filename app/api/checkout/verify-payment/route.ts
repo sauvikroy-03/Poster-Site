@@ -3,6 +3,9 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { verifyRazorpaySignature } from "@/lib/razorpay";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY || process.env.Resend_API_KEY);
 
 function fail(message: string, status: number) {
   return NextResponse.json({ success: false, message }, { status });
@@ -56,7 +59,7 @@ export async function POST(request: Request) {
     const admin = getSupabaseAdmin();
 
     // Confirm this payment row actually belongs to this user and matches the
-    // razorpay order *we* generated in create-order — never trust the client's claim alone.
+    // razorpay order we generated in create-order — never trust the client's claim alone.
     const { data: payment, error: paymentFetchError } = await admin
       .from("payments")
       .select("payment_id, order_id, user_id, status")
@@ -73,7 +76,6 @@ export async function POST(request: Request) {
     }
 
     // Idempotency: don't reprocess a payment that already succeeded
-    // (handles double-fires of the Razorpay success handler).
     if (payment.status === "captured") {
       return NextResponse.json({ success: true, message: "Payment already verified.", orderId }, { status: 200 });
     }
@@ -119,12 +121,43 @@ export async function POST(request: Request) {
       return fail("Failed to confirm order.", 500);
     }
 
-    // Clear the cart now that payment is confirmed — same scoping pattern as /api/cart.
+    // Clear the cart now that payment is confirmed
     const { error: cartClearError } = await supabase.from("cart_items").delete().eq("user_id", user.id);
     if (cartClearError) {
-      console.error("❌ Cart Clear Error:", cartClearError.message); // non-fatal, order is already confirmed
+      console.error("❌ Cart Clear Error:", cartClearError.message);
     }
 
+    // -------------------------------------------------------------
+    // Send Order Notification Email via Resend
+    // -------------------------------------------------------------
+    try {
+      const { data: emailData, error: emailError } = await resend.emails.send({
+        from: "Posterly <orders@posterly.co.in>",
+        to: ["sauvikroy3@gmail.com"],
+        subject: `🎉 New Order Received! (#${orderId})`,
+        html: `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <h2>New Order Confirmed!</h2>
+            <p>A new order has been placed and payment successfully verified via Razorpay.</p>
+            <hr style="border: 0; border-top: 1px solid #eee;" />
+            <p><strong>Order ID:</strong> ${orderId}</p>
+            <p><strong>Customer ID:</strong> ${user.id}</p>
+            <p><strong>Customer Email:</strong> ${user.email || "N/A"}</p>
+            <p><strong>Razorpay Payment ID:</strong> ${razorpay_payment_id}</p>
+            <hr style="border: 0; border-top: 1px solid #eee;" />
+            <p style="font-size: 12px; color: #888;">Automated notification from your Posterly backend.</p>
+          </div>
+        `,
+      });
+
+      if (emailError) {
+        console.error("❌ Resend API Error:", emailError);
+      } else {
+        console.log("✅ Resend Email Dispatched ID:", emailData?.id);
+      }
+    } catch (emailErr) {
+      console.error("❌ Resend Network/Execution Error:", emailErr);
+    }
     return NextResponse.json({ success: true, message: "Payment verified.", orderId }, { status: 200 });
   } catch (err: unknown) {
     console.error("❌ Verify Payment Route Catch:", err);

@@ -48,8 +48,8 @@ export default function Footer() {
             <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-black/50">
               Get In Touch
             </p>
-            <a href="mailto:hello@posterly.in" className="text-sm text-black/70 transition-colors hover:text-black">
-              hello@posterly.in
+            <a href="mailto:support@posterly.co.in" className="text-sm text-black/70 transition-colors hover:text-black">
+              support@posterly.co.in
             </a>
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-black/60">
               Email is the only way to reach us. We reply within one business day.

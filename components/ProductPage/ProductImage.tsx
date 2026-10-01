@@ -125,7 +125,7 @@ export default function ProductImage({ product }: ProductCardProps) {
   onClick={() => setActiveIndex(i)}
   aria-label={`View image ${i + 1}`}
   className={`flex-shrink-0 overflow-hidden border-2 bg-[#f7f5f0] transition-transform duration-200 ease-out ${
-    isActive ? "-translate-y-0.5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]" : "hover:-translate-y-0.5"
+    isActive ? "-translate-y-0.5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]" : "hover:-translate-y-0.5 cursor-pointer"
   }`}
 >
   <div className="p-1 sm:p-1.5">

@@ -99,7 +99,7 @@ export default function AddToCartForm({ product }: ProductCardProps) {
   }, []);
 
   return (
-    <div className="flex w-full flex-col gap-6">
+    <div className="flex w-full flex-col gap-6 ">
       {/* Title */}
       <h1 className="text-4xl font-extrabold uppercase leading-none tracking-tight text-black sm:text-5xl">
         {prod_name}
