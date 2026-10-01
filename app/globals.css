@@ -76,7 +76,8 @@
   --muted-foreground: oklch(0.48 0.01 80);
 
   /* Accent / CTA: Warm Burnt Terracotta (#E26D46) */
-  --accent: oklch(0.64 0.16 42);
+  --accent: oklch(0.835 0.16 85.5);
+  /* --accent: oklch(0.64 0.16 42); */
   --accent-foreground: oklch(0.99 0 0);
 
   --destructive: oklch(0.55 0.22 25);
