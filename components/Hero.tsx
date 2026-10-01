@@ -1,30 +1,14 @@
-"use client";
-
 import { ArrowRight } from "lucide-react";
-import { useEffect, useState } from "react";
 import ProjectDataInterface from "@/types/ItemDetails";
-import HeroProductCard from "./Hero_ProductCard";
 import ProductCard from "./ProductCard";
 import ProductCardSkeleton from "./skeletons/SK_ProductCard";
 
-export default function Hero() {
-  const [products, setProducts] = useState<ProjectDataInterface[]>([]);
+interface HeroProps {
+  initialProducts?: ProjectDataInterface[];
+}
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch("/api/product");
-
-        if (response.ok) {
-          const data = (await response.json()) as ProjectDataInterface[];
-          setProducts(data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch products:", error);
-      }
-    };
-    fetchCategories();
-  }, []);
+export default function Hero({ initialProducts = [] }: HeroProps) {
+  const products = initialProducts;
 
   return (
     <section className="w-full bg-[#f7f5f0] "> 
