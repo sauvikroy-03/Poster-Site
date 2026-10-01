@@ -1,3 +1,4 @@
+// components/FeaturedCard.tsx
 import React from "react";
 import Image from "next/image";
 import { CategoryInterface } from "@/types/categoryDetails";
@@ -14,6 +15,7 @@ export default function FeaturedCard({ category }: categoriesProps) {
   return (
     <Link
       href={`/categories?category=${slug}`}
+      prefetch={true} // 👈 Preloads route bundle on viewport visibility
       className="group flex h-full w-full flex-col border-2 border-black bg-[#f7f5f0] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform duration-300 ease-out hover:-translate-y-1.5 sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:cursor-pointer"
     >
       {/* Image frame */}
@@ -29,7 +31,7 @@ export default function FeaturedCard({ category }: categoriesProps) {
         </div>
       </div>
 
-      {/* Text block — flex-1 so it fills remaining height evenly across cards */}
+      {/* Text block */}
       <div className="flex flex-1 flex-col border-t border-black/10 px-2.5 py-2 sm:px-4 sm:py-3">
         <h3 className="mt-1 line-clamp-2 min-h-[2.4em] text-xs font-extrabold uppercase leading-tight text-black sm:text-sm md:text-base lg:text-lg">
           {category_name}

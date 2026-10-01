@@ -9,8 +9,13 @@ import ProjectDataInterface from "@/types/ItemDetails";
 import CategoryHero from "@/components/CategoryPage/CategoryHero";
 import Navbar from "@/components/Navbar";
 
-// Keep static/cached responses fast at the edge
 export const revalidate = 60;
+
+// Reuse client across edge invocations
+const supabase = createClient(
+  (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL)!,
+  (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)!
+);
 
 async function getFilteredProducts({
   category,
@@ -21,11 +26,6 @@ async function getFilteredProducts({
   maxPrice?: string;
   sort?: string;
 }): Promise<ProjectDataInterface[]> {
-  const supabase = createClient(
-    (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL)!,
-    (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)!
-  );
-
   const variantsRelation = maxPrice ? "product_variants!inner" : "product_variants";
 
   let query = supabase
@@ -137,11 +137,14 @@ function ProductResultsSkeleton() {
   );
 }
 
-export default function Page({
+export default async function Page({
   searchParams,
 }: {
   searchParams: Promise<{ category?: string; sort?: string; maxPrice?: string }>;
 }) {
+  const resolvedParams = await searchParams;
+  const suspenseKey = `${resolvedParams.category || ""}-${resolvedParams.maxPrice || ""}-${resolvedParams.sort || ""}`;
+
   return (
     <div className="min-h-screen w-full bg-[#fbfaf8]">
       <CategoryHero />
@@ -177,8 +180,8 @@ export default function Page({
           </aside>
 
           <main className="col-span-1 md:col-span-3">
-            {/* searchParams passed as an unawaited promise directly into Suspense */}
-            <Suspense fallback={<ProductResultsSkeleton />}>
+            {/* key={suspenseKey} guarantees instant skeleton fallback on filter changes */}
+            <Suspense key={suspenseKey} fallback={<ProductResultsSkeleton />}>
               <ProductResults searchParamsPromise={searchParams} />
             </Suspense>
           </main>
