@@ -7,9 +7,10 @@ import ProjectDataInterface from "@/types/ItemDetails";
 import Link from "next/link";
 interface ProductCardProps {
   product: ProjectDataInterface;
+  priority?: boolean;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, priority=false }: ProductCardProps) {
   const { prod_name, prod_images, product_variants, prod_category } = product;
 
   const [activeIndex, setActiveIndex] = useState(0);
@@ -53,6 +54,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             src={images[0]}
             alt={`${prod_name} - image 1`}
             fill
+            priority={priority}
            className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
             sizes="(max-width: 640px) 160px, (max-width: 768px) 200px, (max-width: 1024px) 240px, 280px"
           />
