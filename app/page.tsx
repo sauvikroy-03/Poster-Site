@@ -13,23 +13,6 @@ import Footer from "@/components/Footer";
 
 
 export default function Home() {
-  const [isOpen, setIsOpen] = useState(true);
-const[productDetails,setProductDetails]=useState<ProjectDataInterface[]>([])
-useEffect(()=>{
-    const fetchDetails=async()=>{
-        try{
-        const result=await fetch("/api/product")
-        const data= await result.json()
-        if(!data){
-           console.log("No data recieved")
-        }
-        setProductDetails(data);
-    }catch(err){
-  console.log(err)
-    }
-    }
-    fetchDetails()
-},[])
 
 
  return (
