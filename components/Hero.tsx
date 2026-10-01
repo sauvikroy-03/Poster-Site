@@ -38,7 +38,7 @@ export default function Hero({ initialProducts = [] }: HeroProps) {
             </p>
             <Link
               href="/categories"
-              className="group inline-flex items-center gap-2 border-2 border-border bg-primary px-6 py-3 text-sm font-black uppercase tracking-wide text-primary-foreground shadow-[4px_4px_0px_0px_var(--border)] transition-[transform,box-shadow] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0px_0px_var(--border)]"
+              className="group inline-flex items-center gap-2 border-2 border-border bg-accent px-6 py-3 text-sm font-black uppercase tracking-wide text-primary-foreground shadow-[4px_4px_0px_0px_var(--border)] transition-[transform,box-shadow] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0px_0px_var(--border)]"
             >
               Shop the Drop
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

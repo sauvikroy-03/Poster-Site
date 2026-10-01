@@ -38,7 +38,9 @@ export default function CategoriesFilter() {
 
   const handleSelect = (slug: string | null) => {
     // Prevent duplicate triggers if already selected or currently pending
-    const isCurrentlyActive = !slug ? !currentCategory : currentCategory?.toLowerCase() === slug;
+    const isCurrentlyActive = !slug
+      ? !currentCategory
+      : currentCategory?.toLowerCase() === slug;
     if (isCurrentlyActive || isPending) return;
 
     setPendingSlug(slug);
@@ -63,35 +65,41 @@ export default function CategoriesFilter() {
 
   return (
     <div className="flex w-full flex-col items-start gap-3">
-      <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-400">
-        Categories
-      </span>
+      {/* Category Eyebrow Badge */}
+      {/* <div className="inline-flex items-center gap-1.5 border-2 border-border bg-card px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.18em] text-foreground shadow-[2px_2px_0_0_var(--border)]">
+        <span>✦</span>
+        <span>Categories</span>
+      </div> */}
 
-      {/* wrap, not stack */}
-      <div className="flex w-full flex-wrap items-center gap-2">
-        {/* "All posters" button */}
+      {/* Button Wrap Grid */}
+      <div className="flex w-full flex-wrap items-center gap-2.5">
+        {/* "All posters" Button */}
         <button
           type="button"
           onClick={() => handleSelect(null)}
           disabled={isPending}
-          className={`flex items-center gap-1.5 whitespace-nowrap rounded-full px-5 py-2 text-xs font-semibold transition-all disabled:cursor-not-allowed ${
+          className={`flex cursor-pointer items-center gap-2 border-2 border-border px-4 py-2 text-xs font-black uppercase tracking-wider transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
             !currentCategory
-              ? "bg-black text-white"
-              : "border border-neutral-200 bg-white text-neutral-700 hover:border-black"
+              ? "bg-primary text-primary-foreground shadow-[3px_3px_0_0_var(--border)]"
+              : "bg-card text-foreground shadow-[3px_3px_0_0_var(--border)] hover:-translate-y-0.5 hover:bg-muted active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
           }`}
         >
-          {isAllLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-current" />}
-          <span>All posters</span>
+          {isAllLoading && (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-current" />
+          )}
+          <span>All Posters</span>
         </button>
 
+        {/* Loading Skeletons */}
         {loading &&
           Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="h-8 w-20 animate-pulse rounded-full bg-neutral-200/70"
+              className="h-[38px] w-24 animate-pulse border-2 border-border/40 bg-muted/60"
             />
           ))}
 
+        {/* Dynamic Category Chips */}
         {!loading &&
           categories.map((c, idx) => {
             const slug = getSlug(c);
@@ -105,10 +113,10 @@ export default function CategoriesFilter() {
                 type="button"
                 onClick={() => handleSelect(slug)}
                 disabled={isPending}
-                className={`flex items-center gap-1.5 whitespace-nowrap rounded-full px-5 py-2 text-xs font-semibold transition-all disabled:cursor-not-allowed ${
+                className={`flex cursor-pointer items-center gap-2 border-2 border-border px-4 py-2 text-xs font-black uppercase tracking-wider transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                   isActive
-                    ? "bg-black text-white"
-                    : "border border-neutral-200 bg-white text-neutral-700 hover:border-black"
+                    ? "bg-primary text-primary-foreground shadow-[3px_3px_0_0_var(--border)]"
+                    : "bg-card text-foreground shadow-[3px_3px_0_0_var(--border)] hover:-translate-y-0.5 hover:bg-muted active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
                 }`}
               >
                 {isButtonLoading && (

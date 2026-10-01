@@ -4,32 +4,34 @@ import { ChevronRight } from "lucide-react";
 
 export default function CategoryHero() {
   return (
-    <div className="w-full border-b border-neutral-200 bg-[#fbfaf8]">
+    // Uses bg-muted (deeper oatmeal paper) bounded by a uniform 2px black bottom border
+    <div className="w-full border-b-2 border-border bg-muted">
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <div className="mb-6 flex items-center gap-1.5 text-sm">
+        <div className="mb-6 flex items-center gap-2 text-xs font-black uppercase tracking-wider">
           <Link
             href="/"
-            className="text-neutral-500 transition-colors hover:text-black"
+            className="text-muted-foreground transition-colors hover:text-foreground"
           >
             Home
           </Link>
-          <ChevronRight size={14} className="text-neutral-400" />
-          <span className="font-semibold text-black">Categories</span>
+          <ChevronRight size={14} className="text-muted-foreground" strokeWidth={2.5} />
+          <span className="text-foreground">Categories</span>
         </div>
 
-        {/* Eyebrow */}
-        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-400">
-          The Collection
-        </span>
+        {/* Eyebrow badge with mini brutalist shadow */}
+        <div className="inline-flex items-center gap-1.5 text-xl   px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-foreground ">
+          
+          <span>The Collection</span>
+        </div>
 
         {/* Headline */}
-        <h1 className="mt-3 text-5xl font-extrabold leading-[1.05] tracking-tight text-black sm:text-6xl">
+        <h1 className="mt-4 text-4xl font-black uppercase leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
           Every wall deserves better.
         </h1>
 
         {/* Subtext */}
-        <p className="mt-4 text-base text-neutral-500 sm:text-lg">
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
           1,200+ designs, printed to order on archival stock. Filter your way
           to the one.
         </p>

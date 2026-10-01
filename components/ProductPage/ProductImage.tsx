@@ -47,11 +47,11 @@ export default function ProductImage({ product }: ProductCardProps) {
   return (
     <div className="flex w-full flex-col gap-3">
       {/* Main image */}
-      <div className="group relative w-full overflow-hidden border-2 border-black bg-[#f7f5f0] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform duration-300 ease-out hover:cursor-pointer">
+      <div className="group relative w-full overflow-hidden border-2 border-border bg-card shadow-[4px_4px_0_0_var(--border)] transition-transform duration-300 ease-out hover:cursor-pointer">
         <div className="p-2 sm:p-3">
-          <div className="relative aspect-[5/6] w-full overflow-hidden border border-black/10 bg-[#eeece7]">
+          <div className="relative aspect-[5/6] w-full overflow-hidden border-2 border-border/20 bg-muted">
             {/* Bestseller badge */}
-            <span className="absolute left-2 top-2 z-10 border border-black bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-black sm:text-[10px]">
+            <span className="absolute left-2 top-2 z-10 border-2 border-border bg-background px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-foreground shadow-[1px_1px_0_0_var(--border)] sm:text-[10px]">
               Bestseller
             </span>
 
@@ -68,25 +68,25 @@ export default function ProductImage({ product }: ProductCardProps) {
                 <button
                   onClick={goPrev}
                   aria-label="Previous image"
-                  className="absolute left-1 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/80 p-1 opacity-70 transition-opacity duration-200 hover:bg-white sm:opacity-0 sm:group-hover:opacity-100"
+                  className="absolute left-1 top-1/2 z-10 -translate-y-1/2 border-2 border-border bg-card p-1 opacity-70 transition-opacity duration-200 hover:bg-muted sm:opacity-0 sm:group-hover:opacity-100"
                 >
-                  <ChevronLeft size={14} className="text-black" />
+                  <ChevronLeft size={14} className="text-foreground" />
                 </button>
 
                 <button
                   onClick={goNext}
                   aria-label="Next image"
-                  className="absolute right-1 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/80 p-1 opacity-70 transition-opacity duration-200 hover:bg-white sm:opacity-0 sm:group-hover:opacity-100"
+                  className="absolute right-1 top-1/2 z-10 -translate-y-1/2 border-2 border-border bg-card p-1 opacity-70 transition-opacity duration-200 hover:bg-muted sm:opacity-0 sm:group-hover:opacity-100"
                 >
-                  <ChevronRight size={14} className="text-black" />
+                  <ChevronRight size={14} className="text-foreground" />
                 </button>
 
                 <div className="absolute bottom-1.5 left-1/2 z-10 flex -translate-x-1/2 gap-1">
                   {images.map((_, i) => (
                     <span
                       key={i}
-                      className={`h-1 w-1 rounded-full transition-colors ${
-                        i === activeIndex ? "bg-white" : "bg-white/40"
+                      className={`h-1.5 w-1.5 border border-border transition-colors ${
+                        i === activeIndex ? "bg-primary" : "bg-card/70"
                       }`}
                     />
                   ))}
@@ -105,9 +105,9 @@ export default function ProductImage({ product }: ProductCardProps) {
               type="button"
               onClick={() => scrollThumbs("left")}
               aria-label="Scroll thumbnails left"
-              className="flex h-9 w-7 flex-shrink-0 items-center justify-center rounded-full border border-black/10 bg-white text-black/60 shadow-sm transition-colors hover:border-black hover:text-black"
+              className="flex h-9 w-7 flex-shrink-0 items-center justify-center border-2 border-border bg-card text-muted-foreground shadow-[2px_2px_0_0_var(--border)] transition-colors hover:bg-muted hover:text-foreground active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
             >
-              <ChevronLeft size={14} />
+              <ChevronLeft size={14} strokeWidth={2.5} />
             </button>
           )}
 
@@ -119,27 +119,29 @@ export default function ProductImage({ product }: ProductCardProps) {
               const isActive = i === activeIndex;
               return (
                 <button
-  key={i}
-  data-thumb
-  type="button"
-  onClick={() => setActiveIndex(i)}
-  aria-label={`View image ${i + 1}`}
-  className={`flex-shrink-0 overflow-hidden border-2 bg-[#f7f5f0] transition-transform duration-200 ease-out ${
-    isActive ? "-translate-y-0.5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]" : "hover:-translate-y-0.5 cursor-pointer"
-  }`}
->
-  <div className="p-1 sm:p-1.5">
-    <div className="relative aspect-square w-16 overflow-hidden border border-black/10 sm:w-20 md:w-24">
-      <Image
-        src={img}
-        alt={`${prod_name} thumbnail ${i + 1}`}
-        fill
-        className="object-cover"
-        sizes="96px"
-      />
-    </div>
-  </div>
-</button>
+                  key={i}
+                  data-thumb
+                  type="button"
+                  onClick={() => setActiveIndex(i)}
+                  aria-label={`View image ${i + 1}`}
+                  className={`flex-shrink-0 overflow-hidden border-2 border-border bg-card transition-all duration-200 ease-out ${
+                    isActive
+                      ? "-translate-y-0.5 shadow-[4px_4px_0_0_var(--border)]"
+                      : "cursor-pointer shadow-[2px_2px_0_0_var(--border)] hover:-translate-y-0.5 hover:bg-muted"
+                  }`}
+                >
+                  <div className="p-1 sm:p-1.5">
+                    <div className="relative aspect-square w-16 overflow-hidden border-2 border-border/20 bg-muted sm:w-20 md:w-24">
+                      <Image
+                        src={img}
+                        alt={`${prod_name} thumbnail ${i + 1}`}
+                        fill
+                        className="object-cover"
+                        sizes="96px"
+                      />
+                    </div>
+                  </div>
+                </button>
               );
             })}
           </div>
@@ -149,9 +151,9 @@ export default function ProductImage({ product }: ProductCardProps) {
               type="button"
               onClick={() => scrollThumbs("right")}
               aria-label="Scroll thumbnails right"
-              className="flex h-9 w-7 flex-shrink-0 items-center justify-center rounded-full border border-black/10 bg-white text-black/60 shadow-sm transition-colors hover:border-black hover:text-black"
+              className="flex h-9 w-7 flex-shrink-0 items-center justify-center border-2 border-border bg-card text-muted-foreground shadow-[2px_2px_0_0_var(--border)] transition-colors hover:bg-muted hover:text-foreground active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
             >
-              <ChevronRight size={14} />
+              <ChevronRight size={14} strokeWidth={2.5} />
             </button>
           )}
         </div>

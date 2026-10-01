@@ -2,7 +2,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Moon, Search, ShoppingBag, ChevronDown } from "lucide-react";
+import { Moon, Sun, Search, ShoppingBag, ChevronDown } from "lucide-react";
+import { useTheme } from "next-themes";
 import AuthModal from "@/components/AuthModal";
 import AccountMenu from "@/components/Profile/AccountMenu";
 import { createClient } from "@/lib/client";
@@ -19,6 +20,8 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -26,6 +29,11 @@ export default function Navbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const supabase = createClient();
+
+  // Prevent hydration mismatch for client-only theme state
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
@@ -95,20 +103,36 @@ export default function Navbar() {
 
           {/* Actions */}
           <div className="flex items-center gap-1 sm:gap-2">
-            <button aria-label="Toggle theme" className={`${iconBtn} hidden sm:flex`}>
-              <Moon className="h-[18px] w-[18px]" />
+            {/* Dark Mode Toggle Button */}
+            <button
+              type="button"
+              aria-label="Toggle theme"
+              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+              className={`${iconBtn} hidden sm:flex`}
+            >
+              {mounted ? (
+                resolvedTheme === "dark" ? (
+                  <Sun className="h-[18px] w-[18px]" strokeWidth={2.5} />
+                ) : (
+                  <Moon className="h-[18px] w-[18px]" strokeWidth={2.5} />
+                )
+              ) : (
+                <div className="h-[18px] w-[18px]" />
+              )}
             </button>
-            <button aria-label="Search" className={`${iconBtn} hidden sm:flex`}>
-              <Search className="h-[18px] w-[18px]" />
+
+            <button type="button" aria-label="Search" className={`${iconBtn} hidden sm:flex`}>
+              <Search className="h-[18px] w-[18px]" strokeWidth={2.5} />
             </button>
 
             <Link href="/cart" prefetch={true} aria-label="Cart" className={iconBtn}>
-              <ShoppingBag className="h-[18px] w-[18px]" />
+              <ShoppingBag className="h-[18px] w-[18px]" strokeWidth={2.5} />
             </Link>
 
             {user ? (
               <div className="relative ml-2" ref={dropdownRef}>
                 <button
+                  type="button"
                   onClick={() => setIsDropdownOpen((prev) => !prev)}
                   aria-label="Account menu"
                   aria-expanded={isDropdownOpen}
@@ -134,6 +158,7 @@ export default function Navbar() {
               </div>
             ) : (
               <button
+                type="button"
                 onClick={() => setIsAuthOpen(true)}
                 className={`${FOCUS} ml-2 h-10 cursor-pointer border-2 border-border bg-primary px-5 text-sm font-bold text-primary-foreground shadow-[3px_3px_0_0_var(--border)] transition-[transform,box-shadow] duration-100 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_var(--border)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none`}
               >
