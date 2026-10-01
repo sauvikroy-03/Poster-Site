@@ -55,6 +55,7 @@ export default function ProductCard({ product, priority=false }: ProductCardProp
             alt={`${prod_name} - image 1`}
             fill
             priority={priority}
+            loading={priority ? "eager" : "lazy"}
            className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
             sizes="(max-width: 640px) 160px, (max-width: 768px) 200px, (max-width: 1024px) 240px, 280px"
           />
