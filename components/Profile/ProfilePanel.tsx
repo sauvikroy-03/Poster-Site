@@ -12,7 +12,7 @@ interface ProfilePanelProps {
   email?: string;
 }
 
-const DEFAULT_DEBOUNCE_MS = 300;
+const DEFAULT_DEBOUNCE_MS = 250;
 
 export default function ProfilePanel({ email }: ProfilePanelProps) {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
