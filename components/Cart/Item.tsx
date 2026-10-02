@@ -34,7 +34,7 @@ interface ItemProps {
   item: CartItemData;
 }
 
-const DEBOUNCE_MS = 600;
+const DEBOUNCE_MS = 200;
 
 export default function Item({ item }: ItemProps) {
   const { quantity, products, product_variants } = item;
