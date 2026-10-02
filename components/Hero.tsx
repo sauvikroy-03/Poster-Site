@@ -53,7 +53,7 @@ export default function Hero({ initialProducts = [] }: HeroProps) {
           {/* Card 0: Full width on mobile, 2x2 grid cell on desktop */}
           <div className="col-span-2 md:col-span-2 md:row-span-2 md:h-full">
             {products[0] ? (
-              <ProductCard product={products[0]} priority={true} />
+              <ProductCard product={products[0]} priority={true} sizes="(max-width: 768px) 100vw, 50vw" />
             ) : (
               <ProductCardSkeleton />
             )}
