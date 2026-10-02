@@ -85,34 +85,39 @@ export default function DefaultAddress() {
   return (
     <>
       {isLoading ? (
-        <div className="flex h-20 items-center justify-center">
-          <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
+        <div className="flex h-20 items-center justify-center border-2 border-border bg-card">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
       ) : !defaultAddress ? (
-        <div className="flex items-center gap-3 rounded-xl border border-dashed border-black/15 bg-neutral-50 px-4 py-4">
-          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-neutral-100">
-            <MapPin className="h-4 w-4 text-neutral-400" />
+        <div className="flex items-center gap-3 border-2 border-dashed border-border bg-muted/30 p-4">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center border-2 border-border bg-muted">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
           </span>
-          <p className="min-w-0 flex-1 text-sm text-neutral-400">Add delivery address</p>
+          <p className="min-w-0 flex-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            No delivery address found
+          </p>
           <Button
             type="button"
             size="sm"
             onClick={handleAddNew}
-            className="gap-1.5 bg-black text-xs font-semibold text-white hover:bg-black/85"
+            className="gap-1.5 border-2 border-border bg-primary font-mono text-xs font-black uppercase text-primary-foreground shadow-[2px_2px_0_0_var(--border)] hover:bg-primary/90 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
           >
             <Plus className="h-3.5 w-3.5" />
             Add
           </Button>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border">
-          <div className="flex items-start gap-3 p-4">
+        <div className="border-2 border-border bg-card">
+          <div className="flex items-start justify-between gap-3 p-4">
             <div className="min-w-0 flex-1 space-y-1">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <p className="max-w-full truncate text-sm font-semibold text-black">
+                <p className="truncate font-mono text-sm font-black uppercase tracking-tight text-foreground">
                   {defaultAddress.first_name} {defaultAddress.last_name}
                 </p>
-                <Badge variant="secondary" className="gap-1 capitalize">
+                <Badge
+                  variant="secondary"
+                  className="gap-1 rounded-none border border-border bg-secondary font-mono text-[10px] font-bold uppercase text-secondary-foreground"
+                >
                   {defaultAddress.address_type === "home" ? (
                     <Home className="h-3 w-3" />
                   ) : (
@@ -120,26 +125,28 @@ export default function DefaultAddress() {
                   )}
                   {defaultAddress.address_type}
                 </Badge>
-                <Badge>Default</Badge>
+                <Badge className="rounded-none border border-border bg-primary font-mono text-[10px] font-bold uppercase text-primary-foreground">
+                  Default
+                </Badge>
               </div>
 
-              <p className="text-xs text-muted-foreground">
+              <p className="font-mono text-xs text-muted-foreground">
                 {defaultAddress.phone_dial_code} {defaultAddress.phone_number}
               </p>
-              <p className="truncate text-xs text-neutral-700">
+              <p className="truncate text-xs font-medium text-foreground/80">
                 {defaultAddress.address_line1}
               </p>
-              <p className="truncate text-xs text-neutral-700">
+              <p className="truncate font-mono text-xs text-muted-foreground">
                 {defaultAddress.city}, {defaultAddress.state} - {defaultAddress.pincode}
               </p>
             </div>
 
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={() => setIsListOpen(true)}
-              className="shrink-0 text-xs font-semibold"
+              className="shrink-0 rounded-none border-2 border-border font-mono text-xs font-black uppercase tracking-wider text-foreground hover:bg-muted"
             >
               Change
             </Button>
@@ -147,14 +154,14 @@ export default function DefaultAddress() {
         </div>
       )}
 
-     <ChangeAddressDialog
-  open={isListOpen}
-  onOpenChange={setIsListOpen}
-  addresses={addresses}
-  onEdit={handleEdit}
-  onSetDefault={handleSetDefault}
-  onAddNew={handleAddNew}
-/>
+      <ChangeAddressDialog
+        open={isListOpen}
+        onOpenChange={setIsListOpen}
+        addresses={addresses}
+        onEdit={handleEdit}
+        onSetDefault={handleSetDefault}
+        onAddNew={handleAddNew}
+      />
 
       <BasicDetails
         open={isFormOpen}

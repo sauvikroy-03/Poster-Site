@@ -33,7 +33,7 @@ export default function TrendingPosters({ products = [] }: TrendingPostersProps)
           <Link
             href="/categories"
             prefetch={true}
-            className="group inline-flex items-center gap-2 border-2 border-border bg-primary px-4 py-2.5 text-[13px] font-black uppercase tracking-[0.1em] text-primary-foreground shadow-[3px_3px_0_0_var(--border)] transition-[transform,box-shadow] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_0_var(--border)]"
+            className="group inline-flex items-center gap-2 border-2 border-border bg-accent px-4 py-2.5 text-[13px] font-black uppercase tracking-[0.1em] text-primary-foreground shadow-[3px_3px_0_0_var(--border)] transition-[transform,box-shadow] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_0_var(--border)]"
           >
             Shop All
             <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />

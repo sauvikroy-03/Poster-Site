@@ -36,9 +36,9 @@ async function ProfileView() {
 function PanelSkeleton() {
   return (
     <div className="w-full animate-pulse space-y-6">
-      <div className="h-7 w-40 rounded bg-neutral-200" />
-      <div className="h-28 w-full rounded border border-neutral-200 bg-neutral-100" />
-      <div className="h-40 w-full rounded border border-neutral-200 bg-neutral-100" />
+      <div className="h-7 w-40 border-2 border-border bg-muted" />
+      <div className="h-28 w-full border-2 border-border bg-card shadow-[4px_4px_0_0_var(--border)]" />
+      <div className="h-44 w-full border-2 border-border bg-card shadow-[4px_4px_0_0_var(--border)]" />
     </div>
   );
 }
@@ -52,10 +52,10 @@ export default async function AccountPage({
   const activeTab = tab === "orders" ? "orders" : "profile";
 
   return (
-    <div className="min-h-screen w-full bg-[#fbfaf8]">
+    <div className="min-h-screen w-full bg-background text-foreground">
       <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-8 px-6 py-10 md:flex-row md:gap-14 md:py-14">
         {/* Sidebar renders instantly */}
-        <aside className="w-full md:w-56 shrink-0">
+        <aside className="w-full shrink-0 md:w-60">
           <AccountSidebar activeTab={activeTab} />
         </aside>
 

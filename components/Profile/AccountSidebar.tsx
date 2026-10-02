@@ -36,8 +36,8 @@ export default function AccountSidebar({ activeTab }: AccountSidebarProps) {
 
   return (
     <>
-      {/* Mobile: horizontal scrollable pill tabs */}
-      <nav className="flex w-full gap-2 overflow-x-auto px-0.5 py-1 md:hidden">
+      {/* Mobile: horizontal scrollable brutalist tabs */}
+      <nav className="flex w-full gap-2.5 overflow-x-auto px-0.5 py-1 md:hidden">
         {TABS.map(({ key, label, icon: Icon }) => {
           const isActive = activeTab === key;
           const isLoading = isPending && loadingTab === key;
@@ -48,10 +48,10 @@ export default function AccountSidebar({ activeTab }: AccountSidebarProps) {
               type="button"
               onClick={() => goToTab(key)}
               disabled={isPending}
-              className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed ${
+              className={`flex shrink-0 items-center gap-2 border-2 border-border px-4 py-2.5 font-mono text-xs font-black uppercase tracking-wider transition-transform disabled:cursor-not-allowed ${
                 isActive
-                  ? "bg-black text-white"
-                  : "bg-white text-neutral-500 ring-1 ring-black/10 hover:text-black"
+                  ? "bg-primary text-primary-foreground shadow-[3px_3px_0_0_var(--border)]"
+                  : "bg-card text-muted-foreground shadow-[3px_3px_0_0_var(--border)] hover:bg-muted hover:text-foreground active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0_0_var(--border)]"
               }`}
             >
               {isLoading ? (
@@ -65,8 +65,8 @@ export default function AccountSidebar({ activeTab }: AccountSidebarProps) {
         })}
       </nav>
 
-      {/* Desktop: vertical sidebar, fixed width, sticky while scrolling */}
-      <nav className="hidden w-56 shrink-0 flex-col gap-1 md:sticky md:top-24 md:flex md:self-start">
+      {/* Desktop: vertical brutalist sidebar */}
+      <nav className="hidden w-60 shrink-0 flex-col gap-2.5 md:sticky md:top-24 md:flex md:self-start">
         {TABS.map(({ key, label, icon: Icon }) => {
           const isActive = activeTab === key;
           const isLoading = isPending && loadingTab === key;
@@ -77,10 +77,10 @@ export default function AccountSidebar({ activeTab }: AccountSidebarProps) {
               type="button"
               onClick={() => goToTab(key)}
               disabled={isPending}
-              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-semibold transition-colors disabled:cursor-not-allowed ${
+              className={`flex items-center gap-3 border-2 border-border px-4 py-3 text-left font-mono text-xs font-black uppercase tracking-wider transition-transform disabled:cursor-not-allowed ${
                 isActive
-                  ? "bg-black text-white"
-                  : "text-neutral-500 hover:bg-black/5 hover:text-black"
+                  ? "translate-x-[2px] translate-y-[2px] bg-primary text-primary-foreground shadow-[4px_4px_0_0_var(--border)]"
+                  : "bg-card text-muted-foreground shadow-[4px_4px_0_0_var(--border)] hover:bg-muted hover:text-foreground active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_0_var(--border)]"
               }`}
             >
               {isLoading ? (

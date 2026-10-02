@@ -42,7 +42,7 @@ export default function ReviewsSection() {
   return (
     // Steps to bg-muted to contrast with TrendingPosters' bg-background
     // border-b-2 ensures a consistent 2px separation before the next section/footer
-    <section className="w-full overflow-hidden border-b-2 border-border bg-background px-5 py-16 sm:px-8 sm:py-20 lg:px-12">
+    <section className="w-full overflow-hidden border-b-2 border-border bg-muted px-5 py-16 sm:px-8 sm:py-20 lg:px-12">
       <div className="mx-auto max-w-7xl">
         {/* Eyebrow badge */}
         <div className="mb-4 inline-flex items-center gap-1.5 border-2 border-border bg-card px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-foreground shadow-[2px_2px_0_0_var(--border)]">

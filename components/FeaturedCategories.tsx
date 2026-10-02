@@ -17,7 +17,7 @@ export default function FeaturedCategories({
   return (
     // border-y-2 keeps the top and bottom borders at the exact same uniform 2px thickness
     // bg-muted steps the tone into a deeper oatmeal/kraft beige to break monotony
-    <section className="w-full border-y-2 border-border bg-muted">
+    <section className="w-full border-y-2 border-border bg-background">
       <div className="mx-auto max-w-[1400px] px-6 py-16 sm:px-12">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="max-w-xl">

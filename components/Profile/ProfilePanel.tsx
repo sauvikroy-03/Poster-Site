@@ -95,38 +95,38 @@ export default function ProfilePanel({ email }: ProfilePanelProps) {
   return (
     <div className="flex w-full flex-col gap-6">
       {/* Contact */}
-      <Card>
+      <Card className="border-border bg-card text-card-foreground">
         <CardHeader>
-          <CardTitle className="text-base font-bold">Contact</CardTitle>
+          <CardTitle className="text-base font-bold text-foreground">Contact</CardTitle>
           <CardAction>
-            <Button variant="ghost" size="sm" className="gap-1.5 text-xs font-semibold">
+            {/* <Button variant="ghost" size="sm" className="gap-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground">
               <Pencil className="h-3.5 w-3.5" />
               Edit
-            </Button>
+            </Button> */}
           </CardAction>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-neutral-100">
-              <Mail className="h-4 w-4 text-neutral-500" />
+            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-muted">
+              <Mail className="h-4 w-4 text-muted-foreground" />
             </span>
             <div className="min-w-0">
-              <p className="text-xs text-neutral-400">Email</p>
-              <p className="truncate text-sm font-medium text-black">{email}</p>
+              <p className="text-xs text-muted-foreground">Email</p>
+              <p className="truncate text-sm font-medium text-foreground">{email}</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Addresses */}
-      <Card>
+      <Card className="border-border bg-card text-card-foreground">
         <CardHeader>
-          <CardTitle className="text-base font-bold">Addresses</CardTitle>
+          <CardTitle className="text-base font-bold text-foreground">Addresses</CardTitle>
           <CardAction>
             <Button
               size="sm"
               onClick={handleAddNew}
-              className="gap-1.5 bg-black text-xs font-semibold text-white hover:bg-black/85"
+              className="gap-1.5 bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90"
             >
               <Plus className="h-3.5 w-3.5" />
               Add address
@@ -136,7 +136,7 @@ export default function ProfilePanel({ email }: ProfilePanelProps) {
         <CardContent>
           {isLoadingAddresses ? (
             <div className="flex h-20 items-center justify-center">
-              <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           ) : addresses.length > 0 ? (
             <AddressList
@@ -145,11 +145,11 @@ export default function ProfilePanel({ email }: ProfilePanelProps) {
               onSetDefault={handleSetDefault}
             />
           ) : (
-            <div className="flex items-center gap-3 rounded-xl border border-dashed border-black/15 bg-neutral-50 px-4 py-5">
-              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-neutral-100">
-                <MapPin className="h-4 w-4 text-neutral-400" />
+            <div className="flex items-center gap-3 rounded-xl border border-dashed border-border bg-muted/30 px-4 py-5">
+              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-muted">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
               </span>
-              <p className="text-sm text-neutral-400">No addresses added yet</p>
+              <p className="text-sm text-muted-foreground">No addresses added yet</p>
             </div>
           )}
         </CardContent>
@@ -160,7 +160,7 @@ export default function ProfilePanel({ email }: ProfilePanelProps) {
         <Button
           variant="outline"
           onClick={handleSignOut}
-          className="gap-2 font-semibold hover:bg-black hover:text-white"
+          className="gap-2 border-border font-semibold text-foreground hover:bg-primary hover:text-primary-foreground"
         >
           <LogOut className="h-4 w-4" />
           Sign out

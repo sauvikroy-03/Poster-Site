@@ -33,33 +33,37 @@ export default function OrdersPanel() {
 
   if (loading) {
     return (
-      <div className="flex h-72 w-full items-center justify-center rounded-2xl border border-black/10 bg-white">
-        <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
+      <div className="flex h-72 w-full items-center justify-center border-2 border-border bg-card shadow-[4px_4px_0_0_var(--border)]">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex h-72 w-full  flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-red-200 bg-white text-center">
-        <p className="text-sm font-semibold text-red-600">{error}</p>
+      <div className="flex h-72 w-full flex-col items-center justify-center gap-2 border-2 border-dashed border-destructive bg-card p-6 text-center shadow-[4px_4px_0_0_var(--destructive)]">
+        <p className="font-mono text-xs font-black uppercase tracking-wider text-destructive">
+          {error}
+        </p>
       </div>
     );
   }
 
   if (orders.length === 0) {
     return (
-      <div className="flex h-72 w-full flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-black/10 bg-white text-center">
-        <PackageOpen className="h-8 w-8 text-neutral-300" />
-        <p className="text-sm font-bold uppercase tracking-wide text-neutral-400">
-          No orders yet
+      <div className="flex h-72 w-full flex-col items-center justify-center gap-3 border-2 border-dashed border-border bg-card text-center shadow-[4px_4px_0_0_var(--border)]">
+        <span className="flex h-12 w-12 items-center justify-center border-2 border-border bg-muted">
+          <PackageOpen className="h-6 w-6 text-muted-foreground" />
+        </span>
+        <p className="font-mono text-xs font-black uppercase tracking-wider text-muted-foreground">
+          NO ORDERS FOUND // ARCHIVE EMPTY
         </p>
       </div>
     );
   }
 
   return (
-    <div className="flex w-full flex-col gap-4">
+    <div className="flex w-full flex-col gap-6">
       {orders.map((order) => (
         <OrderCard key={order.order_id} order={order} />
       ))}

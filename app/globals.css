@@ -50,8 +50,8 @@
 }
 
 :root {
-  /* Canvas: Archival warm parchment beige (#F4F0E8) */
-  --background: oklch(0.952 0.012 85);
+  /* Canvas: Clean warm archival beige */
+  --background: oklch(0.972 0.008 85);
   
   /* Ink: High-density carbon black (#121212) */
   --foreground: oklch(0.18 0 0);
@@ -71,13 +71,13 @@
   --secondary: oklch(0.885 0.022 75);
   --secondary-foreground: oklch(0.18 0 0);
 
-  /* Muted Surface: Warm Oatmeal (#E8E2D5) */
-  --muted: oklch(0.908 0.015 85);
-  --muted-foreground: oklch(0.48 0.01 80);
+  /* Muted Surface: Slightly deepened to create crisp contrast against the 0.972 background */
+  --muted: oklch(0.913 0.009 76.5);
+  /* Muted Text: Darkened to preserve readability against muted and background surfaces */
+  --muted-foreground: oklch(0.42 0.015 80);
 
   /* Accent / CTA: Warm Burnt Terracotta (#E26D46) */
   --accent: oklch(0.835 0.16 85.5);
-  /* --accent: oklch(0.64 0.16 42); */
   --accent-foreground: oklch(0.99 0 0);
 
   --destructive: oklch(0.55 0.22 25);
@@ -90,36 +90,49 @@
   /* Neo-brutalism relies on sharp corners */
   --radius: 0rem;
 
-  --sidebar: oklch(0.952 0.012 85);
+  --sidebar: oklch(0.972 0.008 85);
   --sidebar-foreground: oklch(0.18 0 0);
   --sidebar-primary: oklch(0.18 0 0);
   --sidebar-primary-foreground: oklch(0.985 0.005 85);
-  --sidebar-accent: oklch(0.908 0.015 85);
+  --sidebar-accent: oklch(0.925 0.012 85);
   --sidebar-accent-foreground: oklch(0.18 0 0);
   --sidebar-border: oklch(0.18 0 0);
   --sidebar-ring: oklch(0.18 0 0);
 }
-
 .dark {
-  /* Rich espresso-dark theme if toggled */
-  --background: oklch(0.20 0.01 75);
-  --foreground: oklch(0.95 0.01 85);
-  --card: oklch(0.25 0.01 75);
-  --card-foreground: oklch(0.95 0.01 85);
-  --popover: oklch(0.25 0.01 75);
-  --popover-foreground: oklch(0.95 0.01 85);
-  --primary: oklch(0.95 0.01 85);
-  --primary-foreground: oklch(0.18 0 0);
-  --secondary: oklch(0.32 0.01 75);
-  --secondary-foreground: oklch(0.95 0.01 85);
-  --muted: oklch(0.28 0.01 75);
-  --muted-foreground: oklch(0.70 0.01 80);
-  --accent: oklch(0.64 0.16 42);
-  --accent-foreground: oklch(0.99 0 0);
-  --destructive: oklch(0.65 0.20 25);
-  --border: oklch(0.95 0.01 85);
-  --input: oklch(0.95 0.01 85);
-  --ring: oklch(0.95 0.01 85);
+  /* Midnight Cobalt & Electric Violet theme */
+  --background: oklch(0.12 0.03 275);
+  --foreground: oklch(0.98 0 0);
+
+  /* Dark indigo surface cards */
+  --card: oklch(0.16 0.04 275);
+  --card-foreground: oklch(0.98 0 0);
+
+  --popover: oklch(0.16 0.04 275);
+  --popover-foreground: oklch(0.98 0 0);
+
+  /* Electric Periwinkle/Cobalt (Used for "Login", "Shop the drop", and "P" badge) */
+  --primary: oklch(0.55 0.24 275);
+  --primary-foreground: oklch(0.98 0 0);
+
+  /* Deep muted indigo sections & secondary states */
+  --secondary: oklch(0.24 0.08 275);
+  --secondary-foreground: oklch(0.98 0 0);
+
+  --muted: oklch(0.20 0.06 275);
+  --muted-foreground: oklch(0.72 0.05 275);
+
+  /* Bright vibrant accent (Archive Sale Banner blocks) */
+  --accent: oklch(0.55 0.24 275);
+  --accent-foreground: oklch(0.98 0 0);
+
+  --destructive: oklch(0.62 0.22 25);
+
+  /* Electric border lines (Visible 2px grid lines shown in cards) */
+  --border: oklch(0.42 0.20 275);
+  --input: oklch(0.42 0.20 275);
+  --ring: oklch(0.55 0.24 275);
+
   --radius: 0rem;
 }
 .bg-paper-dots {

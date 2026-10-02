@@ -65,10 +65,10 @@ export default function OrderTracker({ status, history = [] }: OrderTrackerProps
   if (CANCELLED.includes(status)) {
     const when = firstTime(history, CANCELLED);
     return (
-      <div className="inline-flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600">
+      <div className="inline-flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">
         <XCircle size={14} />
         <span>Order cancelled</span>
-        {when && <span className="font-normal text-red-500">on {formatStamp(when)}</span>}
+        {when && <span className="font-normal text-destructive/80">on {formatStamp(when)}</span>}
       </div>
     );
   }
@@ -76,7 +76,7 @@ export default function OrderTracker({ status, history = [] }: OrderTrackerProps
   const found = STEPS.findIndex((s) => s.statuses.includes(status));
   const currentIndex = found === -1 ? 0 : found;
   const isDelivered = status === "delivered";
-  const accent = isDelivered ? "bg-emerald-600" : "bg-black";
+  const accent = isDelivered ? "bg-primary text-primary-foreground" : "bg-primary text-primary-foreground";
 
   const stepData = STEPS.map((step, i) => {
     const isDone = i < currentIndex || isDelivered;
@@ -105,7 +105,7 @@ export default function OrderTracker({ status, history = [] }: OrderTrackerProps
               <span
                 className={cn(
                   "flex min-h-[26px] items-end px-0.5 text-[11px] leading-[13px] sm:min-h-0 sm:text-xs",
-                  isCurrent ? "font-bold text-black" : isReached ? "font-medium text-neutral-700" : "font-medium text-neutral-400"
+                  isCurrent ? "font-bold text-foreground" : isReached ? "font-medium text-foreground/80" : "font-medium text-muted-foreground"
                 )}
               >
                 {step.label}
@@ -116,7 +116,7 @@ export default function OrderTracker({ status, history = [] }: OrderTrackerProps
                 {!isLast && (
                   <span
                     aria-hidden
-                    className="absolute left-1/2 top-1/2 h-0.5 w-full -translate-y-1/2 bg-neutral-200"
+                    className="absolute left-1/2 top-1/2 h-0.5 w-full -translate-y-1/2 bg-muted"
                   >
                     <span
                       className={cn(
@@ -133,10 +133,10 @@ export default function OrderTracker({ status, history = [] }: OrderTrackerProps
 
                 <span
                   className={cn(
-                    "relative z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 bg-white",
-                    isDone && cn("border-transparent text-white", accent),
-                    isCurrent && "border-black text-black ring-4 ring-black/10",
-                    !isReached && "border-neutral-200 text-neutral-300"
+                    "relative z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 bg-card",
+                    isDone && cn("border-transparent", accent),
+                    isCurrent && "border-border text-foreground ring-4 ring-border/10",
+                    !isReached && "border-border/40 text-muted-foreground/40"
                   )}
                 >
                   <Icon size={13} strokeWidth={2.25} />
@@ -146,7 +146,7 @@ export default function OrderTracker({ status, history = [] }: OrderTrackerProps
               {/* Date only, no time */}
               <span
                 className={cn(
-                  "text-[11px] font-medium leading-[14px] text-neutral-500 sm:text-xs",
+                  "text-[11px] font-medium leading-[14px] text-muted-foreground sm:text-xs",
                   hasDates && "min-h-[14px]"
                 )}
               >
@@ -156,7 +156,6 @@ export default function OrderTracker({ status, history = [] }: OrderTrackerProps
           );
         })}
       </ol>
-
     </div>
   );
 }

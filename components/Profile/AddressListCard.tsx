@@ -36,7 +36,7 @@ export default function AddressList({ addresses, onEdit, onSetDefault }: Address
   const defaultAddressId = addresses.find((a) => a.is_default)?.id ?? "";
 
   return (
-    <div className="overflow-hidden rounded-xl border">
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
       <RadioGroup
         aria-label="Default address"
         value={defaultAddressId}
@@ -49,21 +49,21 @@ export default function AddressList({ addresses, onEdit, onSetDefault }: Address
       >
         {addresses.map((a, index) => (
           <React.Fragment key={a.id}>
-            {index > 0 && <Separator />}
+            {index > 0 && <Separator className="bg-border" />}
             <div className="flex items-start gap-3 p-4">
               <RadioGroupItem
                 value={a.id}
                 id={`default-${a.id}`}
                 aria-label="Set as default address"
-                className="mt-1"
+                className="mt-1 border-border text-primary focus-visible:ring-ring"
               />
 
               <div className="min-w-0 flex-1 space-y-1">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <p className="max-w-full truncate text-sm font-semibold text-black">
+                  <p className="max-w-full truncate text-sm font-semibold text-foreground">
                     {a.first_name} {a.last_name}
                   </p>
-                  <Badge variant="secondary" className="gap-1 capitalize">
+                  <Badge variant="secondary" className="gap-1 capitalize bg-secondary text-secondary-foreground">
                     {a.address_type === "home" ? (
                       <Home className="h-3 w-3" />
                     ) : (
@@ -71,15 +71,19 @@ export default function AddressList({ addresses, onEdit, onSetDefault }: Address
                     )}
                     {a.address_type}
                   </Badge>
-                  {a.is_default && <Badge>Default</Badge>}
+                  {a.is_default && (
+                    <Badge className="bg-primary text-primary-foreground">
+                      Default
+                    </Badge>
+                  )}
                 </div>
 
                 <p className="text-xs text-muted-foreground">
                   {a.phone_dial_code} {a.phone_number}
                 </p>
-                <p className="truncate text-xs text-neutral-700">{a.address_line1}</p>
-                <p className="truncate text-xs text-neutral-700">
-                  {a.city}, {a.state} - {a.pincode}
+                <p className="truncate text-xs text-foreground/80">{a.address_line1}</p>
+                <p className="truncate text-xs text-foreground/80">
+                  {a.city}, {a.state} {a.pincode}
                 </p>
               </div>
 
@@ -89,7 +93,7 @@ export default function AddressList({ addresses, onEdit, onSetDefault }: Address
                 size="icon"
                 aria-label="Edit address"
                 onClick={() => onEdit(a)}
-                className="h-8 w-8 shrink-0"
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 <Pencil className="h-4 w-4" />
               </Button>

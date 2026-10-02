@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import { Heart, Minus, Plus, Truck, ShieldCheck, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/toast";
 import ProjectDataInterface from "@/types/ItemDetails";
+import { playMechanicalClick, playStampSound } from "@/lib/sounds";
 
 interface ProductCardProps {
   product: ProjectDataInterface;
@@ -71,6 +72,9 @@ export default function AddToCartForm({ product }: ProductCardProps) {
   const handleAddToCart = async () => {
     if (!selectedVariant || isAddingToCart) return;
 
+    // 1. Play tactile mechanical click on press
+    playMechanicalClick();
+
     setIsAddingToCart(true);
     try {
       const res = await fetch("/api/cart", {
@@ -94,6 +98,8 @@ export default function AddToCartForm({ product }: ProductCardProps) {
         return;
       }
 
+      // 2. Play archival rubber stamp thump when confirmed
+      playStampSound();
       toast.add({
         type: "success",
         title: "Item added to cart",

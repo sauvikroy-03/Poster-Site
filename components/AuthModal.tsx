@@ -9,8 +9,12 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/client";
 import { useRouter } from "next/navigation";
+import { playMechanicalClick, playStampSound } from "@/lib/sounds";
 
 type Step = "EMAIL" | "OTP" | "SUCCESS";
+
+const FOCUS =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -84,11 +88,9 @@ function OtpInput({
           onPaste={handlePaste}
           autoFocus={i === 0}
           className={cn(
-            "h-12 w-12 rounded-lg border text-center text-lg font-mono font-medium text-[#121212] bg-[#FAF9F6] outline-none transition-all",
-            "focus:bg-white focus:ring-1 focus:ring-[#121212] focus:border-[#121212]",
-            hasError
-              ? "border-[#B3261E] bg-[#FFF8F7] focus:ring-[#B3261E]/30 focus:border-[#B3261E]"
-              : "border-[#E8E6DF]"
+            "h-12 w-12 rounded-none border-2 border-border bg-card text-center font-mono text-lg font-bold text-foreground outline-none transition-all shadow-[2px_2px_0_0_var(--border)]",
+            "focus:bg-muted focus:ring-0 focus:border-border focus:shadow-[1px_1px_0_0_var(--border)]",
+            hasError && "border-destructive bg-destructive/10 text-destructive focus:border-destructive shadow-[2px_2px_0_0_var(--destructive)]"
           )}
         />
       ))}
@@ -145,14 +147,14 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     }
   }, []);
 
-  // 1. Email Step: Send the OTP directly — signInWithOtp with
-  // shouldCreateUser:true handles both new and existing accounts.
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email.trim() || !emailRegex.test(email)) {
       return setError("Please enter a valid email address.");
     }
+
+    playMechanicalClick();
     setError("");
     setLoading(true);
     try {
@@ -165,7 +167,6 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     }
   };
 
-  // 2. OTP Step: Verify code, then hydrate this browser client's session
   const handleVerifyOtp = React.useCallback(async (code: string) => {
     if (code.length < 6) return setError("Please enter the complete 6-digit code.");
 
@@ -188,13 +189,6 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         return;
       }
 
-      // The server verified the OTP using a separate (server-side)
-      // Supabase client — this browser client has no idea a session
-      // now exists. getUser() can't fix that; it only re-validates a
-      // session already in this client's memory. setSession() is the
-      // real sync: it loads the tokens the server just created into
-      // THIS client, which is what fires onAuthStateChange for every
-      // subscriber sharing this singleton (e.g. Navbar).
       if (verifyData.session?.access_token && verifyData.session?.refresh_token) {
         const { error: sessionError } = await supabase.auth.setSession({
           access_token: verifyData.session.access_token,
@@ -207,11 +201,12 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         console.error("Server response missing session tokens — check /api/auth/createUser.");
       }
 
+      playStampSound();
       onSuccess?.(email);
       goTo("SUCCESS", 1);
       setTimeout(() => {
         onClose();
-        router.refresh(); // re-run server components with the new session
+        router.refresh();
       }, 1200);
     } catch {
       setError("Something went wrong during verification. Please try again.");
@@ -220,7 +215,6 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     }
   }, [email, onSuccess, goTo, onClose, supabase, router]);
 
-  // Auto-trigger when 6 digits are typed
   React.useEffect(() => {
     if (otpCode.length === 6 && step === "OTP" && !loading) {
       const timerId = setTimeout(() => {
@@ -238,7 +232,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         if (!open) onClose();
       }}
     >
-      <DialogContent className="sm:max-w-[410px] border-[#E8E6DF] bg-white p-7 sm:p-8 rounded-2xl shadow-xl">
+      <DialogContent className="sm:max-w-[410px] rounded-none border-2 border-border bg-card p-7 sm:p-8 shadow-[6px_6px_0_0_var(--border)] text-foreground">
         <DialogTitle className="sr-only">Account Authentication</DialogTitle>
 
         <AnimatePresence mode="wait" custom={direction} initial={false}>
@@ -254,10 +248,10 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               className="space-y-5"
             >
               <div className="space-y-1">
-                <h2 className="text-[22px] font-semibold tracking-[-0.025em] text-[#121212]">
+                <h2 className="text-[22px] font-black tracking-tight text-foreground">
                   Sign in or create account
                 </h2>
-                <p className="text-[13px] text-[#71717A] tracking-[-0.01em]">
+                <p className="text-[13px] text-muted-foreground">
                   Join Postercult to save your custom prints.
                 </p>
               </div>
@@ -265,23 +259,30 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => onSuccess?.("google-user@example.com")}
-                className="h-11 w-full gap-2.5 rounded-lg border-[#E8E6DF] bg-[#FAF9F6] text-[13px] font-medium text-[#121212] transition-colors hover:bg-[#F4F2EC] hover:border-[#DCD9D0]"
+             
+                onClick={() => {
+                  playMechanicalClick();
+                  onSuccess?.("google-user@example.com");
+                }}
+                className={cn(
+                  FOCUS,
+                  "h-11 w-full gap-2.5 rounded-none border-2 border-border bg-card text-[13px] font-bold text-foreground shadow-[3px_3px_0_0_var(--border)] transition-[transform,box-shadow] duration-100 hover:bg-muted active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                )}
               >
                 <GoogleIcon />
                 Continue with Google
               </Button>
 
-              <div className="relative flex items-center justify-center my-2">
-                <span className="w-full border-t border-[#E8E6DF]" />
-                <span className="absolute bg-white px-3 text-[10px] font-medium uppercase tracking-[0.08em] text-[#A1A1AA]">
+              <div className="relative my-2 flex items-center justify-center">
+                <span className="w-full border-t-2 border-border" />
+                <span className="absolute bg-card px-3 font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                   or continue with email
                 </span>
               </div>
 
               <form onSubmit={handleEmailSubmit} noValidate className="space-y-3.5">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-medium uppercase tracking-[0.05em] text-[#121212]">
+                  <label className="font-mono text-[11px] font-bold uppercase tracking-[0.05em] text-foreground">
                     Email address
                   </label>
                   <Input
@@ -290,24 +291,29 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                     onChange={(e) => { setEmail(e.target.value); setError(""); }}
                     placeholder="you@example.com"
                     className={cn(
-                      "h-11 rounded-lg border-[#E8E6DF] bg-[#FAF9F6] px-3.5 text-sm text-[#121212] placeholder:text-[#A1A1AA] transition-all focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#121212] focus-visible:border-[#121212]",
-                      error && "border-[#B3261E] bg-[#FFF8F7]"
+                      FOCUS,
+                      "h-11 rounded-none border-2 border-border bg-card px-3.5 text-sm text-foreground shadow-[3px_3px_0_0_var(--border)] placeholder:text-muted-foreground transition-all focus-visible:bg-card focus-visible:ring-0 focus-visible:border-border",
+                      error && "border-destructive bg-destructive/10 text-destructive shadow-[3px_3px_0_0_var(--destructive)] focus-visible:border-destructive"
                     )}
                     autoFocus
                   />
-                  {error && <p className="text-xs text-[#B3261E] pt-0.5">{error}</p>}
+                  {error && <p className="pt-0.5 text-xs font-bold text-destructive">{error}</p>}
                 </div>
 
                 <Button
                   type="submit"
+              
                   disabled={loading}
-                  className="h-11 w-full rounded-lg bg-[#121212] text-sm font-medium text-[#FAF9F6] shadow-sm transition-all hover:bg-[#262626] active:scale-[0.99] cursor-pointer"
+                  className={cn(
+                    FOCUS,
+                    "h-11 w-full cursor-pointer rounded-none border-2 border-border bg-primary text-sm font-bold text-primary-foreground shadow-[4px_4px_0_0_var(--border)] transition-[transform,box-shadow] duration-100 hover:bg-primary active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_0_var(--border)] disabled:cursor-not-allowed disabled:opacity-50"
+                  )}
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Continue"}
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin text-current" /> : "Continue"}
                 </Button>
               </form>
 
-              <p className="text-center text-[11px] leading-relaxed text-[#A1A1AA] pt-1">
+              <p className="pt-1 text-center text-[11px] leading-relaxed text-muted-foreground">
                 By continuing, you agree to Postercult&apos;s Terms and Privacy Policy.
               </p>
             </motion.div>
@@ -328,16 +334,19 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                 <button
                   type="button"
                   onClick={() => goTo("EMAIL", -1)}
-                  className="inline-flex items-center gap-1.5 text-xs text-[#71717A] hover:text-[#121212] transition-colors mb-3"
+                  className={cn(
+                    FOCUS,
+                    "mb-3 inline-flex cursor-pointer items-center gap-1.5 font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+                  )}
                 >
                   <ArrowLeft className="h-3.5 w-3.5" /> Back
                 </button>
-                <h2 className="text-[22px] font-semibold tracking-[-0.025em] text-[#121212]">
+                <h2 className="text-[22px] font-black tracking-tight text-foreground">
                   Check your inbox
                 </h2>
-                <p className="text-[13px] text-[#71717A] mt-1 leading-normal">
+                <p className="mt-1 text-[13px] leading-normal text-muted-foreground">
                   Enter the 6-digit code sent to{" "}
-                  <span className="text-[#121212] font-medium">{email}</span>.{" "}
+                  <span className="font-bold text-foreground">{email}</span>.{" "}
                   <button
                     type="button"
                     onClick={() => {
@@ -345,7 +354,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                       setOtp(["", "", "", "", "", ""]);
                       setError("");
                     }}
-                    className="underline underline-offset-2 text-[#121212] hover:opacity-75"
+                    className="border-b-2 border-foreground font-bold text-foreground hover:opacity-75"
                   >
                     Edit
                   </button>
@@ -354,21 +363,28 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
 
               <div className="space-y-2">
                 <OtpInput value={otp} onChange={setOtp} hasError={!!error} />
-                {error && <p className="text-xs text-[#B3261E] text-center pt-1">{error}</p>}
+                {error && <p className="pt-1 text-center text-xs font-bold text-destructive">{error}</p>}
               </div>
 
               <Button
                 type="button"
-                onClick={() => handleVerifyOtp(otpCode)}
+              
+                onClick={() => {
+                  playMechanicalClick();
+                  handleVerifyOtp(otpCode);
+                }}
                 disabled={otpCode.length < 6 || loading}
-                className="h-11 w-full rounded-lg bg-[#121212] text-sm font-medium text-[#FAF9F6] shadow-sm transition-all hover:bg-[#262626] active:scale-[0.99]"
+                className={cn(
+                  FOCUS,
+                  "h-11 w-full cursor-pointer rounded-none border-2 border-border bg-primary text-sm font-bold text-primary-foreground shadow-[4px_4px_0_0_var(--border)] transition-[transform,box-shadow] duration-100 hover:bg-primary active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_0_var(--border)] disabled:cursor-not-allowed disabled:opacity-50"
+                )}
               >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify code"}
+                {loading ? <Loader2 className="h-4 w-4 animate-spin text-current" /> : "Verify code"}
               </Button>
 
-              <div className="text-center text-xs text-[#71717A]">
+              <div className="text-center font-mono text-xs text-muted-foreground">
                 {timer > 0 ? (
-                  <span className="text-[#A1A1AA]">Resend code in {timer}s</span>
+                  <span>Resend code in {timer}s</span>
                 ) : (
                   <button
                     type="button"
@@ -382,7 +398,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                         setError(err instanceof Error ? err.message : "Failed to resend code.");
                       }
                     }}
-                    className="underline underline-offset-2 text-[#121212] font-medium"
+                    className="border-b-2 border-foreground font-bold text-foreground transition-opacity hover:opacity-75"
                   >
                     Resend code
                   </button>
@@ -397,13 +413,15 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.22, ease: "easeOut" }}
-              className="flex flex-col items-center py-6 text-center space-y-2"
+              className="flex flex-col items-center space-y-3 py-6 text-center"
             >
-              <CheckCircle2 className="h-10 w-10 text-[#121212]" />
-              <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-[#121212]">
+              <div className="flex h-14 w-14 items-center justify-center border-2 border-border bg-muted text-foreground shadow-[3px_3px_0_0_var(--border)]">
+                <CheckCircle2 className="h-8 w-8 text-foreground" strokeWidth={2.5} />
+              </div>
+              <h2 className="text-[20px] font-black tracking-tight text-foreground">
                 You&apos;re all set
               </h2>
-              <p className="text-xs text-[#71717A]">Welcome to Postercult.</p>
+              <p className="text-xs text-muted-foreground">Welcome to Postercult.</p>
             </motion.div>
           )}
         </AnimatePresence>

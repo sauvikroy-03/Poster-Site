@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/toast";
 import { useRouter } from "next/navigation";
+import { playMechanicalClick, playStampSound } from "@/lib/sounds";
 
 declare global {
   interface Window {
@@ -32,6 +33,7 @@ export default function CheckoutButton() {
 
   const handleCheckout = async () => {
     if (isProcessing) return;
+    playMechanicalClick();
     setIsProcessing(true);
 
     try {
@@ -83,6 +85,7 @@ export default function CheckoutButton() {
               return;
             }
 
+            playStampSound();
             toast.add({type:"success",description:"Order placed successfully!"});
             router.push(`/account?tab=orders`);
             router.refresh();
@@ -109,17 +112,17 @@ export default function CheckoutButton() {
       type="button"
       onClick={handleCheckout}
       disabled={isProcessing}
-      className="flex w-full items-center justify-center gap-2 rounded-xl bg-black py-3.5 text-sm font-bold text-white transition-all hover:opacity-90 duration-300 ease-out hover:scale-105 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
+      className="flex w-full cursor-pointer items-center justify-center gap-2 border-2 border-border bg-primary py-4 font-mono text-xs font-black uppercase tracking-wider text-primary-foreground shadow-[4px_4px_0_0_var(--accent)] transition-all hover:bg-primary/95 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_0_var(--accent)] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:active:translate-x-0 disabled:active:translate-y-0"
     >
       {isProcessing ? (
         <>
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Processing...
+          <Loader2 className="h-4 w-4 animate-spin text-current" />
+          PROCESSING...
         </>
       ) : (
         <>
-          Go to Checkout
-          <ChevronRight size={16} />
+          PROCEED TO CHECKOUT
+          <ChevronRight size={16} strokeWidth={2.5} />
         </>
       )}
     </button>

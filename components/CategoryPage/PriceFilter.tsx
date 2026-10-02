@@ -14,11 +14,7 @@ export default function PriceFilter() {
   const initial = Number(searchParams.get("maxPrice")) || MAX_PRICE;
   const [value, setValue] = useState(initial);
 
-  // Keep local slider in sync if URL changes externally (e.g. reset),
-  // but only trigger a re-render when the URL value actually differs
-  // from current state — otherwise every searchParams change (including
-  // ones this component itself caused via commitToUrl) re-invokes
-  // setValue needlessly, risking a cascading render.
+  // Keep local slider in sync if URL changes externally
   useEffect(() => {
     const urlValue = Number(searchParams.get("maxPrice")) || MAX_PRICE;
     setValue((prev) => (prev === urlValue ? prev : urlValue));
@@ -40,9 +36,9 @@ export default function PriceFilter() {
   const percent = ((value - MIN_PRICE) / (MAX_PRICE - MIN_PRICE)) * 100;
 
   return (
-    <div className="flex w-full flex-col items-start gap-3">
-      <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-400">
-        Max Price
+    <div className="flex w-full flex-col items-start gap-2.5">
+      <span className="font-mono text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+        MAX PRICE
       </span>
 
       <div className="w-full px-0.5">
@@ -55,21 +51,26 @@ export default function PriceFilter() {
           onChange={(e) => setValue(Number(e.target.value))}
           onMouseUp={() => commitToUrl(value)}
           onTouchEnd={() => commitToUrl(value)}
-          className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral-200 accent-orange-500
+          className="h-2 w-full cursor-pointer appearance-none border-2 border-border bg-muted
             [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4
-            [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full
-            [&::-webkit-slider-thumb]:bg-orange-500 [&::-webkit-slider-thumb]:shadow-md
-            [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full
-            [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-orange-500"
+            [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-none
+            [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-border
+            [&::-webkit-slider-thumb]:bg-accent [&::-webkit-slider-thumb]:shadow-[2px_2px_0_0_var(--border)]
+            [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-none
+            [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-border
+            [&::-moz-range-thumb]:bg-accent [&::-moz-range-thumb]:shadow-[2px_2px_0_0_var(--border)]"
           style={{
-            background: `linear-gradient(to right, #f97316 ${percent}%, #e5e5e5 ${percent}%)`,
+            background: `linear-gradient(to right, var(--accent) ${percent}%, var(--muted) ${percent}%)`,
           }}
         />
       </div>
 
-      <span className="text-xs text-neutral-500">
-        Up to ₹{value.toLocaleString("en-IN")}
-      </span>
+      <div className="flex w-full items-center justify-between font-mono text-xs font-bold text-foreground">
+        <span className="text-[11px] text-muted-foreground">UP TO</span>
+        <span className="border border-border bg-card px-1.5 py-0.5 shadow-[2px_2px_0_0_var(--border)]">
+          ₹{value.toLocaleString("en-IN")}
+        </span>
+      </div>
     </div>
   );
 }

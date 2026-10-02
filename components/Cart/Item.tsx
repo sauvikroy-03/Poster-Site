@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Minus, Plus, Trash2, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/toast";
+import { playMechanicalClick, playStampSound } from "@/lib/sounds";
 
 export interface CartItemData {
   cart_id: string;
@@ -107,15 +108,18 @@ export default function Item({ item }: ItemProps) {
   }, [localQuantity]);
 
   const handleIncrease = () => {
+    playMechanicalClick();
     setLocalQuantity((prev) => Math.min(prev + 1, 99));
   };
 
   const handleDecrease = () => {
+    playMechanicalClick();
     setLocalQuantity((prev) => Math.max(prev - 1, 1));
   };
 
   const handleRemove = async () => {
     if (isRemoving) return;
+    playMechanicalClick();
     setIsRemoving(true);
     try {
       const res = await fetch("/api/cart", {
@@ -135,6 +139,7 @@ export default function Item({ item }: ItemProps) {
         return;
       }
 
+      playStampSound();
       toast.add({
         type: "success",
         description: "Item removed from cart",
@@ -150,9 +155,9 @@ export default function Item({ item }: ItemProps) {
   };
 
   return (
-    <div className="flex w-full items-start gap-4 border-b border-neutral-200 py-5 last:border-b-0">
-      {/* Image */}
-      <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-neutral-100 sm:h-24 sm:w-24">
+    <div className="flex w-full items-start gap-4 border-b-2 border-border py-5 text-foreground last:border-b-0">
+      {/* Image Frame */}
+      <div className="relative h-20 w-20 flex-shrink-0 border-2 border-border bg-muted sm:h-24 sm:w-24">
         <Image
           src={image}
           alt={products.prod_name}
@@ -165,7 +170,7 @@ export default function Item({ item }: ItemProps) {
       {/* Details */}
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="truncate text-sm font-bold text-black sm:text-base">
+          <h3 className="truncate font-mono text-sm font-black uppercase tracking-tight text-foreground sm:text-base">
             {products.prod_name}
           </h3>
           <button
@@ -173,43 +178,46 @@ export default function Item({ item }: ItemProps) {
             onClick={handleRemove}
             disabled={isRemoving}
             aria-label="Remove item"
-            className="flex-shrink-0 text-red-500 transition-colors hover:text-red-600 disabled:opacity-40 hover:scale-105 cursor-pointer"
+            className="flex h-7 w-7 flex-shrink-0 cursor-pointer items-center justify-center border-2 border-transparent text-destructive transition-colors hover:border-border hover:bg-destructive/10 disabled:opacity-40"
           >
             {isRemoving ? (
-              <Loader2 size={18} className="animate-spin" />
+              <Loader2 size={16} className="animate-spin" />
             ) : (
-              <Trash2 size={18} />
+              <Trash2 size={16} strokeWidth={2.5} />
             )}
           </button>
         </div>
 
-        <p className="text-xs text-neutral-500">
-          Size: {product_variants.prod_size}
+        <p className="font-mono text-xs text-muted-foreground">
+          SIZE: <span className="font-bold text-foreground">{product_variants.prod_size}</span>
         </p>
 
         <div className="mt-1 flex items-end justify-between gap-3">
-          <span className="text-base font-bold text-black sm:text-lg">
+          <span className="font-mono text-base font-black text-foreground sm:text-lg">
             ₹{price.toLocaleString("en-IN")}
           </span>
 
-          <div className="flex flex-shrink-0 items-center gap-3 rounded-full bg-neutral-100 px-3 py-1.5">
+          {/* Quantity Stepper */}
+          <div className="flex flex-shrink-0 items-center border-2 border-border bg-card">
             <button
               type="button"
               onClick={handleDecrease}
               aria-label="Decrease quantity"
               disabled={localQuantity <= 1}
-              className="text-black transition-opacity disabled:opacity-30 hover:cursor-pointer "
+              className="flex h-7 w-7 cursor-pointer items-center justify-center transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
             >
-              <Minus size={14} />
+              <Minus size={13} strokeWidth={2.5} />
             </button>
-            <span className="w-4 text-center text-sm font-bold">{localQuantity}</span>
+            <span className="flex h-7 w-7 items-center justify-center border-x-2 border-border font-mono text-xs font-black text-foreground">
+              {localQuantity}
+            </span>
             <button
               type="button"
               onClick={handleIncrease}
               aria-label="Increase quantity"
-              className="text-black hover:cursor-pointer"
+              className="flex h-7 w-7 cursor-pointer items-center justify-center transition-colors hover:bg-muted"
             >
-              <Plus size={14} />
+              <Plus size={13} strokeWidth={2.5} />
             </button>
           </div>
         </div>

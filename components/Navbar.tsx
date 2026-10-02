@@ -8,6 +8,7 @@ import AuthModal from "@/components/AuthModal";
 import AccountMenu from "@/components/Profile/AccountMenu";
 import { createClient } from "@/lib/client";
 import type { User } from "@supabase/supabase-js";
+import { playMechanicalClick } from "@/lib/sounds";
 
 const FOCUS =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
@@ -25,6 +26,7 @@ export default function Navbar() {
 
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -36,10 +38,14 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      setAuthChecked(true);
+    });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      setAuthChecked(true);
     });
 
     return () => listener.subscription.unsubscribe();
@@ -65,6 +71,33 @@ export default function Navbar() {
 
   // Flat icon buttons: no border until hover, uses semantic hover states
   const iconBtn = `${FOCUS} flex h-10 w-10 cursor-pointer items-center justify-center border-2 border-transparent text-foreground transition-colors hover:border-border hover:bg-muted`;
+
+  // Cart only for signed-in users; signed-out users get the theme toggle in its place
+  const showCart = authChecked && !!user;
+  const themeInCartSlot = authChecked && !user;
+
+  const toggleTheme = () => {
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
+  };
+
+  const themeButton = (extraClass: string) => (
+    <button
+      type="button"
+      aria-label="Toggle theme"
+      onClick={toggleTheme}
+      className={`${iconBtn} ${extraClass}`}
+    >
+      {mounted ? (
+        resolvedTheme === "dark" ? (
+          <Sun className="h-[18px] w-[18px]" strokeWidth={2.5} />
+        ) : (
+          <Moon className="h-[18px] w-[18px]" strokeWidth={2.5} />
+        )
+      ) : (
+        <div className="h-[18px] w-[18px]" />
+      )}
+    </button>
+  );
 
   return (
     <>
@@ -103,31 +136,28 @@ export default function Navbar() {
 
           {/* Actions */}
           <div className="flex items-center gap-1 sm:gap-2">
-            {/* Dark Mode Toggle Button */}
+            {!themeInCartSlot && themeButton("hidden sm:flex")}
+
             <button
               type="button"
-              aria-label="Toggle theme"
-              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+              aria-label="Search"
               className={`${iconBtn} hidden sm:flex`}
             >
-              {mounted ? (
-                resolvedTheme === "dark" ? (
-                  <Sun className="h-[18px] w-[18px]" strokeWidth={2.5} />
-                ) : (
-                  <Moon className="h-[18px] w-[18px]" strokeWidth={2.5} />
-                )
-              ) : (
-                <div className="h-[18px] w-[18px]" />
-              )}
-            </button>
-
-            <button type="button" aria-label="Search" className={`${iconBtn} hidden sm:flex`}>
               <Search className="h-[18px] w-[18px]" strokeWidth={2.5} />
             </button>
 
-            <Link href="/cart" prefetch={true} aria-label="Cart" className={iconBtn}>
-              <ShoppingBag className="h-[18px] w-[18px]" strokeWidth={2.5} />
-            </Link>
+            {/* Cart slot */}
+            {showCart && (
+              <Link
+                href="/cart"
+                prefetch={true}
+                aria-label="Cart"
+                className={iconBtn}
+              >
+                <ShoppingBag className="h-[18px] w-[18px]" strokeWidth={2.5} />
+              </Link>
+            )}
+            {themeInCartSlot && themeButton("")}
 
             {user ? (
               <div className="relative ml-2" ref={dropdownRef}>
@@ -159,7 +189,10 @@ export default function Navbar() {
             ) : (
               <button
                 type="button"
-                onClick={() => setIsAuthOpen(true)}
+                onClick={() => {
+                  playMechanicalClick();
+                  setIsAuthOpen(true);
+                }}
                 className={`${FOCUS} ml-2 h-10 cursor-pointer border-2 border-border bg-primary px-5 text-sm font-bold text-primary-foreground shadow-[3px_3px_0_0_var(--border)] transition-[transform,box-shadow] duration-100 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_var(--border)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none`}
               >
                 Login

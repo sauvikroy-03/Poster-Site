@@ -245,10 +245,10 @@ export default function BasicDetails({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[620px]">
+      <DialogContent className="max-h-[90vh] overflow-y-auto border-border bg-card text-card-foreground sm:max-w-[620px]">
         <DialogHeader>
-          <DialogTitle>{editingId ? "Edit Address" : "Shipping Details"}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-foreground">{editingId ? "Edit Address" : "Shipping Details"}</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
             We&apos;ll use this to deliver your order and send updates.
           </DialogDescription>
         </DialogHeader>
@@ -259,7 +259,7 @@ export default function BasicDetails({
             {/* Name row */}
             <div className="grid grid-cols-2 gap-3">
               <Field data-invalid={!!errors.firstName}>
-                <FieldLabel htmlFor="firstName">First name</FieldLabel>
+                <FieldLabel htmlFor="firstName" className="text-foreground">First name</FieldLabel>
                 <Input
                   id="firstName"
                   autoComplete="given-name"
@@ -267,12 +267,13 @@ export default function BasicDetails({
                   onChange={(e) => updateField("firstName", e.target.value)}
                   aria-invalid={!!errors.firstName}
                   placeholder="Sauvik"
+                  className="border-input bg-background text-foreground"
                 />
-                {errors.firstName && <FieldError>{errors.firstName}</FieldError>}
+                {errors.firstName && <FieldError className="text-destructive">{errors.firstName}</FieldError>}
               </Field>
 
               <Field data-invalid={!!errors.lastName}>
-                <FieldLabel htmlFor="lastName">Last name</FieldLabel>
+                <FieldLabel htmlFor="lastName" className="text-foreground">Last name</FieldLabel>
                 <Input
                   id="lastName"
                   autoComplete="family-name"
@@ -280,15 +281,16 @@ export default function BasicDetails({
                   onChange={(e) => updateField("lastName", e.target.value)}
                   aria-invalid={!!errors.lastName}
                   placeholder="Roy"
+                  className="border-input bg-background text-foreground"
                 />
-                {errors.lastName && <FieldError>{errors.lastName}</FieldError>}
+                {errors.lastName && <FieldError className="text-destructive">{errors.lastName}</FieldError>}
               </Field>
             </div>
 
             {/* Email + Phone: stacked on mobile, side by side from sm: up */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Field data-invalid={!!errors.email}>
-                <FieldLabel htmlFor="email">Email address</FieldLabel>
+                <FieldLabel htmlFor="email" className="text-foreground">Email address</FieldLabel>
                 <Input
                   id="email"
                   type="email"
@@ -297,28 +299,29 @@ export default function BasicDetails({
                   onChange={(e) => updateField("email", e.target.value)}
                   aria-invalid={!!errors.email}
                   placeholder="you@example.com"
+                  className="border-input bg-background text-foreground"
                 />
-                {errors.email && <FieldError>{errors.email}</FieldError>}
+                {errors.email && <FieldError className="text-destructive">{errors.email}</FieldError>}
               </Field>
 
               <Field data-invalid={!!errors.phoneNumber}>
-                <FieldLabel htmlFor="phoneNumber">Mobile number</FieldLabel>
+                <FieldLabel htmlFor="phoneNumber" className="text-foreground">Mobile number</FieldLabel>
                 <div className="flex gap-2">
                   <Popover open={isPhonePopoverOpen} onOpenChange={setIsPhonePopoverOpen}>
                     <PopoverTrigger
                       type="button"
                       role="combobox"
                       aria-expanded={isPhonePopoverOpen}
-                      className="flex w-[90px] flex-shrink-0 items-center justify-between gap-1 rounded-md border border-input bg-background px-2 py-2 text-sm shadow-sm hover:bg-accent"
+                      className="flex w-[90px] flex-shrink-0 items-center justify-between gap-1 rounded-md border border-input bg-background px-2 py-2 text-sm text-foreground shadow-sm hover:bg-muted"
                     >
                       <span className="flex items-center gap-1 truncate">
                         <span>{isoToFlagEmoji(selectedPhoneCountry.iso2)}</span>
                         <span className="text-xs">{selectedPhoneCountry.dialCode}</span>
                       </span>
-                      <ChevronsUpDown className="h-3 w-3 flex-shrink-0 opacity-50" />
+                      <ChevronsUpDown className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
                     </PopoverTrigger>
-                    <PopoverContent className="w-[280px] p-0">
-                      <Command>
+                    <PopoverContent className="w-[280px] border-border bg-popover p-0 text-popover-foreground">
+                      <Command className="bg-transparent">
                         <CommandInput placeholder="Search country..." />
                         <CommandList>
                           <CommandEmpty>No country found.</CommandEmpty>
@@ -331,10 +334,11 @@ export default function BasicDetails({
                                   updateField("phoneCountryIso2", c.iso2);
                                   setIsPhonePopoverOpen(false);
                                 }}
+                                className="data-[selected=true]:bg-muted"
                               >
                                 <Check
                                   className={cn(
-                                    "mr-2 h-4 w-4",
+                                    "mr-2 h-4 w-4 text-primary",
                                     form.phoneCountryIso2 === c.iso2 ? "opacity-100" : "opacity-0"
                                   )}
                                 />
@@ -359,16 +363,16 @@ export default function BasicDetails({
                     }
                     aria-invalid={!!errors.phoneNumber}
                     placeholder="98765 43210"
-                    className="min-w-0 flex-1"
+                    className="min-w-0 flex-1 border-input bg-background text-foreground"
                   />
                 </div>
-                {errors.phoneNumber && <FieldError>{errors.phoneNumber}</FieldError>}
+                {errors.phoneNumber && <FieldError className="text-destructive">{errors.phoneNumber}</FieldError>}
               </Field>
             </div>
 
             {/* Address */}
             <Field data-invalid={!!errors.address}>
-              <FieldLabel htmlFor="address">Address</FieldLabel>
+              <FieldLabel htmlFor="address" className="text-foreground">Address</FieldLabel>
               <Input
                 id="address"
                 autoComplete="street-address"
@@ -376,35 +380,37 @@ export default function BasicDetails({
                 onChange={(e) => updateField("address", e.target.value)}
                 aria-invalid={!!errors.address}
                 placeholder="Flat / house no., building, street, area"
+                className="border-input bg-background text-foreground"
               />
-              {errors.address && <FieldError>{errors.address}</FieldError>}
+              {errors.address && <FieldError className="text-destructive">{errors.address}</FieldError>}
             </Field>
 
             {/* Landmark + Country side by side */}
             <div className="grid grid-cols-2 gap-3">
               <Field>
-                <FieldLabel htmlFor="landmark">Landmark</FieldLabel>
+                <FieldLabel htmlFor="landmark" className="text-foreground">Landmark</FieldLabel>
                 <Input
                   id="landmark"
                   value={form.landmark}
                   onChange={(e) => updateField("landmark", e.target.value)}
                   placeholder="Near..."
+                  className="border-input bg-background text-foreground"
                 />
-                <FieldDescription>Optional</FieldDescription>
+                <FieldDescription className="text-muted-foreground">Optional</FieldDescription>
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="country">Country</FieldLabel>
+                <FieldLabel htmlFor="country" className="text-foreground">Country</FieldLabel>
                 <Select
                   value={form.country}
                   onValueChange={(value) => {
                     if (value) updateField("country", value);
                   }}
                 >
-                  <SelectTrigger id="country">
+                  <SelectTrigger id="country" className="border-input bg-background text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="border-border bg-popover text-popover-foreground">
                     {countries.map((c) => (
                       <SelectItem key={c.iso2} value={c.name}>
                         <span className="mr-2">{isoToFlagEmoji(c.iso2)}</span>
@@ -419,7 +425,7 @@ export default function BasicDetails({
             {/* Pincode + City + State */}
             <div className="grid grid-cols-3 gap-3">
               <Field data-invalid={!!errors.pincode || !!pincodeError}>
-                <FieldLabel htmlFor="pincode">Pincode</FieldLabel>
+                <FieldLabel htmlFor="pincode" className="text-foreground">Pincode</FieldLabel>
                 <div className="relative">
                   <Input
                     id="pincode"
@@ -429,50 +435,49 @@ export default function BasicDetails({
                     aria-invalid={!!errors.pincode || !!pincodeError}
                     placeholder="110001"
                     maxLength={6}
+                    className="border-input bg-background text-foreground"
                   />
                   {isPincodeLoading && (
-                    <Loader2 className="absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-neutral-400" />
+                    <Loader2 className="absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
                   )}
                 </div>
                 {(errors.pincode || pincodeError) && (
-                  <FieldError>{errors.pincode || pincodeError}</FieldError>
+                  <FieldError className="text-destructive">{errors.pincode || pincodeError}</FieldError>
                 )}
               </Field>
 
               <Field data-invalid={!!errors.city}>
-                <FieldLabel htmlFor="city">City</FieldLabel>
+                <FieldLabel htmlFor="city" className="text-foreground">City</FieldLabel>
                 <Input
                   id="city"
                   value={form.city}
                   disabled
                   placeholder="Auto-filled"
-                  className="bg-neutral-50"
+                  className="border-input bg-muted text-muted-foreground"
                 />
-                {errors.city && <FieldError>{errors.city}</FieldError>}
+                {errors.city && <FieldError className="text-destructive">{errors.city}</FieldError>}
               </Field>
 
               <Field data-invalid={!!errors.state}>
-                <FieldLabel htmlFor="state">State</FieldLabel>
+                <FieldLabel htmlFor="state" className="text-foreground">State</FieldLabel>
                 <Input
                   id="state"
                   value={form.state}
                   disabled
                   placeholder="Auto-filled"
-                  className="bg-neutral-50"
+                  className="border-input bg-muted text-muted-foreground"
                 />
-                {errors.state && <FieldError>{errors.state}</FieldError>}
+                {errors.state && <FieldError className="text-destructive">{errors.state}</FieldError>}
               </Field>
             </div>
 
             {/* Address type */}
             <Field>
-              <FieldLabel id="address-type-label">Address type</FieldLabel>
+              <FieldLabel id="address-type-label" className="text-foreground">Address type</FieldLabel>
               <RadioGroup
                 aria-labelledby="address-type-label"
                 value={form.addressType}
                 onValueChange={(value) => {
-                  // Narrow explicitly: this Base UI-based RadioGroup can hand
-                  // back a wider type than our two-value union.
                   if (value === "home" || value === "office") {
                     updateField("addressType", value);
                   }
@@ -488,13 +493,13 @@ export default function BasicDetails({
                       className={cn(
                         "flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 transition-colors",
                         isSelected
-                          ? "border-black bg-neutral-50"
-                          : "border-input hover:border-black/40"
+                          ? "border-primary bg-secondary/50 text-foreground"
+                          : "border-input bg-background text-foreground hover:border-primary/50"
                       )}
                     >
-                      <RadioGroupItem value={value} id={`address-type-${value}`} />
-                      <Icon className="h-4 w-4 text-neutral-600" />
-                      <span className="text-sm font-semibold text-black">{label}</span>
+                      <RadioGroupItem value={value} id={`address-type-${value}`} className="border-border text-primary" />
+                      <Icon className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-semibold">{label}</span>
                     </label>
                   );
                 })}
@@ -504,22 +509,22 @@ export default function BasicDetails({
         </FieldSet>
 
         <Button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          className="mt-2 w-full rounded-xl bg-black py-5 text-sm font-bold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isSubmitting ? (
-            <span className="flex items-center justify-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Saving...
-            </span>
-          ) : editingId ? (
-            "Update Address"
-          ) : (
-            "Save Details"
-          )}
-        </Button>
+  type="button"
+  onClick={handleSubmit}
+  disabled={isSubmitting}
+  className="mt-3 w-full rounded-none border-2 border-border bg-primary py-5 font-mono text-xs font-black uppercase tracking-wider text-primary-foreground shadow-[4px_4px_0_0_var(--accent)] transition-all hover:bg-primary/95 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_0_var(--accent)] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:active:translate-x-0 disabled:active:translate-y-0"
+>
+  {isSubmitting ? (
+    <span className="flex items-center justify-center gap-2">
+      <Loader2 className="h-4 w-4 animate-spin text-current" />
+      SAVING...
+    </span>
+  ) : editingId ? (
+    "UPDATE ADDRESS"
+  ) : (
+    "SAVE DETAILS"
+  )}
+</Button>
       </DialogContent>
     </Dialog>
   );
