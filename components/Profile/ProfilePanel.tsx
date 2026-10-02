@@ -1,15 +1,18 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { MapPin, Mail, LogOut, Plus, Loader2 } from "lucide-react";
-import { toast } from "react-hot-toast";
+import { toast } from "@/components/ui/toast";
 import BasicDetails from "@/components/Profile/BasicDetails";
 import AddressList, { SavedAddress } from "@/components/Profile/AddressListCard";
 import { createClient } from "@/lib/client";
+import { playStampSound } from "@/lib/sounds";
 
 interface ProfilePanelProps {
   email?: string;
 }
+
+const DEFAULT_DEBOUNCE_MS = 500;
 
 export default function ProfilePanel({ email }: ProfilePanelProps) {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
@@ -17,6 +20,11 @@ export default function ProfilePanel({ email }: ProfilePanelProps) {
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
   const [editingAddress, setEditingAddress] = useState<SavedAddress | null>(null);
   const supabase = createClient();
+
+  // Debounce bookkeeping for "set default address"
+  const lastSynced = useRef<SavedAddress[]>([]); // last state the server confirmed
+  const pendingDefaultId = useRef<string | null>(null); // latest id the user picked
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -29,12 +37,16 @@ export default function ProfilePanel({ email }: ProfilePanelProps) {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
+        lastSynced.current = [];
         setAddresses([]);
         return;
       }
 
-      setAddresses(data.addresses as SavedAddress[]);
+      const list = data.addresses as SavedAddress[];
+      lastSynced.current = list;
+      setAddresses(list);
     } catch {
+      lastSynced.current = [];
       setAddresses([]);
     } finally {
       setIsLoadingAddresses(false);
@@ -44,6 +56,25 @@ export default function ProfilePanel({ email }: ProfilePanelProps) {
   useEffect(() => {
     loadAddresses();
   }, [loadAddresses]);
+
+  // If the user leaves while a change is still waiting, send it instead of dropping it
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+        const id = pendingDefaultId.current;
+        const confirmedDefault = lastSynced.current.find((a) => a.is_default)?.id;
+        if (id && id !== confirmedDefault) {
+          fetch("/api/address", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, setDefault: true }),
+            keepalive: true,
+          }).catch(() => {});
+        }
+      }
+    };
+  }, []);
 
   // ---------- Actions ----------
   const handleAddNew = () => {
@@ -56,11 +87,13 @@ export default function ProfilePanel({ email }: ProfilePanelProps) {
     setIsAddressModalOpen(true);
   };
 
-  const handleSetDefault = async (id: string) => {
-    const previous = addresses;
+  // Sends the request once the user has stopped clicking
+  const syncDefault = async (id: string) => {
+    debounceTimer.current = null;
 
-    // Optimistic update
-    setAddresses((prev) => prev.map((a) => ({ ...a, is_default: a.id === id })));
+    // User ended up back on the default the server already has: nothing to send
+    const confirmedDefault = lastSynced.current.find((a) => a.is_default)?.id;
+    if (id === confirmedDefault) return;
 
     try {
       const res = await fetch("/api/address", {
@@ -71,16 +104,34 @@ export default function ProfilePanel({ email }: ProfilePanelProps) {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        setAddresses(previous);
-        toast.error(data.message || "Failed to update default address.");
+        // Only roll back if the user hasn't picked something newer meanwhile
+        if (pendingDefaultId.current === id) setAddresses(lastSynced.current);
+        toast.add({
+          type: "error",
+          description: data.message || "Failed to update default address.",
+        });
+        playStampSound();
         return;
       }
 
-      toast.success("Default address updated");
+      lastSynced.current = lastSynced.current.map((a) => ({ ...a, is_default: a.id === id }));
+      toast.add({ type: "success", description: "Default address updated successfully." });
+      playStampSound();
     } catch {
-      setAddresses(previous);
-      toast.error("Something went wrong. Please try again.");
+      if (pendingDefaultId.current === id) setAddresses(lastSynced.current);
+      toast.add({ type: "error", description: "Something went wrong. Please try again." });
+      playStampSound();
     }
+  };
+
+  const handleSetDefault = (id: string) => {
+    // Optimistic update: the UI changes instantly
+    setAddresses((prev) => prev.map((a) => ({ ...a, is_default: a.id === id })));
+
+    // Restart the timer on every click so only the last choice is sent
+    pendingDefaultId.current = id;
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => syncDefault(id), DEFAULT_DEBOUNCE_MS);
   };
 
   return (
