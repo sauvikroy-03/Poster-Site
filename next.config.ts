@@ -15,11 +15,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-
-  // 3. Inline critical CSS to eliminate the render-blocking CSS warning
-  experimental: {
-    optimizeCss: true,
-  },
 };
 
 export default nextConfig;
