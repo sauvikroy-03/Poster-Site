@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/toast";
 import { useRouter } from "next/navigation";
@@ -12,6 +12,9 @@ declare global {
     Razorpay: new (options: Record<string, unknown>) => { open: () => void };
   }
 }
+
+// Must match the delivery rule used in CartShell and on the server
+const DELIVERY_CHARGE = 79;
 
 function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
@@ -31,7 +34,11 @@ function loadRazorpayScript(): Promise<boolean> {
 export default function CheckoutButton() {
   const [isProcessing, setIsProcessing] = useState(false);
   const router = useRouter();
-  const { flush } = useCart();
+  const { flush, subtotal } = useCart();
+
+  // Always holds the latest on-screen subtotal, even inside async callbacks
+  const subtotalRef = useRef(subtotal);
+  subtotalRef.current = subtotal;
 
   const handleCheckout = async () => {
     if (isProcessing) return;
@@ -55,6 +62,18 @@ export default function CheckoutButton() {
 
       if (!createRes.ok || !createData.success) {
         toast.add({type:"error",description:createData.message || "Failed to start checkout."});
+        setIsProcessing(false);
+        return;
+      }
+
+      // Safety check: the server-computed amount must match what the user saw.
+      // Razorpay amounts are in paise. If your API returns rupees, drop the * 100.
+      const expectedAmount = Math.round((subtotalRef.current + DELIVERY_CHARGE) * 100);
+      if (createData.amount !== expectedAmount) {
+        toast.add({
+          type: "error",
+          description: "Prices have changed. Please refresh and review your cart.",
+        });
         setIsProcessing(false);
         return;
       }
