@@ -106,10 +106,13 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
   const [timer, setTimer] = React.useState(60);
+  const lastAttemptedCode = React.useRef<string>("");
+
   const otpCode = otp.join("");
   const supabase = createClient();
   const router = useRouter();
 
+  // Reset inputs when closed
   React.useEffect(() => {
     if (!isOpen) {
       const resetTimeout = setTimeout(() => {
@@ -118,11 +121,13 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         setOtp(["", "", "", "", "", ""]);
         setError("");
         setTimer(60);
+        lastAttemptedCode.current = "";
       }, 200);
       return () => clearTimeout(resetTimeout);
     }
   }, [isOpen]);
 
+  // Resend countdown timer
   React.useEffect(() => {
     if (step !== "OTP" || timer <= 0) return;
     const interval = setInterval(() => setTimer((t) => t - 1), 1000);
@@ -170,6 +175,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   const handleVerifyOtp = React.useCallback(async (code: string) => {
     if (code.length < 6) return setError("Please enter the complete 6-digit code.");
 
+    lastAttemptedCode.current = code;
     setError("");
     setLoading(true);
     try {
@@ -215,14 +221,30 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     }
   }, [email, onSuccess, goTo, onClose, supabase, router]);
 
+  // Keep a stable ref to handleVerifyOtp to avoid re-running the effect on callback recreation
+  const verifyRef = React.useRef(handleVerifyOtp);
+  React.useEffect(() => {
+    verifyRef.current = handleVerifyOtp;
+  }, [handleVerifyOtp]);
+
+  // Auto-trigger when 6 digits are typed, only if this exact code hasn't failed already
   React.useEffect(() => {
     if (otpCode.length === 6 && step === "OTP" && !loading) {
-      const timerId = setTimeout(() => {
-        handleVerifyOtp(otpCode);
-      }, 0);
-      return () => clearTimeout(timerId);
+      if (otpCode !== lastAttemptedCode.current) {
+        verifyRef.current(otpCode);
+      }
     }
-  }, [otpCode, step, loading, handleVerifyOtp]);
+  }, [otpCode, step, loading]);
+
+  const handleOtpChange = (newOtp: string[]) => {
+    setOtp(newOtp);
+    setError("");
+    const newCode = newOtp.join("");
+    // If the user modified the code from the failed attempt, reset the lock
+    if (newCode !== lastAttemptedCode.current) {
+      lastAttemptedCode.current = "";
+    }
+  };
 
   return (
     <Dialog
@@ -259,7 +281,6 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               <Button
                 type="button"
                 variant="outline"
-             
                 onClick={() => {
                   playMechanicalClick();
                   onSuccess?.("google-user@example.com");
@@ -302,7 +323,6 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
 
                 <Button
                   type="submit"
-              
                   disabled={loading}
                   className={cn(
                     FOCUS,
@@ -353,6 +373,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                       goTo("EMAIL", -1);
                       setOtp(["", "", "", "", "", ""]);
                       setError("");
+                      lastAttemptedCode.current = "";
                     }}
                     className="border-b-2 border-foreground font-bold text-foreground hover:opacity-75"
                   >
@@ -362,13 +383,12 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               </div>
 
               <div className="space-y-2">
-                <OtpInput value={otp} onChange={setOtp} hasError={!!error} />
+                <OtpInput value={otp} onChange={handleOtpChange} hasError={!!error} />
                 {error && <p className="pt-1 text-center text-xs font-bold text-destructive">{error}</p>}
               </div>
 
               <Button
                 type="button"
-              
                 onClick={() => {
                   playMechanicalClick();
                   handleVerifyOtp(otpCode);
@@ -392,6 +412,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                       setOtp(["", "", "", "", "", ""]);
                       setError("");
                       setTimer(60);
+                      lastAttemptedCode.current = "";
                       try {
                         await sendOtp(email.trim().toLowerCase());
                       } catch (err) {
