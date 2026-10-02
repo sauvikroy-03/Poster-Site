@@ -8,10 +8,9 @@ import Link from "next/link";
 interface ProductCardProps {
   product: ProjectDataInterface;
   priority?: boolean;
-  sizes?:string;
 }
 
-export default function ProductCard({ product, priority = false,sizes = "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"}: ProductCardProps) {
+export default function ProductCard({ product, priority = false }: ProductCardProps) {
   const { prod_name, prod_images, product_variants, prod_category } = product;
 
   const [activeIndex, setActiveIndex] = useState(0);
@@ -60,8 +59,7 @@ export default function ProductCard({ product, priority = false,sizes = "(max-wi
             priority={priority}
             fetchPriority={priority ? "high" : "auto"}
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
-            
-            sizes={sizes}
+            sizes="(max-width: 640px) 160px, (max-width: 768px) 200px, (max-width: 1024px) 240px, 280px"
           />
 
           {/* {hasMultipleImages && (
