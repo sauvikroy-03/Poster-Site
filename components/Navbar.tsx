@@ -150,7 +150,7 @@ export default function Navbar() {
             {showCart && (
               <Link
                 href="/cart"
-                prefetch={true}
+              
                 aria-label="Cart"
                 className={iconBtn}
               >

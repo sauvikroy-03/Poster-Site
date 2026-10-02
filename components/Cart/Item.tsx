@@ -40,6 +40,9 @@ export default function Item({ item }: ItemProps) {
   const { quantity, products, product_variants } = item;
   const [localQuantity, setLocalQuantity] = useState(quantity);
   const [isRemoving, setIsRemoving] = useState(false);
+  // Flips to true the moment the server confirms the delete, so the row
+  // disappears at the same time as the toast instead of after router.refresh()
+  const [isRemoved, setIsRemoved] = useState(false);
   const router = useRouter();
 
   // Tracks whether the pending debounced update has been confirmed by
@@ -139,12 +142,14 @@ export default function Item({ item }: ItemProps) {
         return;
       }
 
+      // Hide the row right away, then confirm with the toast
+      setIsRemoved(true);
       playStampSound();
       toast.add({
         type: "success",
         description: "Item removed from cart",
       });
-      router.refresh();
+      router.refresh(); // updates the Order Summary totals / empty state
     } catch {
       toast.add({
         type: "error",
@@ -153,6 +158,8 @@ export default function Item({ item }: ItemProps) {
       setIsRemoving(false);
     }
   };
+
+  if (isRemoved) return null;
 
   return (
     <div className="flex w-full items-start gap-4 border-b-2 border-border py-5 text-foreground last:border-b-0">
