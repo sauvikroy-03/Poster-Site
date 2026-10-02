@@ -207,7 +207,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         console.error("Server response missing session tokens — check /api/auth/createUser.");
       }
 
-      playStampSound();
+    
       onSuccess?.(email);
       goTo("SUCCESS", 1);
       setTimeout(() => {
