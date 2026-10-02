@@ -5,6 +5,7 @@ import { ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/toast";
 import { useRouter } from "next/navigation";
 import { playMechanicalClick, playStampSound } from "@/lib/sounds";
+import { useCart } from "@/components/Cart/CartProvider";
 
 declare global {
   interface Window {
@@ -30,6 +31,7 @@ function loadRazorpayScript(): Promise<boolean> {
 export default function CheckoutButton() {
   const [isProcessing, setIsProcessing] = useState(false);
   const router = useRouter();
+  const { flush } = useCart();
 
   const handleCheckout = async () => {
     if (isProcessing) return;
@@ -37,6 +39,17 @@ export default function CheckoutButton() {
     setIsProcessing(true);
 
     try {
+      // Make sure the server has the quantities the user is looking at
+      const synced = await flush();
+      if (!synced) {
+        toast.add({
+          type: "error",
+          description: "Couldn't save your cart changes. Please check quantities and try again.",
+        });
+        setIsProcessing(false);
+        return;
+      }
+
       const createRes = await fetch("/api/checkout/create-order", { method: "POST" });
       const createData = await createRes.json();
 

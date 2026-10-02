@@ -1,11 +1,9 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { Minus, Plus, Trash2, Loader2 } from "lucide-react";
-import { toast } from "@/components/ui/toast";
+import { Minus, Plus, Trash2 } from "lucide-react";
 import { playMechanicalClick, playStampSound } from "@/lib/sounds";
+import { useCart } from "@/components/Cart/CartProvider";
 
 export interface CartItemData {
   cart_id: string;
@@ -30,136 +28,28 @@ export interface CartItemData {
   };
 }
 
-interface ItemProps {
-  item: CartItemData;
-}
-
-const DEBOUNCE_MS = 200;
-
-export default function Item({ item }: ItemProps) {
+export default function Item({ item }: { item: CartItemData }) {
+  const { updateQuantity, removeItem } = useCart();
   const { quantity, products, product_variants } = item;
-  const [localQuantity, setLocalQuantity] = useState(quantity);
-  const [isRemoving, setIsRemoving] = useState(false);
-  // Flips to true the moment the server confirms the delete, so the row
-  // disappears at the same time as the toast instead of after router.refresh()
-  const [isRemoved, setIsRemoved] = useState(false);
-  const router = useRouter();
-
-  // Tracks whether the pending debounced update has been confirmed by
-  // the server yet — used to avoid firing a request for the very first
-  // render (mount) where localQuantity trivially equals the prop.
-  const isFirstRender = useRef(true);
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastSyncedQuantity = useRef(quantity);
 
   const image = products.prod_images?.[0] ?? "/placeholder.png";
   const price = Number(product_variants.prod_price);
 
-  const syncQuantity = async (newQuantity: number) => {
-    try {
-      const res = await fetch("/api/cart", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cart_id: item.cart_id, quantity: newQuantity }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        toast.add({
-          type: "error",
-          description: data.message || "Failed to update quantity.",
-        });
-        // Roll back to the last known-good value on failure
-        setLocalQuantity(lastSyncedQuantity.current);
-        return;
-      }
-
-      lastSyncedQuantity.current = newQuantity;
-      router.refresh(); // keeps Order Summary totals in sync
-    } catch {
-      toast.add({
-        type: "error",
-        description: "Something went wrong. Please try again.",
-      });
-      setLocalQuantity(lastSyncedQuantity.current);
-    }
-  };
-
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    debounceTimer.current = setTimeout(() => {
-      if (localQuantity !== lastSyncedQuantity.current) {
-        syncQuantity(localQuantity);
-      }
-    }, DEBOUNCE_MS);
-
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localQuantity]);
-
   const handleIncrease = () => {
     playMechanicalClick();
-    setLocalQuantity((prev) => Math.min(prev + 1, 99));
+    updateQuantity(item.cart_id, Math.min(quantity + 1, 99));
   };
 
   const handleDecrease = () => {
     playMechanicalClick();
-    setLocalQuantity((prev) => Math.max(prev - 1, 1));
+    updateQuantity(item.cart_id, Math.max(quantity - 1, 1));
   };
 
-  const handleRemove = async () => {
-    if (isRemoving) return;
+  const handleRemove = () => {
     playMechanicalClick();
-    setIsRemoving(true);
-    try {
-      const res = await fetch("/api/cart", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cart_id: item.cart_id }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        toast.add({
-          type: "error",
-          description: data.message || "Failed to remove item.",
-        });
-        setIsRemoving(false);
-        return;
-      }
-
-      // Hide the row right away, then confirm with the toast
-      setIsRemoved(true);
-      playStampSound();
-      toast.add({
-        type: "success",
-        description: "Item removed from cart",
-      });
-      router.refresh(); // updates the Order Summary totals / empty state
-    } catch {
-      toast.add({
-        type: "error",
-        description: "Something went wrong. Please try again.",
-      });
-      setIsRemoving(false);
-    }
+    playStampSound();
+    removeItem(item.cart_id);
   };
-
-  if (isRemoved) return null;
 
   return (
     <div className="flex w-full items-start gap-4 border-b-2 border-border py-5 text-foreground last:border-b-0">
@@ -183,15 +73,10 @@ export default function Item({ item }: ItemProps) {
           <button
             type="button"
             onClick={handleRemove}
-            disabled={isRemoving}
             aria-label="Remove item"
-            className="flex h-7 w-7 flex-shrink-0 cursor-pointer items-center justify-center border-2 border-transparent text-destructive transition-colors hover:border-border hover:bg-destructive/10 disabled:opacity-40"
+            className="flex h-7 w-7 flex-shrink-0 cursor-pointer items-center justify-center border-2 border-transparent text-destructive transition-colors hover:border-border hover:bg-destructive/10"
           >
-            {isRemoving ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <Trash2 size={16} strokeWidth={2.5} />
-            )}
+            <Trash2 size={16} strokeWidth={2.5} />
           </button>
         </div>
 
@@ -210,13 +95,13 @@ export default function Item({ item }: ItemProps) {
               type="button"
               onClick={handleDecrease}
               aria-label="Decrease quantity"
-              disabled={localQuantity <= 1}
+              disabled={quantity <= 1}
               className="flex h-7 w-7 cursor-pointer items-center justify-center transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
             >
               <Minus size={13} strokeWidth={2.5} />
             </button>
             <span className="flex h-7 w-7 items-center justify-center border-x-2 border-border font-mono text-xs font-black text-foreground">
-              {localQuantity}
+              {quantity}
             </span>
             <button
               type="button"
