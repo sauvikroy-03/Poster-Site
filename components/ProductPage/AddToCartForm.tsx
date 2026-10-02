@@ -91,7 +91,7 @@ export default function AddToCartForm({ product }: ProductCardProps) {
 
       if (!res.ok || !data.success) {
         toast.add({
-          type: "error",
+          type: "warning",
           title: "Please Sign in",
           description: "You need to be signed in to add items to your cart.",
         });
