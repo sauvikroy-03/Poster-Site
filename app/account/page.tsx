@@ -1,9 +1,9 @@
+// app/account/page.tsx
 import React, { Suspense } from "react";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import AccountSidebar from "@/components/Profile/AccountSidebar";
 import ProfilePanel from "@/components/Profile/ProfilePanel";
-import OrdersPanel from "@/components/Profile/OrdersPanel";
+import AccountTabs from "@/components/Profile/AccountTabs";
 
 async function getUserEmail(): Promise<string | undefined> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -43,29 +43,17 @@ function PanelSkeleton() {
   );
 }
 
-export default async function AccountPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ tab?: string }>;
-}) {
-  const { tab } = await searchParams;
-  const activeTab = tab === "orders" ? "orders" : "profile";
-
+export default function AccountPage() {
   return (
     <div className="min-h-screen w-full bg-background text-foreground">
-      <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-8 px-6 py-10 md:flex-row md:gap-14 md:py-14">
-        {/* Sidebar renders instantly */}
-        <aside className="w-full shrink-0 md:w-60">
-          <AccountSidebar activeTab={activeTab} />
-        </aside>
-
-        {/* Panel streams independently based on the active tab */}
-        <div className="min-w-0 flex-1">
-          <Suspense key={activeTab} fallback={<PanelSkeleton />}>
-            {activeTab === "orders" ? <OrdersPanel /> : <ProfileView />}
+      {/* Tabs switch on the client, so there is no server round trip when clicking */}
+      <AccountTabs
+        profile={
+          <Suspense fallback={<PanelSkeleton />}>
+            <ProfileView />
           </Suspense>
-        </div>
-      </div>
+        }
+      />
     </div>
   );
 }
