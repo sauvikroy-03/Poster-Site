@@ -13,9 +13,6 @@ declare global {
   }
 }
 
-// Must match the delivery rule used in CartShell and on the server
-const DELIVERY_CHARGE = 79;
-
 function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
     if (document.getElementById("razorpay-checkout-js")) {
@@ -34,11 +31,15 @@ function loadRazorpayScript(): Promise<boolean> {
 export default function CheckoutButton() {
   const [isProcessing, setIsProcessing] = useState(false);
   const router = useRouter();
-  const { flush, subtotal } = useCart();
+  const { flush, total, coupon, couponWarning } = useCart();
 
-  // Always holds the latest on-screen subtotal, even inside async callbacks
-  const subtotalRef = useRef(subtotal);
-  subtotalRef.current = subtotal;
+  // Always hold the latest on-screen values, even inside async callbacks
+  const totalRef = useRef(total);
+  totalRef.current = total;
+  const couponRef = useRef(coupon);
+  couponRef.current = coupon;
+  const couponWarningRef = useRef(couponWarning);
+  couponWarningRef.current = couponWarning;
 
   const handleCheckout = async () => {
     if (isProcessing) return;
@@ -51,24 +52,40 @@ export default function CheckoutButton() {
       if (!synced) {
         toast.add({
           type: "error",
-          description: "Couldn't save your cart changes. Please check quantities and try again.",
+          description:
+            "Couldn't save your cart changes. Please check quantities and try again.",
         });
         setIsProcessing(false);
         return;
       }
 
-      const createRes = await fetch("/api/checkout/create-order", { method: "POST" });
+      // Send only the coupon code, never an amount. If the coupon no longer
+      // qualifies on screen (e.g. cart dropped below its minimum), don't send
+      // it, so the server total matches what the user sees.
+      const couponCode =
+        couponRef.current && !couponWarningRef.current
+          ? couponRef.current.coupon_code
+          : null;
+
+      const createRes = await fetch("/api/checkout/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ couponCode }),
+      });
       const createData = await createRes.json();
 
       if (!createRes.ok || !createData.success) {
-        toast.add({type:"error",description:createData.message || "Failed to start checkout."});
+        toast.add({
+          type: "error",
+          description: createData.message || "Failed to start checkout.",
+        });
         setIsProcessing(false);
         return;
       }
 
       // Safety check: the server-computed amount must match what the user saw.
       // Razorpay amounts are in paise. If your API returns rupees, drop the * 100.
-      const expectedAmount = Math.round((subtotalRef.current + DELIVERY_CHARGE) * 100);
+      const expectedAmount = Math.round(totalRef.current * 100);
       if (createData.amount !== expectedAmount) {
         toast.add({
           type: "error",
@@ -80,7 +97,10 @@ export default function CheckoutButton() {
 
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
-        toast.add({type:"error",description:"Failed to load payment gateway. Please try again."});
+        toast.add({
+          type: "error",
+          description: "Failed to load payment gateway. Please try again.",
+        });
         setIsProcessing(false);
         return;
       }
@@ -113,16 +133,22 @@ export default function CheckoutButton() {
             const verifyData = await verifyRes.json();
 
             if (!verifyRes.ok || !verifyData.success) {
-              toast.add({type:"error",description:verifyData.message || "Payment verification failed."});
+              toast.add({
+                type: "error",
+                description: verifyData.message || "Payment verification failed.",
+              });
               return;
             }
 
             playStampSound();
-            toast.add({type:"success",description:"Order placed successfully!"});
+            toast.add({ type: "success", description: "Order placed successfully!" });
             router.push(`/account?tab=orders`);
             router.refresh();
           } catch {
-            toast.add({type:"error",description:"Something went wrong while verifying your payment."});
+            toast.add({
+              type: "error",
+              description: "Something went wrong while verifying your payment.",
+            });
           } finally {
             setIsProcessing(false);
           }
@@ -134,7 +160,10 @@ export default function CheckoutButton() {
 
       razorpay.open();
     } catch {
-      toast.add({type:"error",description:"Something went wrong. Please try again."});
+      toast.add({
+        type: "error",
+        description: "Something went wrong. Please try again.",
+      });
       setIsProcessing(false);
     }
   };

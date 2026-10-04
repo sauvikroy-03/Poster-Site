@@ -1,11 +1,12 @@
 import crypto from "crypto";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { createRazorpayOrder, getRazorpayKeyId } from "@/lib/razorpay";
+import { DELIVERY_CHARGE, type CouponInfo } from "@/lib/coupons-shared";
+import { validateCoupon } from "@/lib/coupons";
 
-const DELIVERY_CHARGE = 79;
 const MAX_QUANTITY = 99;
 
 function fail(message: string, status: number) {
@@ -23,9 +24,13 @@ async function getAuthedClient() {
     cookies: {
       getAll: () => cookieStore.getAll(),
       setAll: (cookiesToSet) => {
-        cookiesToSet.forEach(({ name, value, options }) =>
-          cookieStore.set(name, value, options)
-        );
+        try {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          );
+        } catch {
+          // ignore if called where cookies can't be set
+        }
       },
     },
   });
@@ -59,8 +64,15 @@ interface CartRow {
   } | null;
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    // Client sends only a coupon code (or null). Never an amount.
+    const body = await request.json().catch(() => ({}));
+    const couponCode =
+      typeof body?.couponCode === "string" && body.couponCode.trim()
+        ? body.couponCode
+        : null;
+
     const supabase = await getAuthedClient();
     if (!supabase) return fail("Server configuration error: Missing environment variables.", 500);
 
@@ -87,7 +99,7 @@ export async function POST() {
     }
     if (!address) return fail("Please add a delivery address before checking out.", 400);
 
-    // ---- Cart with live prices/stock — never trust a client-supplied cart or total ----
+    // ---- Cart with live prices/stock: never trust a client-supplied cart or total ----
     const { data: cartItems, error: cartError } = await supabase
       .from("cart_items")
       .select(
@@ -121,8 +133,23 @@ export async function POST() {
 
     if (subtotal <= 0) return fail("Invalid cart total.", 400);
 
+    // ---- Coupon: re-validated server-side against the DB subtotal ----
+    let discount = 0;
+    let appliedCoupon: CouponInfo | null = null;
+
+    if (couponCode) {
+      const result = await validateCoupon({
+        code: couponCode,
+        userId: user.id,
+        subtotal,
+      });
+      if (!result.ok) return fail(result.message, 400);
+      appliedCoupon = result.coupon;
+      discount = result.discount;
+    }
+
     const deliveryCharge = DELIVERY_CHARGE;
-    const totalAmount = subtotal + deliveryCharge;
+    const totalAmount = subtotal - discount + deliveryCharge;
     const orderNumber = generateOrderNumber();
 
     const shippingAddressSnapshot = {
@@ -143,7 +170,7 @@ export async function POST() {
 
     const admin = getSupabaseAdmin();
 
-    // ---- 1. Create the order ----
+    // ---- 1. Create the order (with discount details) ----
     const { data: order, error: orderError } = await admin
       .from("orders")
       .insert({
@@ -151,9 +178,19 @@ export async function POST() {
         order_number: orderNumber,
         subtotal,
         delivery_charge: deliveryCharge,
-        discount_amount: 0,
+        discount_amount: discount,
         total_amount: totalAmount,
         shipping_address: shippingAddressSnapshot,
+        coupon_code: appliedCoupon?.coupon_code ?? null,
+        discount_details: appliedCoupon
+          ? {
+              coupon_id: appliedCoupon.coupon_id,
+              discount_type: appliedCoupon.discount_type,
+              discount_amount: appliedCoupon.discount_amount,
+              max_discount_amount: appliedCoupon.max_discount_amount,
+              applied_discount: discount,
+            }
+          : null,
       })
       .select("order_id, order_number")
       .single();
@@ -190,7 +227,7 @@ export async function POST() {
       return fail("Failed to save order items.", 500);
     }
 
-    // ---- 3. Create the Razorpay order ----
+    // ---- 3. Create the Razorpay order (amount already includes the discount) ----
     let razorpayOrder;
     try {
       razorpayOrder = await createRazorpayOrder({

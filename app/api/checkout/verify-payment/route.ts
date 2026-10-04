@@ -121,6 +121,40 @@ export async function POST(request: Request) {
       return fail("Failed to confirm order.", 500);
     }
 
+    // -------------------------------------------------------------
+    // Record coupon usage (only now that payment is verified)
+    // -------------------------------------------------------------
+    try {
+      const { data: orderRow } = await admin
+        .from("orders")
+        .select("coupon_code, discount_amount, discount_details")
+        .eq("order_id", orderId)
+        .maybeSingle();
+
+      const couponId = (orderRow?.discount_details as { coupon_id?: string } | null)?.coupon_id;
+
+      if (orderRow?.coupon_code && couponId) {
+        const { data: existingUsage } = await admin
+          .from("coupon_usages")
+          .select("id")
+          .eq("order_id", orderId)
+          .maybeSingle();
+
+        if (!existingUsage) {
+          const { error: usageError } = await admin.from("coupon_usages").insert({
+            coupon_id: couponId,
+            user_id: user.id,
+            order_id: orderId,
+            discount_applied: Math.round(Number(orderRow.discount_amount)),
+          });
+          if (usageError) console.error("❌ Coupon Usage Insert Error:", usageError.message);
+        }
+      }
+    } catch (couponErr) {
+      // Never fail a successful payment because of coupon bookkeeping
+      console.error("❌ Coupon Usage Error:", couponErr);
+    }
+
     // Clear the cart now that payment is confirmed
     const { error: cartClearError } = await supabase.from("cart_items").delete().eq("user_id", user.id);
     if (cartClearError) {

@@ -10,6 +10,11 @@ import {
 } from "react";
 import { toast } from "@/components/ui/toast";
 import type { CartItemData } from "@/components/Cart/Item";
+import {
+  DELIVERY_CHARGE,
+  checkCouponForSubtotal,
+  type CouponInfo,
+} from "@/lib/coupons-shared";
 
 const DEBOUNCE_MS = 200;
 
@@ -22,6 +27,14 @@ type CartContextValue = {
   /** Fires any pending quantity updates now and waits for them.
    *  Resolves true only if everything is saved on the server. */
   flush: () => Promise<boolean>;
+
+  // Coupon
+  coupon: CouponInfo | null;
+  discount: number;
+  total: number;
+  couponWarning: string | null;
+  applyCoupon: (code: string) => Promise<{ ok: boolean; message: string }>;
+  removeCoupon: () => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -40,6 +53,7 @@ export function CartProvider({
   children: React.ReactNode;
 }) {
   const [items, setItems] = useState(initialItems);
+  const [coupon, setCoupon] = useState<CouponInfo | null>(null);
 
   const itemsRef = useRef(items);
   itemsRef.current = items;
@@ -198,20 +212,71 @@ export function CartProvider({
     }
   }, []);
 
-  const value = useMemo<CartContextValue>(
-    () => ({
+  const applyCoupon = useCallback(
+    async (code: string) => {
+      // make sure the server sees the same quantities as the screen
+      const synced = await flush();
+      if (!synced) {
+        return {
+          ok: false,
+          message: "Couldn't save your cart changes. Try again.",
+        };
+      }
+      try {
+        const res = await fetch("/api/coupon", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ promoCode: code }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          return { ok: false, message: data.message || "Invalid promo code." };
+        }
+        setCoupon(data.coupon as CouponInfo);
+        return { ok: true, message: `${data.coupon.coupon_code} applied` };
+      } catch {
+        return { ok: false, message: "Something went wrong. Please try again." };
+      }
+    },
+    [flush]
+  );
+
+  const removeCoupon = useCallback(() => setCoupon(null), []);
+
+  const value = useMemo<CartContextValue>(() => {
+    const subtotal = items.reduce(
+      (sum, i) => sum + Number(i.product_variants.prod_price) * i.quantity,
+      0
+    );
+    // re-checked on every change, so lowering quantities below the
+    // coupon's minimum drops the discount and shows a warning
+    const check = coupon ? checkCouponForSubtotal(coupon, subtotal) : null;
+    const discount = check?.valid ? check.discount : 0;
+    const delivery = items.length === 0 ? 0 : DELIVERY_CHARGE;
+
+    return {
       items,
       updateQuantity,
       removeItem,
       flush,
+      subtotal,
       itemCount: items.reduce((n, i) => n + i.quantity, 0),
-      subtotal: items.reduce(
-        (sum, i) => sum + Number(i.product_variants.prod_price) * i.quantity,
-        0
-      ),
-    }),
-    [items, updateQuantity, removeItem, flush]
-  );
+      coupon,
+      discount,
+      couponWarning: check && !check.valid ? check.reason ?? null : null,
+      total: subtotal - discount + delivery,
+      applyCoupon,
+      removeCoupon,
+    };
+  }, [
+    items,
+    coupon,
+    updateQuantity,
+    removeItem,
+    flush,
+    applyCoupon,
+    removeCoupon,
+  ]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
