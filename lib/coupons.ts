@@ -55,9 +55,28 @@ export async function validateCoupon(params: {
     return { ok: false, message: "You have already used this coupon." };
   }
 
-  // TODO: user_type. 'all' passes. If you have other values (e.g. 'new'),
-  // add the rule here, such as "no previous paid orders".
-  // if (c.user_type === "new") { ... }
+  // ---- User type: new / existing / all ----
+  if (c.user_type === "new" || c.user_type === "existing") {
+    const { count: paidOrders, error: ordersError } = await admin
+      .from("orders")
+      .select("order_id", { count: "exact", head: true })
+      .eq("user_id", params.userId)
+      .eq("payment_status", "paid");
+
+    if (ordersError) {
+      console.error("❌ Coupon order-history lookup error:", ordersError.message);
+      return { ok: false, message: "Could not verify coupon. Try again." };
+    }
+
+    const hasPaidOrders = (paidOrders ?? 0) > 0;
+
+    if (c.user_type === "new" && hasPaidOrders) {
+      return { ok: false, message: "This coupon is only for new customers." };
+    }
+    if (c.user_type === "existing" && !hasPaidOrders) {
+      return { ok: false, message: "This coupon is only for returning customers." };
+    }
+  }
 
   const coupon: CouponInfo = {
     coupon_id: c.coupon_id,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Tag, X } from "lucide-react";
+import { Tag, X ,Loader2} from "lucide-react";
 import Item from "@/components/Cart/Item";
 import DefaultAddress from "@/components/Cart/DefaultAddress";
 import CheckoutButton from "@/components/Cart/CheckoutButton";
@@ -133,7 +133,11 @@ export default function CartShell() {
                 disabled={isApplying}
                 className="flex-shrink-0 border-2 border-border bg-secondary px-5 py-2.5 font-mono text-xs font-black uppercase tracking-wider text-secondary-foreground shadow-[2px_2px_0_0_var(--border)] transition-transform hover:bg-muted active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-50"
               >
-                {isApplying ? "Applying..." : "Apply"}
+                  {isApplying ? (
+ <Loader2 className="h-4 w-4 animate-spin" />
+  ) : (
+    "Apply"
+  )}
               </button>
             </div>
           )}
