@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import { Toaster } from "@/components/ui/toast";
 
 import  { ThemeProvider } from "@/components/Themes/ThemeProvider";
+import OfferBar from "@/components/Others/OfferBar";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -56,6 +57,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           enableSystem
           disableTransitionOnChange
         >
+          <OfferBar />
 <Navbar/>
  <Toaster />
 {children}

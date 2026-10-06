@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Moon, Sun, Search, ShoppingBag, ChevronDown } from "lucide-react";
 import { useTheme } from "next-themes";
 import AuthModal from "@/components/AuthModal";
@@ -21,6 +21,7 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -43,13 +44,19 @@ export default function Navbar() {
       setAuthChecked(true);
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       setAuthChecked(true);
+
+      // Re-fetch server components (cart, profile, etc.) whenever auth state
+      // actually changes, so stale "logged out"/"logged in" data doesn't linger.
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "TOKEN_REFRESHED") {
+        router.refresh();
+      }
     });
 
     return () => listener.subscription.unsubscribe();
-  }, [supabase]);
+  }, [supabase, router]);
 
   useEffect(() => {
     if (!isDropdownOpen) return;
@@ -65,6 +72,8 @@ export default function Navbar() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setIsDropdownOpen(false);
+    router.push("/");
+    router.refresh();
   };
 
   const initial = user?.email ? user.email.charAt(0).toUpperCase() : null;
@@ -208,6 +217,7 @@ export default function Navbar() {
         onSuccess={(email) => {
           console.log("Authenticated as:", email);
           setIsAuthOpen(false);
+          router.refresh();
         }}
       />
     </>
