@@ -60,11 +60,18 @@ export default function TermsPage() {
           licensed products.
         </p>
         <p>
-          If you believe content on our website infringes your intellectual property rights,
-          contact us at copyright@posterly.co.in with the relevant URL, proof of ownership or
-          authority, and details of the alleged infringement. We will review complaints and may
-          restrict or remove disputed content while investigating.
-        </p>
+  If you believe content on our website infringes your intellectual property rights,
+  contact us at{" "}
+  <a
+    href="mailto:copyright@posterly.co.in"
+    className="font-semibold text-foreground underline"
+  >
+    copyright@posterly.co.in
+  </a>{" "}
+  with the relevant URL, proof of ownership or authority, and details of the alleged
+  infringement. We will review complaints and may restrict or remove disputed content
+  while investigating.
+</p>
       </LegalSection>
 
       <LegalSection heading="4. Shipping, Cancellation and Refunds">
