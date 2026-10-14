@@ -32,15 +32,15 @@ export default function Footer() {
             <ul className="flex flex-col gap-3">
               <li>
                 <Link
-                  href="/about"
+                  href="/refund-policy"
                   className="text-sm text-primary-foreground/80 transition-colors hover:text-primary-foreground"
                 >
-                  About Us
+                  Refund Policy
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/privacy-policy"
+                  href="/privacy"
                   className="text-sm text-primary-foreground/80 transition-colors hover:text-primary-foreground"
                 >
                   Privacy Policy
@@ -48,7 +48,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/terms-and-conditions"
+                  href="/terms"
                   className="text-sm text-primary-foreground/80 transition-colors hover:text-primary-foreground"
                 >
                   Terms &amp; Conditions
