@@ -61,7 +61,7 @@ export default function TermsPage() {
         </p>
         <p>
           If you believe content on our website infringes your intellectual property rights,
-          contact us at [IP complaints email] with the relevant URL, proof of ownership or
+          contact us at copyright@posterly.co.in with the relevant URL, proof of ownership or
           authority, and details of the alleged infringement. We will review complaints and may
           restrict or remove disputed content while investigating.
         </p>
