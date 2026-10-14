@@ -29,7 +29,16 @@ export default function RefundPolicyPage() {
       </LegalSection>
 
       <LegalSection heading="3. How to Raise a Request">
-        <p>Contact [support email] within 48 hours of delivery, providing:</p>
+        <p>
+  Contact{" "}
+  <a
+    href="mailto:support@posterly.co.in"
+    className="font-semibold text-foreground underline"
+  >
+    support@posterly.co.in
+  </a>{" "}
+  within 48 hours of delivery, providing:
+</p>
         <ul>
           <li>Your order number.</li>
           <li>Clear photographs of the product and packaging.</li>
