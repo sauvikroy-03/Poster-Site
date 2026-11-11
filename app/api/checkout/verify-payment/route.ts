@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { verifyRazorpaySignature } from "@/lib/razorpay";
 import { Resend } from "resend";
+import { sendWhatsAppTemplate } from "@/lib/whatsapp";
 
 const resend = new Resend(process.env.RESEND_API_KEY || process.env.Resend_API_KEY);
 
@@ -58,8 +59,6 @@ export async function POST(request: Request) {
 
     const admin = getSupabaseAdmin();
 
-    // Confirm this payment row actually belongs to this user and matches the
-    // razorpay order we generated in create-order — never trust the client's claim alone.
     const { data: payment, error: paymentFetchError } = await admin
       .from("payments")
       .select("payment_id, order_id, user_id, status")
@@ -77,6 +76,7 @@ export async function POST(request: Request) {
 
     // Idempotency: don't reprocess a payment that already succeeded
     if (payment.status === "captured") {
+      console.log("ℹ️ Payment already captured, returning early (no email/WhatsApp)");
       return NextResponse.json({ success: true, message: "Payment already verified.", orderId }, { status: 200 });
     }
 
@@ -151,7 +151,6 @@ export async function POST(request: Request) {
         }
       }
     } catch (couponErr) {
-      // Never fail a successful payment because of coupon bookkeeping
       console.error("❌ Coupon Usage Error:", couponErr);
     }
 
@@ -192,6 +191,49 @@ export async function POST(request: Request) {
     } catch (emailErr) {
       console.error("❌ Resend Network/Execution Error:", emailErr);
     }
+
+    // -------------------------------------------------------------
+    // WhatsApp order confirmation
+    // -------------------------------------------------------------
+    try {
+      console.log("📲 WA: starting for user", user.id);
+
+      const { data: addr, error: addrErr } = await admin
+        .from("user_address")
+        .select("first_name, phone_dial_code, phone_number")
+        .eq("user_id", user.id)
+        .eq("is_default", true)
+        .maybeSingle();
+
+      console.log("📲 WA: address lookup", addr ? "found" : "none", addrErr?.message ?? "");
+
+      const { data: ord } = await admin
+        .from("orders")
+        .select("order_number")
+        .eq("order_id", orderId)
+        .maybeSingle();
+
+      if (!addr?.phone_number) {
+        console.log("📲 WA: skipped, no default address with a phone number");
+      } else {
+        const hasTemplate = !!process.env.WA_ORDER_TEMPLATE;
+        const to = `${addr.phone_dial_code}${addr.phone_number}`;
+        console.log("📲 WA: sending to", to, "| env set:", !!process.env.WA_TOKEN, !!process.env.WA_PHONE_ID);
+
+        const result = await sendWhatsAppTemplate({
+          to,
+          template: process.env.WA_ORDER_TEMPLATE || "hello_world",
+          language: process.env.WA_TEMPLATE_LANG || "en_US",
+          params: hasTemplate
+            ? [addr.first_name, ord?.order_number ?? String(orderId)]
+            : [],
+        });
+        console.log("📲 WA: result", JSON.stringify(result));
+      }
+    } catch (waErr) {
+      console.error("❌ WhatsApp Error:", waErr);
+    }
+
     return NextResponse.json({ success: true, message: "Payment verified.", orderId }, { status: 200 });
   } catch (err: unknown) {
     console.error("❌ Verify Payment Route Catch:", err);

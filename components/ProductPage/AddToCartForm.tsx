@@ -5,9 +5,12 @@ import { Heart, Minus, Plus, Truck, ShieldCheck, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/toast";
 import ProjectDataInterface from "@/types/ItemDetails";
 import { playMechanicalClick, playStampSound } from "@/lib/sounds";
+import Stars from "@/components/Utility/Stars";
 
 interface ProductCardProps {
   product: ProjectDataInterface;
+  avgRating?: number;
+  reviewCount?: number;
 }
 
 const LINE = "border-2 border-border";
@@ -26,7 +29,11 @@ const SPECIFICATIONS = [
   { label: "Dispatch", value: "Ships within 24 hours" },
 ];
 
-export default function AddToCartForm({ product }: ProductCardProps) {
+export default function AddToCartForm({
+  product,
+  avgRating = 0,
+  reviewCount = 0,
+}: ProductCardProps) {
   const { prod_id, prod_name, prod_category, product_variants, prod_description } = product;
 
   const sizeOptions = useMemo(() => {
@@ -124,7 +131,7 @@ export default function AddToCartForm({ product }: ProductCardProps) {
 
   return (
     <div className="flex w-full flex-col gap-7 text-foreground">
-      {/* Title + category */}
+      {/* Title + category + rating */}
       <div className="flex flex-col gap-2">
         <span className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
           {prod_category}
@@ -132,6 +139,24 @@ export default function AddToCartForm({ product }: ProductCardProps) {
         <h1 className="text-4xl font-black uppercase leading-[0.95] tracking-tight sm:text-5xl">
           {prod_name}
         </h1>
+        <div className="mt-1 flex items-center gap-2">
+          {reviewCount > 0 ? (
+            <>
+              <Stars rating={avgRating} size={18} />
+              <span className="text-sm font-semibold text-foreground">
+                {avgRating.toFixed(1)}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                ({reviewCount.toLocaleString("en-IN")}{" "}
+                {reviewCount === 1 ? "rating" : "ratings"})
+              </span>
+            </>
+          ) : (
+            <span className="text-sm font-semibold text-muted-foreground">
+              No ratings yet
+            </span>
+          )}
+        </div>
       </div>
 
       {/* HOT SPOT 1: price + tilted discount tag */}

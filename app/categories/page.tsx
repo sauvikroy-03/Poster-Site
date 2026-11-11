@@ -7,6 +7,7 @@ import ProductCard from "@/components/ProductCard";
 import ProductCardSkeleton from "@/components/skeletons/SK_ProductCard";
 import ProjectDataInterface from "@/types/ItemDetails";
 import CategoryHero from "@/components/CategoryPage/CategoryHero";
+import { getProductRatings } from "@/lib/product-ratings";
 
 export const revalidate = 60;
 
@@ -94,6 +95,12 @@ async function ProductResults({
   const { category, maxPrice, sort } = await searchParamsPromise;
   const products = await getFilteredProducts({ category, maxPrice, sort });
 
+  // One batched call for every product on the page (skipped when there are none)
+  const ratings =
+    products.length > 0
+      ? await getProductRatings(products.map((p) => p.prod_id))
+      : {};
+
   return (
     <>
       <div className="mb-6 flex items-center justify-between border-b-2 border-border pb-4">
@@ -120,7 +127,12 @@ async function ProductResults({
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
           {products.map((product) => (
-            <ProductCard key={product.prod_id} product={product} />
+            <ProductCard
+              key={product.prod_id}
+              product={product}
+              avgRating={ratings[product.prod_id]?.avgRating}
+              reviewCount={ratings[product.prod_id]?.reviewCount}
+            />
           ))}
         </div>
       )}

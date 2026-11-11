@@ -3,13 +3,17 @@ import ProjectDataInterface from "@/types/ItemDetails";
 import ProductCard from "./ProductCard";
 import ProductCardSkeleton from "./skeletons/SK_ProductCard";
 import Link from "next/link";
+import { getProductRatings } from "@/lib/product-ratings";
 
 interface TrendingPostersProps {
   products?: ProjectDataInterface[];
 }
 
-export default function TrendingPosters({ products = [] }: TrendingPostersProps) {
+export default async function TrendingPosters({ products = [] }: TrendingPostersProps) {
   const loading = !products || products.length === 0;
+
+  const visible = loading ? [] : products.slice(0, 4);
+  const ratings = await getProductRatings(visible.map((p) => p.prod_id));
 
   return (
     // Steps back to bg-background after the deeper bg-muted in FeaturedCategories
@@ -45,9 +49,14 @@ export default function TrendingPosters({ products = [] }: TrendingPostersProps)
             ? Array.from({ length: 4 }).map((_, i) => (
                 <ProductCardSkeleton key={i} />
               ))
-            : products
-                .slice(0, 4)
-                .map((p) => <ProductCard key={p.prod_id} product={p} />)}
+            : visible.map((p) => (
+                <ProductCard
+                  key={p.prod_id}
+                  product={p}
+                  avgRating={ratings[p.prod_id]?.avgRating}
+                  reviewCount={ratings[p.prod_id]?.reviewCount}
+                />
+              ))}
         </div>
       </div>
     </section>

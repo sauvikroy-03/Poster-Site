@@ -5,12 +5,28 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import ProjectDataInterface from "@/types/ItemDetails";
 import Link from "next/link";
+import Stars from "@/components/Utility/Stars";
+
 interface ProductCardProps {
   product: ProjectDataInterface;
   priority?: boolean;
+  avgRating?: number;
+  reviewCount?: number;
 }
 
-export default function ProductCard({ product, priority = false }: ProductCardProps) {
+// 999 -> "999", 1000 -> "1k", 1250 -> "1.2k", 12000 -> "12k"
+function formatCount(n: number) {
+  if (n < 1000) return String(n);
+  const k = Math.floor(n / 100) / 10; // truncate to one decimal, never round up
+  return `${Number.isInteger(k) ? k : k.toFixed(1)}k`;
+}
+
+export default function ProductCard({
+  product,
+  priority = false,
+  avgRating = 0,
+  reviewCount = 0,
+}: ProductCardProps) {
   const { prod_name, prod_images, product_variants, prod_category } = product;
 
   const [activeIndex, setActiveIndex] = useState(0);
@@ -97,7 +113,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
 
       {/* Text block: Content naturally determines bottom height */}
       <div className="flex items-start justify-between gap-2 border-t-2 border-border/15 px-2.5 py-2 sm:gap-4 sm:px-4 sm:py-3">
-        {/* Row 1: name (left) + category */}
+        {/* Row 1: name (left) + category + rating */}
         <div className="flex min-w-0 flex-1 flex-col items-start justify-between gap-1">
           <h3
             title={prod_name}
@@ -112,6 +128,19 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           >
             {prod_category}
           </p>
+
+          {reviewCount > 0 ? (
+            <div className="flex items-center gap-1.5">
+              <Stars rating={avgRating} size={14} />
+              <span className="text-[10px] font-bold text-muted-foreground sm:text-xs">
+                ({formatCount(reviewCount)})
+              </span>
+            </div>
+          ) : (
+            <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground sm:text-xs">
+              No ratings yet
+            </span>
+          )}
         </div>
 
         {/* Row 2: price stack */}

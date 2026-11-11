@@ -4,6 +4,7 @@ import ProductImage from "@/components/ProductPage/ProductImage";
 import ProductCardSkeleton from "@/components/skeletons/SK_ProductCard";
 import ProjectDataInterface from "@/types/ItemDetails";
 import AddToCartForm from "@/components/ProductPage/AddToCartForm";
+import { getProductRatings } from "@/lib/product-ratings";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -74,13 +75,32 @@ async function getProductBySlug(slug: string): Promise<ProjectDataInterface | nu
 async function ProductContent({ slug }: { slug: string }) {
   const productData = await getProductBySlug(slug);
 
+  // Batch helper takes an array and returns a map keyed by prod_id.
+  // It never throws, so the page still renders if it fails.
+  let avgRating = 0;
+  let reviewCount = 0;
+
+  if (productData) {
+    const ratings = await getProductRatings([productData.prod_id]);
+    avgRating = ratings[productData.prod_id]?.avgRating ?? 0;
+    reviewCount = ratings[productData.prod_id]?.reviewCount ?? 0;
+  }
+
   return (
     <>
       <div className="w-full md:w-1/2 lg:w-2/5">
         {productData ? <ProductImage product={productData} /> : <ProductCardSkeleton />}
       </div>
       <div className="w-full md:w-1/2 lg:w-3/5">
-        {productData ? <AddToCartForm product={productData} /> : <h1></h1>}
+        {productData ? (
+          <AddToCartForm
+            product={productData}
+            avgRating={avgRating}
+            reviewCount={reviewCount}
+          />
+        ) : (
+          <h1></h1>
+        )}
       </div>
     </>
   );
