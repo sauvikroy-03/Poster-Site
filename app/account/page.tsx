@@ -5,11 +5,11 @@ import { cookies } from "next/headers";
 import ProfilePanel from "@/components/Profile/ProfilePanel";
 import AccountTabs from "@/components/Profile/AccountTabs";
 
-async function getUserEmail(): Promise<string | undefined> {
+async function getUserContact(): Promise<{ email?: string; phone?: string }> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey) return undefined;
+  if (!supabaseUrl || !supabaseAnonKey) return {};
 
   const cookieStore = await cookies();
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -24,13 +24,20 @@ async function getUserEmail(): Promise<string | undefined> {
   });
 
   const { data } = await supabase.auth.getUser();
-  return data.user?.email;
+  const user = data.user;
+
+  return {
+    // Empty strings count as "no email"
+    email: user?.email || undefined,
+    // Supabase stores phones without the "+", so add it back
+    phone: user?.phone ? `+${user.phone}` : undefined,
+  };
 }
 
 // Streamed async subcomponent for Profile
 async function ProfileView() {
-  const email = await getUserEmail();
-  return <ProfilePanel email={email} />;
+  const { email, phone } = await getUserContact();
+  return <ProfilePanel email={email} phone={phone} />;
 }
 
 function PanelSkeleton() {

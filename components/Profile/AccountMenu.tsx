@@ -42,6 +42,9 @@ export default function AccountMenu({
 
   const isDarkMode = mounted && resolvedTheme === "dark";
 
+  // Phone users have no email. Supabase stores phones without the "+", so add it back.
+  const displayName = user.email || (user.phone ? `+${user.phone}` : "Signed in");
+
   return (
     <div className="w-64 overflow-hidden border-2 border-border bg-card shadow-[4px_4px_0_0_var(--border)]">
       {/* Header */}
@@ -50,7 +53,7 @@ export default function AccountMenu({
           ACCOUNT
         </p>
         <p className="mt-0.5 truncate text-sm font-bold text-foreground">
-          {user.email}
+          {displayName}
         </p>
       </div>
 

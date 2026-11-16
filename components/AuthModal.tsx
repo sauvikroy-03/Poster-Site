@@ -11,7 +11,9 @@ import { createClient } from "@/lib/client";
 import { useRouter } from "next/navigation";
 import { playMechanicalClick, playStampSound } from "@/lib/sounds";
 
-type Step = "EMAIL" | "OTP" | "SUCCESS";
+type Step = "PHONE" | "OTP" | "SUCCESS";
+
+const DIAL_CODE = "+91";
 
 const FOCUS =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
@@ -19,7 +21,7 @@ const FOCUS =
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: (userEmail: string) => void;
+  onSuccess?: (user: string) => void; // receives the E.164 phone number
 }
 
 const slideVariants = {
@@ -27,6 +29,14 @@ const slideVariants = {
   center: { x: 0, opacity: 1 },
   exit: (direction: number) => ({ x: direction > 0 ? -18 : 18, opacity: 0 }),
 };
+
+// Keeps only the 10-digit national number, even if the user pastes "+91 98765 43210" or "098765 43210"
+function normalizeIndianNumber(raw: string) {
+  let digits = raw.replace(/\D/g, "");
+  if (digits.length > 10 && digits.startsWith("91")) digits = digits.slice(2);
+  if (digits.length > 10 && digits.startsWith("0")) digits = digits.slice(1);
+  return digits.slice(0, 10);
+}
 
 function GoogleIcon() {
   return (
@@ -75,20 +85,22 @@ function OtpInput({
   };
 
   return (
-    <div className="flex justify-between gap-2">
+    <div className="grid grid-cols-6 gap-1.5 sm:gap-2">
       {value.map((digit, i) => (
         <input
           key={i}
           ref={(el) => { refs.current[i] = el; }}
           inputMode="numeric"
+          autoComplete={i === 0 ? "one-time-code" : "off"}
           maxLength={1}
           value={digit}
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKeyDown(i, e)}
           onPaste={handlePaste}
           autoFocus={i === 0}
+          aria-label={`Digit ${i + 1}`}
           className={cn(
-            "h-12 w-12 rounded-none border-2 border-border bg-card text-center font-mono text-lg font-bold text-foreground outline-none transition-all shadow-[2px_2px_0_0_var(--border)]",
+            "aspect-square w-full min-w-0 rounded-none border-2 border-border bg-card p-0 text-center font-mono text-lg font-bold text-foreground outline-none transition-all shadow-[2px_2px_0_0_var(--border)] sm:text-xl",
             "focus:bg-muted focus:ring-0 focus:border-border focus:shadow-[1px_1px_0_0_var(--border)]",
             hasError && "border-destructive bg-destructive/10 text-destructive focus:border-destructive shadow-[2px_2px_0_0_var(--destructive)]"
           )}
@@ -99,9 +111,9 @@ function OtpInput({
 }
 
 export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
-  const [step, setStep] = React.useState<Step>("EMAIL");
+  const [step, setStep] = React.useState<Step>("PHONE");
   const [direction, setDirection] = React.useState(1);
-  const [email, setEmail] = React.useState("");
+  const [phone, setPhone] = React.useState(""); // 10-digit national number
   const [otp, setOtp] = React.useState<string[]>(["", "", "", "", "", ""]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
@@ -109,6 +121,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   const lastAttemptedCode = React.useRef<string>("");
 
   const otpCode = otp.join("");
+  const fullPhone = `${DIAL_CODE}${phone}`; // E.164, e.g. +919876543210
   const supabase = createClient();
   const router = useRouter();
 
@@ -116,8 +129,8 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   React.useEffect(() => {
     if (!isOpen) {
       const resetTimeout = setTimeout(() => {
-        setStep("EMAIL");
-        setEmail("");
+        setStep("PHONE");
+        setPhone("");
         setOtp(["", "", "", "", "", ""]);
         setError("");
         setTimer(60);
@@ -140,11 +153,11 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     setStep(next);
   }, []);
 
-  const sendOtp = React.useCallback(async (targetEmail: string) => {
+  const sendOtp = React.useCallback(async (targetPhone: string) => {
     const otpRes = await fetch("/api/auth/sendOTP", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: targetEmail }),
+      body: JSON.stringify({ phone: targetPhone }),
     });
     const otpData = await otpRes.json();
     if (!otpRes.ok || !otpData.success) {
@@ -152,18 +165,20 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     }
   }, []);
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email.trim() || !emailRegex.test(email)) {
-      return setError("Please enter a valid email address.");
+
+    // Indian mobiles are 10 digits starting with 6-9
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      return setError("Enter a valid 10-digit mobile number.");
     }
 
     playMechanicalClick();
     setError("");
     setLoading(true);
     try {
-      await sendOtp(email.trim().toLowerCase());
+      await sendOtp(fullPhone);
+      setTimer(60);
       goTo("OTP", 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Network error. Please check your connection.");
@@ -183,7 +198,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: email.trim().toLowerCase(),
+          phone: fullPhone,
           token: code.trim(),
         }),
       });
@@ -207,8 +222,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         console.error("Server response missing session tokens — check /api/auth/createUser.");
       }
 
-    
-      onSuccess?.(email);
+      onSuccess?.(fullPhone);
       goTo("SUCCESS", 1);
       setTimeout(() => {
         onClose();
@@ -219,7 +233,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     } finally {
       setLoading(false);
     }
-  }, [email, onSuccess, goTo, onClose, supabase, router]);
+  }, [fullPhone, onSuccess, goTo, onClose, supabase, router]);
 
   // Keep a stable ref to handleVerifyOtp to avoid re-running the effect on callback recreation
   const verifyRef = React.useRef(handleVerifyOtp);
@@ -254,13 +268,13 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         if (!open) onClose();
       }}
     >
-      <DialogContent className="sm:max-w-[410px] rounded-none border-2 border-border bg-card p-7 sm:p-8 shadow-[6px_6px_0_0_var(--border)] text-foreground">
+      <DialogContent className="sm:max-w-[410px] rounded-none border-2 border-border bg-card p-5 sm:p-8 shadow-[6px_6px_0_0_var(--border)] text-foreground">
         <DialogTitle className="sr-only">Account Authentication</DialogTitle>
 
         <AnimatePresence mode="wait" custom={direction} initial={false}>
-          {step === "EMAIL" && (
+          {step === "PHONE" && (
             <motion.div
-              key="email"
+              key="phone"
               custom={direction}
               variants={slideVariants}
               initial="enter"
@@ -297,27 +311,45 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               <div className="relative my-2 flex items-center justify-center">
                 <span className="w-full border-t-2 border-border" />
                 <span className="absolute bg-card px-3 font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
-                  or continue with email
+                  or continue with phone
                 </span>
               </div>
 
-              <form onSubmit={handleEmailSubmit} noValidate className="space-y-3.5">
+              <form onSubmit={handlePhoneSubmit} noValidate className="space-y-3.5">
                 <div className="space-y-1.5">
-                  <label className="font-mono text-[11px] font-bold uppercase tracking-[0.05em] text-foreground">
-                    Email address
+                  <label
+                    htmlFor="auth-phone"
+                    className="font-mono text-[11px] font-bold uppercase tracking-[0.05em] text-foreground"
+                  >
+                    Mobile number
                   </label>
-                  <Input
-                    type="email"
-                    value={email}
-                    onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                    placeholder="you@example.com"
-                    className={cn(
-                      FOCUS,
-                      "h-11 rounded-none border-2 border-border bg-card px-3.5 text-sm text-foreground shadow-[3px_3px_0_0_var(--border)] placeholder:text-muted-foreground transition-all focus-visible:bg-card focus-visible:ring-0 focus-visible:border-border",
-                      error && "border-destructive bg-destructive/10 text-destructive shadow-[3px_3px_0_0_var(--destructive)] focus-visible:border-destructive"
-                    )}
-                    autoFocus
-                  />
+                  <div className="flex gap-2">
+                    <div
+                      aria-hidden="true"
+                      className="flex h-11 select-none items-center border-2 border-border bg-muted px-3 font-mono text-sm font-bold text-foreground shadow-[3px_3px_0_0_var(--border)]"
+                    >
+                      {DIAL_CODE}
+                    </div>
+                    <Input
+                      id="auth-phone"
+                      type="tel"
+                      inputMode="numeric"
+                      autoComplete="tel-national"
+                      value={phone}
+                      onChange={(e) => {
+                        setPhone(normalizeIndianNumber(e.target.value));
+                        setError("");
+                      }}
+                      placeholder="98765 43210"
+                      maxLength={16}
+                      className={cn(
+                        FOCUS,
+                        "h-11 min-w-0 flex-1 rounded-none border-2 border-border bg-card px-3.5 text-sm text-foreground shadow-[3px_3px_0_0_var(--border)] placeholder:text-muted-foreground transition-all focus-visible:bg-card focus-visible:ring-0 focus-visible:border-border",
+                        error && "border-destructive bg-destructive/10 text-destructive shadow-[3px_3px_0_0_var(--destructive)] focus-visible:border-destructive"
+                      )}
+                      autoFocus
+                    />
+                  </div>
                   {error && <p className="pt-0.5 text-xs font-bold text-destructive">{error}</p>}
                 </div>
 
@@ -329,7 +361,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                     "h-11 w-full cursor-pointer rounded-none border-2 border-border bg-primary text-sm font-bold text-primary-foreground shadow-[4px_4px_0_0_var(--border)] transition-[transform,box-shadow] duration-100 hover:bg-primary active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_0_var(--border)] disabled:cursor-not-allowed disabled:opacity-50"
                   )}
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin text-current" /> : "Continue"}
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin text-current" /> : "Send code"}
                 </Button>
               </form>
 
@@ -353,7 +385,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               <div>
                 <button
                   type="button"
-                  onClick={() => goTo("EMAIL", -1)}
+                  onClick={() => goTo("PHONE", -1)}
                   className={cn(
                     FOCUS,
                     "mb-3 inline-flex cursor-pointer items-center gap-1.5 font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
@@ -362,15 +394,18 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   <ArrowLeft className="h-3.5 w-3.5" /> Back
                 </button>
                 <h2 className="text-[22px] font-black tracking-tight text-foreground">
-                  Check your inbox
+                  Check your WhatsApp
                 </h2>
                 <p className="mt-1 text-[13px] leading-normal text-muted-foreground">
                   Enter the 6-digit code sent to{" "}
-                  <span className="font-bold text-foreground">{email}</span>.{" "}
+                  <span className="font-bold text-foreground">
+                    {DIAL_CODE} {phone}
+                  </span>
+                  .{" "}
                   <button
                     type="button"
                     onClick={() => {
-                      goTo("EMAIL", -1);
+                      goTo("PHONE", -1);
                       setOtp(["", "", "", "", "", ""]);
                       setError("");
                       lastAttemptedCode.current = "";
@@ -414,7 +449,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                       setTimer(60);
                       lastAttemptedCode.current = "";
                       try {
-                        await sendOtp(email.trim().toLowerCase());
+                        await sendOtp(fullPhone);
                       } catch (err) {
                         setError(err instanceof Error ? err.message : "Failed to resend code.");
                       }

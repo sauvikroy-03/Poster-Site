@@ -2,7 +2,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Moon, Sun, Search, ShoppingBag, ChevronDown } from "lucide-react";
+import {
+  Moon,
+  Sun,
+  Search,
+  ShoppingBag,
+  ChevronDown,
+  User as UserIcon,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import AuthModal from "@/components/AuthModal";
 import AccountMenu from "@/components/Profile/AccountMenu";
@@ -75,8 +82,6 @@ export default function Navbar() {
     router.push("/");
     router.refresh();
   };
-
-  const initial = user?.email ? user.email.charAt(0).toUpperCase() : null;
 
   // Flat icon buttons: no border until hover, uses semantic hover states
   const iconBtn = `${FOCUS} flex h-10 w-10 cursor-pointer items-center justify-center border-2 border-transparent text-foreground transition-colors hover:border-border hover:bg-muted`;
@@ -157,12 +162,7 @@ export default function Navbar() {
 
             {/* Cart slot */}
             {showCart && (
-              <Link
-                href="/cart"
-              
-                aria-label="Cart"
-                className={iconBtn}
-              >
+              <Link href="/cart" aria-label="Cart" className={iconBtn}>
                 <ShoppingBag className="h-[18px] w-[18px]" strokeWidth={2.5} />
               </Link>
             )}
@@ -177,8 +177,8 @@ export default function Navbar() {
                   aria-expanded={isDropdownOpen}
                   className={`${FOCUS} flex h-10 cursor-pointer items-center gap-2 border-2 border-border bg-card pl-1.5 pr-2.5 text-foreground transition-colors hover:bg-muted`}
                 >
-                  <span className="flex h-6 w-6 items-center justify-center bg-primary text-xs font-bold text-primary-foreground">
-                    {initial}
+                  <span className="flex h-6 w-6 items-center justify-center bg-primary text-primary-foreground">
+                    <UserIcon className="h-3.5 w-3.5" strokeWidth={2.5} />
                   </span>
                   <ChevronDown
                     className={`h-3.5 w-3.5 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
@@ -214,8 +214,8 @@ export default function Navbar() {
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
-        onSuccess={(email) => {
-          console.log("Authenticated as:", email);
+        onSuccess={(phone) => {
+          console.log("Authenticated as:", phone);
           setIsAuthOpen(false);
           router.refresh();
         }}

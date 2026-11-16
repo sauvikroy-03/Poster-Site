@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { MapPin, Mail, LogOut, Plus, Loader2 } from "lucide-react";
+import { MapPin, Mail, Phone, LogOut, Plus, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/toast";
 import BasicDetails from "@/components/Profile/BasicDetails";
 import AddressList, { SavedAddress } from "@/components/Profile/AddressListCard";
@@ -10,16 +10,23 @@ import { playStampSound } from "@/lib/sounds";
 
 interface ProfilePanelProps {
   email?: string;
+  phone?: string;
 }
 
 const DEFAULT_DEBOUNCE_MS = 250;
 
-export default function ProfilePanel({ email }: ProfilePanelProps) {
+export default function ProfilePanel({ email, phone }: ProfilePanelProps) {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
   const [editingAddress, setEditingAddress] = useState<SavedAddress | null>(null);
   const supabase = createClient();
+
+  // Show the email when there is one, otherwise fall back to the phone number
+  const hasEmail = !!email;
+  const contactLabel = hasEmail ? "Account Email" : "Mobile Number";
+  const contactValue = email || phone || "—";
+  const ContactIcon = hasEmail ? Mail : Phone;
 
   // Debounce bookkeeping for "set default address"
   const lastSynced = useRef<SavedAddress[]>([]); // last state the server confirmed
@@ -149,14 +156,14 @@ export default function ProfilePanel({ email }: ProfilePanelProps) {
 
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center border-2 border-border bg-muted shadow-[2px_2px_0_0_var(--border)]">
-            <Mail className="h-4 w-4 stroke-[2.5] text-foreground" />
+            <ContactIcon className="h-4 w-4 stroke-[2.5] text-foreground" />
           </span>
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
-              Account Email
+              {contactLabel}
             </p>
             <p className="truncate text-sm font-bold text-foreground sm:text-base">
-              {email || "—"}
+              {contactValue}
             </p>
           </div>
         </div>
