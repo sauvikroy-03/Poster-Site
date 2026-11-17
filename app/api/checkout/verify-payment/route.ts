@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { verifyRazorpaySignature } from "@/lib/razorpay";
 import { Resend } from "resend";
-import { sendWhatsAppTemplate } from "@/lib/whatsapp";
+import { sendAiSensyCampaign } from "@/lib/aisensy";
 
 const resend = new Resend(process.env.RESEND_API_KEY || process.env.Resend_API_KEY);
 
@@ -176,6 +176,7 @@ export async function POST(request: Request) {
             <p><strong>Order ID:</strong> ${orderId}</p>
             <p><strong>Customer ID:</strong> ${user.id}</p>
             <p><strong>Customer Email:</strong> ${user.email || "N/A"}</p>
+            <p><strong>Customer Phone:</strong> ${user.phone ? `+${user.phone}` : "N/A"}</p>
             <p><strong>Razorpay Payment ID:</strong> ${razorpay_payment_id}</p>
             <hr style="border: 0; border-top: 1px solid #eee;" />
             <p style="font-size: 12px; color: #888;">Automated notification from your Posterly backend.</p>
@@ -193,42 +194,51 @@ export async function POST(request: Request) {
     }
 
     // -------------------------------------------------------------
-    // WhatsApp order confirmation
+    // WhatsApp order confirmation to the customer (AiSensy)
     // -------------------------------------------------------------
     try {
-      console.log("📲 WA: starting for user", user.id);
-
-      const { data: addr, error: addrErr } = await admin
+      const { data: addr } = await admin
         .from("user_address")
         .select("first_name, phone_dial_code, phone_number")
         .eq("user_id", user.id)
         .eq("is_default", true)
         .maybeSingle();
 
-      console.log("📲 WA: address lookup", addr ? "found" : "none", addrErr?.message ?? "");
-
+      // select("*") so a wrong total column name can't make the whole query fail
       const { data: ord } = await admin
         .from("orders")
-        .select("order_number")
+        .select("*")
         .eq("order_id", orderId)
         .maybeSingle();
 
-      if (!addr?.phone_number) {
-        console.log("📲 WA: skipped, no default address with a phone number");
-      } else {
-        const hasTemplate = !!process.env.WA_ORDER_TEMPLATE;
-        const to = `${addr.phone_dial_code}${addr.phone_number}`;
-        console.log("📲 WA: sending to", to, "| env set:", !!process.env.WA_TOKEN, !!process.env.WA_PHONE_ID);
+      // Prefer the delivery contact number, fall back to the number they logged in with
+      const rawPhone = addr?.phone_number
+        ? `${addr.phone_dial_code ?? ""}${addr.phone_number}`
+        : user.phone ?? "";
+      let destination = rawPhone.replace(/\D/g, "");
+      if (destination.length === 10) destination = `91${destination}`;
 
-        const result = await sendWhatsAppTemplate({
-          to,
-          template: process.env.WA_ORDER_TEMPLATE || "hello_world",
-          language: process.env.WA_TEMPLATE_LANG || "en_US",
-          params: hasTemplate
-            ? [addr.first_name, ord?.order_number ?? String(orderId)]
-            : [],
+      // ⚠️ Adjust to your real total column; these are guesses
+      const total = ord?.total_amount 
+      if (!destination) {
+        console.log("📲 WA: skipped, no phone number for this customer");
+      } else if (!ord?.order_number || total == null) {
+        console.warn("📲 WA: skipped, missing order_number or total. Order columns:", Object.keys(ord ?? {}));
+      } else {
+        
+        const result = await sendAiSensyCampaign({
+          campaignName: process.env.AISENSY_ORDER_CAMPAIGN || "Order_Comfirmation_Campaign",
+          destination,
+          userName: addr?.first_name || "Customer",
+          source: "order-confirmation",
+          // Same order as the template: {{1}} name, {{2}} order number, {{3}} amount
+          templateParams: [
+            addr?.first_name || "there",
+            String(ord.order_number),
+            Number(total).toLocaleString("en-IN", { maximumFractionDigits: 2 }),
+          ],
         });
-        console.log("📲 WA: result", JSON.stringify(result));
+        console.log("📲 WA: AiSensy response", result);
       }
     } catch (waErr) {
       console.error("❌ WhatsApp Error:", waErr);
