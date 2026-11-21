@@ -5,7 +5,7 @@ import FeaturedCategories from "@/components/FeaturedCategories";
 import TrendingPosters from "@/components/TrendingPosters";
 import WhyPosterly from "@/components/WhyPosterly";
 import ReviewsSection from "@/components/ReviewsSection";
-
+import CustomPosterBanner from "@/components/CustomPosterBanner";
 // Cache this page at the edge/server for 60 seconds (instant TTFB)
 export const revalidate = 60;
 
@@ -57,9 +57,10 @@ export default async function Home() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 font-sans dark:bg-black">
       <Hero initialProducts={products} />
+      <CustomPosterBanner href='/customize'/>
       <FeaturedCategories initialCategories={categories} />
       <TrendingPosters products={products} />
-      <WhyPosterly />
+      {/* <WhyPosterly /> */}
       <ReviewsSection />
     </div>
   );
