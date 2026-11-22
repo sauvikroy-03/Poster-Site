@@ -62,7 +62,7 @@ export default function ImageDropzone({ onFile }: ImageDropzoneProps) {
         </p>
 
         <span className="border-2 border-border bg-card px-4 py-2 font-mono text-[11px] font-black uppercase tracking-[0.12em] text-foreground">
-          JPG / PNG / WEBP · No crop
+          JPG / PNG / WEBP
         </span>
       </div>
 

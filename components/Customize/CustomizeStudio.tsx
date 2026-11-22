@@ -1,10 +1,22 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ImageDropzone, { ACCEPTED_TYPES } from "./ImageDropzone";
 import ImagePreview from "./ImagePreview";
 import PinterestInput from "./PinterestInput";
+
+// The editor uses canvas, so it loads only in the browser, and only when opened
+const PhotoEditor = dynamic(() => import("./PhotoEditor"), {
+  ssr: false,
+  loading: () => (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background">
+      <Loader2 className="h-8 w-8 animate-spin text-foreground" strokeWidth={2.5} />
+    </div>
+  ),
+});
 
 type Source = "upload" | "pinterest";
 
@@ -22,6 +34,7 @@ interface PickedImage {
 export default function CustomizeStudio() {
   const [image, setImage] = useState<PickedImage | null>(null);
   const [error, setError] = useState("");
+  const [editing, setEditing] = useState(false);
   const urlRef = useRef<string | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -32,7 +45,7 @@ export default function CustomizeStudio() {
     };
   }, []);
 
-  // Whenever a new image lands, bring the preview into view
+  // Whenever a new image lands (upload, pin or edit), bring the preview into view
   useEffect(() => {
     if (!image?.url) return;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -42,7 +55,7 @@ export default function CustomizeStudio() {
     });
   }, [image?.url]);
 
-  // One entry point for every image, whether it was uploaded or fetched from a pin
+  // One entry point for every image: uploaded, fetched from a pin, or saved from the editor
   const handleFile = (file: File, from: Source = "upload") => {
     setError("");
 
@@ -82,6 +95,13 @@ export default function CustomizeStudio() {
     urlRef.current = null;
     setImage(null);
     setError("");
+    setEditing(false);
+  };
+
+  // The edited file goes through the same checks and preview as any other image
+  const handleEditSave = (file: File) => {
+    handleFile(file, image?.source ?? "upload");
+    setEditing(false);
   };
 
   // Placeholder until the backend exists. To go live, replace the body with:
@@ -89,9 +109,23 @@ export default function CustomizeStudio() {
   //   if (!res.ok) throw new Error("Couldn't fetch that pin.");
   //   const blob = await res.blob();
   //   handleFile(new File([blob], "pinterest-pin.jpg", { type: blob.type }), "pinterest");
-  const resolvePin = async (_url: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 700));
-    throw new Error("Pinterest import is coming soon. Upload a photo for now.");
+    // Asks our own route for the pin's image, then treats it like any other file
+  const resolvePin = async (pinUrl: string) => {
+    let res: Response;
+    try {
+      res = await fetch(`/api/pinterest?url=${encodeURIComponent(pinUrl)}`);
+    } catch {
+      throw new Error("Network error. Check your connection and try again.");
+    }
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      throw new Error(data?.message || "Couldn't fetch that pin.");
+    }
+
+    const blob = await res.blob();
+    const ext = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
+    handleFile(new File([blob], `pinterest-pin.${ext}`, { type: blob.type }), "pinterest");
   };
 
   const labelClass =
@@ -143,6 +177,7 @@ export default function CustomizeStudio() {
           <ImagePreview
             url={image?.url ?? null}
             name={image?.name}
+            onEdit={() => setEditing(true)}
             onReplace={(file) => handleFile(file)}
             onRemove={handleRemove}
           />
@@ -191,6 +226,16 @@ export default function CustomizeStudio() {
           </p>
         </div>
       </div>
+
+      {/* ================= Photo editor (full-screen overlay) ================= */}
+      {editing && image && (
+        <PhotoEditor
+          source={image.url}
+          fileName={image.name}
+          onApply={handleEditSave}
+          onClose={() => setEditing(false)}
+        />
+      )}
     </div>
   );
 }
