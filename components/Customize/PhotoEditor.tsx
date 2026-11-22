@@ -93,6 +93,9 @@ export default function PhotoEditor({ source, fileName, onApply, onClose }: Phot
           tabsIds={[TABS.ADJUST, TABS.FINETUNE, TABS.FILTERS]}
           defaultTabId={TABS.ADJUST}
           defaultToolId={TOOLS.CROP}
+          // Free-form crop: unlocks the handles on the middle of each edge (top, bottom, left, right)
+          // as well as the four corners. A fixed ratio would hide the edge handles.
+          Crop={{ ratio: "custom" }}
           // Quality of the exported image. Raise savingPixelRatio if the output looks smaller than your original.
           savingPixelRatio={4}
           previewPixelRatio={typeof window !== "undefined" ? window.devicePixelRatio : 1}
