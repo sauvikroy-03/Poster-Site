@@ -9,6 +9,13 @@ const RAPID_HOST = "pinterest-video-and-image-downloader.p.rapidapi.com";
 const MAX_BYTES = 20 * 1024 * 1024; // same limit as the upload box
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
+// Pinterest can answer unknown clients differently, so look like a normal browser
+const BROWSER_HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+  Accept: "text/html,application/xhtml+xml,*/*;q=0.8",
+};
+
 function fail(message: string, status: number) {
   return NextResponse.json({ success: false, message }, { status });
 }
@@ -26,19 +33,52 @@ function isPinimgHost(host: string) {
   return host === "pinimg.com" || host.endsWith(".pinimg.com");
 }
 
-// pin.it short links redirect to the real pin. Follow them by hand so we only ever visit Pinterest.
+// A pin.it link doesn't go straight to the pin. It usually hops through
+// api.pinterest.com/url_shortener/<code>/redirect/ first, then lands on
+// pinterest.com/pin/<id>/sent/?... so we keep following until we reach a /pin/ page.
+// Redirects are followed by hand so we only ever visit pin.it or Pinterest hosts.
+function isShortenerStep(u: URL) {
+  return (
+    u.hostname === "pin.it" ||
+    (isPinterestHost(u.hostname) && u.pathname.startsWith("/url_shortener/"))
+  );
+}
+
 async function resolveShortLink(input: URL): Promise<URL> {
   let current = input;
-  for (let i = 0; i < 3 && current.hostname === "pin.it"; i++) {
-    const res = await fetch(current, {
-      redirect: "manual",
-      signal: AbortSignal.timeout(8000),
-      cache: "no-store",
-    });
-    const next = res.headers.get("location");
-    if (!next) break;
-    current = new URL(next, current);
+
+  for (let hop = 0; hop < 6 && isShortenerStep(current); hop++) {
+    let res: Response;
+    try {
+      res = await fetch(current, {
+        redirect: "manual",
+        headers: BROWSER_HEADERS,
+        signal: AbortSignal.timeout(8000),
+        cache: "no-store",
+      });
+    } catch (err) {
+      console.error("❌ Short link fetch failed:", current.href, err);
+      break;
+    }
+
+    const location = res.headers.get("location");
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`🔗 hop ${hop}: ${res.status} ${current.href} -> ${location ?? "(no redirect)"}`);
+    }
+    if (!location) break;
+
+    let next: URL;
+    try {
+      next = new URL(location, current); // handles relative Location headers
+    } catch {
+      break;
+    }
+
+    // Never follow a redirect to anywhere that isn't pin.it or Pinterest
+    if (next.hostname !== "pin.it" && !isPinterestHost(next.hostname)) break;
+    current = next;
   }
+
   return current;
 }
 
@@ -117,12 +157,24 @@ export async function GET(request: Request) {
     }
     if (!/^https?:$/.test(pin.protocol)) return fail("That doesn't look like a valid link.", 400);
 
-    if (pin.hostname === "pin.it") pin = await resolveShortLink(pin);
+    // pin.it/xxxx  ->  pinterest.com/pin/<id>/...
+    if (isShortenerStep(pin)) pin = await resolveShortLink(pin);
 
-    if (!isPinterestHost(pin.hostname) || !pin.pathname.startsWith("/pin/")) {
-      return fail("Paste a link to a Pinterest pin.", 400);
+    // Pull the numeric pin id out of /pin/<id>/ , /pin/<id>/sent/ or /pin/<title>--<id>/
+    const pinId = pin.pathname.match(/^\/pin\/(?:[^/]*--)?(\d+)/)?.[1];
+
+    if (!isPinterestHost(pin.hostname) || !pinId) {
+      const stillShort = isShortenerStep(pin);
+      return fail(
+        stillShort
+          ? "Couldn't open that short link. Try pasting the full pin link instead."
+          : "Paste a link to a Pinterest pin.",
+        400
+      );
     }
-    const cleanPinUrl = `${pin.origin}${pin.pathname}`; // drops tracking params
+
+    // Drops tracking params and trailing segments like /sent/
+    const cleanPinUrl = `${pin.origin}/pin/${pinId}/`;
 
     // ---- 3. Ask RapidAPI for the image ----
     const apiKey = process.env.RAPID_API_KEY;
