@@ -3,17 +3,17 @@
 import React, { useRef, useState } from "react";
 import { ImagePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ACCEPTED_TYPES } from "./shared";
 
 const FOCUS =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
-export const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-
 interface ImageDropzoneProps {
   onFile: (file: File) => void;
+  compact?: boolean;
 }
 
-export default function ImageDropzone({ onFile }: ImageDropzoneProps) {
+export default function ImageDropzone({ onFile, compact = false }: ImageDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
 
@@ -45,15 +45,16 @@ export default function ImageDropzone({ onFile }: ImageDropzoneProps) {
         }}
         className={cn(
           FOCUS,
-          "flex min-h-[280px] cursor-pointer flex-col items-center justify-center gap-5 border-4 border-dashed border-border p-6 text-center transition-colors sm:min-h-[320px]",
+          "flex cursor-pointer flex-col items-center justify-center gap-4 border-dashed border-border p-5 text-center transition-colors",
+          compact ? "min-h-[190px] border-2" : "min-h-[280px] border-4 sm:min-h-[320px]",
           dragging ? "bg-card" : "bg-accent"
         )}
       >
-        <span className="flex h-16 w-16 items-center justify-center border-2 border-border bg-card shadow-[4px_4px_0_0_var(--border)]">
-          <ImagePlus className="h-7 w-7 text-foreground" strokeWidth={2.5} />
+        <span className="flex h-14 w-14 items-center justify-center border-2 border-border bg-card shadow-[4px_4px_0_0_var(--border)]">
+          <ImagePlus className="h-6 w-6 text-foreground" strokeWidth={2.5} />
         </span>
 
-        <p className="text-3xl font-black uppercase leading-none tracking-tight text-foreground sm:text-4xl">
+        <p className="text-2xl font-black uppercase leading-none tracking-tight text-foreground sm:text-3xl">
           {dragging ? "Drop it!" : "Upload photo"}
         </p>
 
