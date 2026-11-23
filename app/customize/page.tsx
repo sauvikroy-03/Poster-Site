@@ -13,7 +13,7 @@ export default function CustomizePage() {
         <div className="mb-6 flex items-center gap-3">
           <span className="h-3.5 w-3.5 border-2 border-border bg-accent" />
           <span className="font-mono text-[11px] font-black uppercase tracking-[0.2em] text-foreground">
-            Posterly custom studio / 01
+            Posterly custom studio 
           </span>
         </div>
 
