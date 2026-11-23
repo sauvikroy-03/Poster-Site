@@ -74,7 +74,7 @@ export const panelMm = (o: Orientation, size: SizeDef): [number, number] => {
 /* ---------- The wall used in the preview ---------- */
 
 export const WALL = {
-  src: "/wall1.png", // put your wall photo in /public
+  src: "/wall6.png", // put your wall photo in /public
   aspect: 3 / 2, // width / height of that photo
   widthMm: 1000, // how wide the photo is in real life. Bigger number = smaller poster on the wall
   centerX: 0.46, // where the poster hangs, as a fraction of the wall photo

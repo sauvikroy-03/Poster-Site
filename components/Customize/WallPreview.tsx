@@ -76,7 +76,8 @@ export default function WallPreview({
             transform: "translate(-50%, -50%)",
           }}
         >
-          <div className="relative shadow-[0_10px_22px_rgba(0,0,0,0.28),0_2px_5px_rgba(0,0,0,0.25)]">
+            {/* shadow-[0_10px_22px_rgba(0,0,0,0.28),0_2px_5px_rgba(0,0,0,0.25)] */}
+          <div className="relative ">
             {image ? (
               <FitFrame
                 plain

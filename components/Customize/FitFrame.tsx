@@ -29,7 +29,7 @@ function SplitLines({ split, variant }: { split: SplitGuide; variant: "dashed" |
             aria-hidden="true"
             className={cn(
               "pointer-events-none absolute bg-white/85 shadow-[0_0_3px_rgba(0,0,0,0.45)]",
-              vertical ? "inset-y-0 w-[1px] -translate-x-1/2" : "inset-x-0 h-[1px] -translate-y-1/2"
+              vertical ? "inset-y-0 w-[0.5px] -translate-x-1/2" : "inset-x-0 h-[0.5px] -translate-y-1/2"
             )}
             style={place}
           />
