@@ -1,4 +1,4 @@
-export const DELIVERY_CHARGE = 79;
+export const DELIVERY_CHARGE = 0;
 
 export type CouponInfo = {
   coupon_id: string;
