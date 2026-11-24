@@ -2,10 +2,11 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import ProjectDataInterface from "@/types/ItemDetails";
 import Link from "next/link";
 import Stars from "@/components/Utility/Stars";
+import { useWishlist } from "@/components/Wishlist/WishlistProvider";
 
 interface ProductCardProps {
   product: ProjectDataInterface;
@@ -27,9 +28,11 @@ export default function ProductCard({
   avgRating = 0,
   reviewCount = 0,
 }: ProductCardProps) {
-  const { prod_name, prod_images, product_variants, prod_category } = product;
+  const { prod_id, prod_name, prod_images, product_variants, prod_category } = product;
 
   const [activeIndex, setActiveIndex] = useState(0);
+  const { isWishlisted, toggleWishlist } = useWishlist();
+  const liked = isWishlisted(prod_id);
 
   const images = prod_images?.length ? prod_images : ["/placeholder.png"];
   const hasMultipleImages = images.length > 1;
@@ -44,6 +47,12 @@ export default function ProductCard({
     e.preventDefault();
     e.stopPropagation();
     setActiveIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  const handleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishlist(prod_id);
   };
 
   const baseVariant = product_variants?.reduce(
@@ -64,9 +73,25 @@ export default function ProductCard({
       <div className="p-2 pb-1.5 sm:p-3 sm:pb-2">
         <div className="relative aspect-[5/6] w-full overflow-hidden border-2 border-border/20 bg-muted">
           {/* Bestseller badge */}
-          <span className="absolute left-2 top-2 z-10 border-2 border-border bg-background px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-foreground shadow-[1px_1px_0_0_var(--border)] sm:text-[10px]">
+          {/* <span className="absolute left-2 top-2 z-10 border-2 border-border bg-background px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-foreground shadow-[1px_1px_0_0_var(--border)] sm:text-[10px]">
             Bestseller
-          </span>
+          </span> */}
+
+          {/* Wishlist button */}
+          <button
+            type="button"
+            onClick={handleWishlist}
+            aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
+            aria-pressed={liked}
+            className="absolute right-2 top-2 z-10 flex h-7 w-7 cursor-pointer items-center justify-center border-2 border-border bg-background text-foreground shadow-[1px_1px_0_0_var(--border)] transition-transform duration-150 hover:scale-105 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none sm:h-8 sm:w-8"
+          >
+            <Heart
+              className={`h-3.5 w-3.5 transition-colors sm:h-4 sm:w-4 ${
+                liked ? "fill-red-500 text-red-500" : "text-foreground"
+              }`}
+              strokeWidth={2.5}
+            />
+          </button>
 
           <Image
             src={images[0]}

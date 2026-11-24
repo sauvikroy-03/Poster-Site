@@ -6,6 +6,7 @@ import { toast } from "@/components/ui/toast";
 import ProjectDataInterface from "@/types/ItemDetails";
 import { playMechanicalClick, playStampSound } from "@/lib/sounds";
 import Stars from "@/components/Utility/Stars";
+import { useWishlist } from "@/components/Wishlist/WishlistProvider";
 
 interface ProductCardProps {
   product: ProjectDataInterface;
@@ -56,7 +57,9 @@ export default function AddToCartForm({
   );
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const [wishlisted, setWishlisted] = useState(false);
+
+  const { isWishlisted, toggleWishlist } = useWishlist();
+  const wishlisted = isWishlisted(prod_id);
 
   const selectedVariant = sizeOptions.find(
     (v) => v.variant_id === selectedVariantId
@@ -74,6 +77,11 @@ export default function AddToCartForm({
 
   const handleQuantityChange = (delta: number) => {
     setQuantity((prev) => Math.max(1, prev + delta));
+  };
+
+  const handleWishlistToggle = () => {
+    playMechanicalClick();
+    toggleWishlist(prod_id);
   };
 
   const handleAddToCart = async () => {
@@ -258,14 +266,13 @@ export default function AddToCartForm({
           type="button"
           aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
           aria-pressed={wishlisted}
-          onClick={() => setWishlisted((w) => !w)}
+          onClick={handleWishlistToggle}
           className={`${LINE} ${FOCUS} flex w-12 flex-shrink-0 cursor-pointer items-center justify-center bg-card transition-colors hover:bg-muted`}
         >
           <Heart
             size={20}
             strokeWidth={2.5}
-            className="text-foreground"
-            fill={wishlisted ? "currentColor" : "none"}
+            className={wishlisted ? "fill-red-500 text-red-500" : "text-foreground"}
           />
         </button>
       </div>

@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/toast";
 
 import  { ThemeProvider } from "@/components/Themes/ThemeProvider";
 import OfferBar from "@/components/Others/OfferBar";
+import { WishlistProvider } from "@/components/Wishlist/WishlistProvider";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -57,11 +58,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           enableSystem
           disableTransitionOnChange
         >
+          <WishlistProvider>
           <OfferBar />
 <Navbar/>
  <Toaster />
 {children}
         <Footer />
+        </WishlistProvider>
         </ThemeProvider>
       </body>
     </html>
