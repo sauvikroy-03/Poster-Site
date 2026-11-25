@@ -15,7 +15,6 @@ import { useTheme } from "next-themes";
 import AuthModal from "@/components/AuthModal";
 import SearchModal from "@/components/Search/SearchModal";
 import AccountMenu from "@/components/Profile/AccountMenu";
-import { useWishlist } from "@/components/Wishlist/WishlistProvider";
 import { createClient } from "@/lib/client";
 import type { User } from "@supabase/supabase-js";
 import { playMechanicalClick } from "@/lib/sounds";
@@ -33,7 +32,6 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { setTheme, resolvedTheme } = useTheme();
-  const { count: wishlistCount } = useWishlist();
   const [mounted, setMounted] = useState(false);
 
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -152,21 +150,25 @@ export default function Navbar() {
           <div className="flex items-center gap-1 sm:gap-2">
             {!themeInCartSlot && themeButton("hidden sm:flex")}
 
+            {/* Search button: visible on mobile and desktop */}
             <button
               type="button"
               aria-label="Search"
               aria-expanded={isSearchOpen}
               onClick={() => setIsSearchOpen((prev) => !prev)}
-              className={`${iconBtn} hidden sm:flex`}
+              className={iconBtn}
             >
               <Search className="h-[18px] w-[18px]" strokeWidth={2.5} />
             </button>
 
-            {/* Wishlist slot */}
+            {/* Wishlist slot: hidden on mobile, visible on sm and above */}
             {showCart && (
-              <Link href="/wishlist" aria-label="Wishlist" className={iconBtn}>
+              <Link
+                href="/wishlist"
+                aria-label="Wishlist"
+                className={`${iconBtn} hidden sm:flex`}
+              >
                 <Heart className="h-[18px] w-[18px]" strokeWidth={2.5} />
-               
               </Link>
             )}
 
