@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import AuthModal from "@/components/AuthModal";
+import SearchModal from "@/components/Search/SearchModal";
 import AccountMenu from "@/components/Profile/AccountMenu";
 import { createClient } from "@/lib/client";
 import type { User } from "@supabase/supabase-js";
@@ -33,6 +34,7 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
 
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -155,7 +157,9 @@ export default function Navbar() {
             <button
               type="button"
               aria-label="Search"
-              className={`${iconBtn} hidden sm:flex`}
+              aria-expanded={isSearchOpen}
+              onClick={() => setIsSearchOpen((prev) => !prev)}
+              className={`${iconBtn} sm:flex`}
             >
               <Search className="h-[18px] w-[18px]" strokeWidth={2.5} />
             </button>
@@ -210,6 +214,11 @@ export default function Navbar() {
           </div>
         </div>
       </header>
+
+      <SearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+      />
 
       <AuthModal
         isOpen={isAuthOpen}
