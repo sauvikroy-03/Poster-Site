@@ -7,6 +7,7 @@ import {
   Sun,
   Search,
   ShoppingBag,
+  Heart,
   ChevronDown,
   User as UserIcon,
 } from "lucide-react";
@@ -14,6 +15,7 @@ import { useTheme } from "next-themes";
 import AuthModal from "@/components/AuthModal";
 import SearchModal from "@/components/Search/SearchModal";
 import AccountMenu from "@/components/Profile/AccountMenu";
+import { useWishlist } from "@/components/Wishlist/WishlistProvider";
 import { createClient } from "@/lib/client";
 import type { User } from "@supabase/supabase-js";
 import { playMechanicalClick } from "@/lib/sounds";
@@ -31,6 +33,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { setTheme, resolvedTheme } = useTheme();
+  const { count: wishlistCount } = useWishlist();
   const [mounted, setMounted] = useState(false);
 
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -42,7 +45,6 @@ export default function Navbar() {
 
   const supabase = createClient();
 
-  // Prevent hydration mismatch for client-only theme state
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -57,8 +59,6 @@ export default function Navbar() {
       setUser(session?.user ?? null);
       setAuthChecked(true);
 
-      // Re-fetch server components (cart, profile, etc.) whenever auth state
-      // actually changes, so stale "logged out"/"logged in" data doesn't linger.
       if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "TOKEN_REFRESHED") {
         router.refresh();
       }
@@ -85,10 +85,8 @@ export default function Navbar() {
     router.refresh();
   };
 
-  // Flat icon buttons: no border until hover, uses semantic hover states
-  const iconBtn = `${FOCUS} flex h-10 w-10 cursor-pointer items-center justify-center border-2 border-transparent text-foreground transition-colors hover:border-border hover:bg-muted`;
+  const iconBtn = `${FOCUS} relative flex h-10 w-10 cursor-pointer items-center justify-center border-2 border-transparent text-foreground transition-colors hover:border-border hover:bg-muted`;
 
-  // Cart only for signed-in users; signed-out users get the theme toggle in its place
   const showCart = authChecked && !!user;
   const themeInCartSlot = authChecked && !user;
 
@@ -159,10 +157,18 @@ export default function Navbar() {
               aria-label="Search"
               aria-expanded={isSearchOpen}
               onClick={() => setIsSearchOpen((prev) => !prev)}
-              className={`${iconBtn} sm:flex`}
+              className={`${iconBtn} hidden sm:flex`}
             >
               <Search className="h-[18px] w-[18px]" strokeWidth={2.5} />
             </button>
+
+            {/* Wishlist slot */}
+            {showCart && (
+              <Link href="/wishlist" aria-label="Wishlist" className={iconBtn}>
+                <Heart className="h-[18px] w-[18px]" strokeWidth={2.5} />
+               
+              </Link>
+            )}
 
             {/* Cart slot */}
             {showCart && (

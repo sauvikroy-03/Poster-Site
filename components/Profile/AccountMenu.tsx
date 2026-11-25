@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Package, User as UserIcon, LogOut, Moon, Sun } from "lucide-react";
+import { Package, User as UserIcon, LogOut, Moon, Sun, Heart } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -75,6 +75,13 @@ export default function AccountMenu({
             >
               <UserIcon className="h-4 w-4 text-foreground" />
               PROFILE
+            </CommandItem>
+            <CommandItem
+            onSelect={() => goTo("/wishlist")}
+              className="flex cursor-pointer items-center gap-3 bg-transparent px-3 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-foreground transition-colors hover:bg-muted data-[selected=true]:bg-muted"
+            >
+              <Heart className="h-4 w-4 text-foreground" />
+              WISHLIST
             </CommandItem>
 
             {/* Mobile Dark Mode Toggle Item (Visible on mobile only) */}
