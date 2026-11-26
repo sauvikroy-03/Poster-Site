@@ -42,6 +42,7 @@ export async function GET() {
         discount_amount,
         total_amount,
         shipping_address,
+        awb_number,
         coupon_code,
         discount_details,
         placed_at,

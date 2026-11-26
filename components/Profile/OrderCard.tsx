@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { ChevronDown, Download, XCircle } from "lucide-react";
+import { Check, ChevronDown, Copy, Download, XCircle } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -56,6 +56,7 @@ export interface Order {
   discount_amount: number;
   total_amount: number;
   shipping_address: ShippingAddress;
+  awb_number?: string | null;
   coupon_code: string | null;
   discount_details: Record<string, unknown> | null;
   placed_at: string;
@@ -69,6 +70,7 @@ interface OrderCardProps {
 
 export default function OrderCard({ order }: OrderCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [copiedAwb, setCopiedAwb] = useState(false);
 
   const placedDate = new Date(order.placed_at).toLocaleDateString("en-IN", {
     day: "numeric",
@@ -84,6 +86,19 @@ export default function OrderCard({ order }: OrderCardProps) {
 
   const handleCancelOrder = () => {
     toast("Cancel order coming soon", { icon: "⚠️" });
+  };
+
+  const handleCopyAwb = async () => {
+    const awb = order.awb_number?.trim();
+    if (!awb) return;
+    try {
+      await navigator.clipboard.writeText(awb);
+      setCopiedAwb(true);
+      toast.success("AWB number copied");
+      setTimeout(() => setCopiedAwb(false), 1800);
+    } catch {
+      toast.error("Failed to copy AWB number");
+    }
   };
 
   return (
@@ -131,6 +146,43 @@ export default function OrderCard({ order }: OrderCardProps) {
           status={order.status}
           history={order.order_status_history ?? []}
         />
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-2 border-border bg-muted/40 px-3 py-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="shrink-0 font-mono text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+              AWB :
+            </span>
+            {order.awb_number?.trim() ? (
+              <span className="truncate font-mono text-xs font-bold text-foreground">
+                {order.awb_number.trim()}
+              </span>
+            ) : (
+              <span className="font-mono text-xs font-medium text-muted-foreground">
+                Generated once shipment is booked
+              </span>
+            )}
+          </div>
+          {order.awb_number?.trim() && (
+            <button
+              type="button"
+              onClick={handleCopyAwb}
+              aria-label="Copy AWB number"
+              className="inline-flex cursor-pointer items-center gap-1.5 border-2 border-border bg-card px-2.5 py-1 font-mono text-[10px] font-black uppercase tracking-wider text-foreground shadow-[2px_2px_0_0_var(--border)] transition-transform active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+            >
+              {copiedAwb ? (
+                <>
+                  <Check className="h-3 w-3 text-emerald-600" />
+                  <span>Copied</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3 w-3" />
+                  <span>Copy</span>
+                </>
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Expanded detail panel */}
