@@ -70,7 +70,8 @@ export async function GET() {
           prod_name,
           prod_slug,
           prod_category,
-          prod_images
+          prod_images,
+          prod_preview_image
         ),
         product_variants (
           variant_id,

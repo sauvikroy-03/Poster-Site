@@ -5,8 +5,10 @@
     prod_category:string,
     prod_description:string,
     prod_images:string[],
+    prod_preview_image?:string | null,
     is_trending:boolean,
     hero_visible:boolean,
+    hero_order?:number | null,
     product_variants: {
       variant_id:string,
       prod_size:string,

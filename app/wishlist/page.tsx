@@ -55,6 +55,7 @@ async function getWishlistProducts(): Promise<{
         prod_category,
         prod_description,
         prod_images,
+        prod_preview_image,
         is_trending,
         hero_visible,
         product_variants (

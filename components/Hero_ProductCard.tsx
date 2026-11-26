@@ -10,11 +10,21 @@ interface ProductCardProps {
 }
 
 export default function HeroProductCard({ product }: ProductCardProps) {
-  const { prod_name, prod_images, product_variants, prod_category } = product;
+  const {
+    prod_name,
+    prod_images,
+    prod_preview_image,
+    product_variants,
+    prod_category,
+  } = product;
 
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const images = prod_images?.length ? prod_images : ["/placeholder.png"];
+  const previewImage = prod_preview_image?.trim();
+  const baseImages = prod_images?.length ? prod_images : ["/placeholder.png"];
+  const images = previewImage
+    ? [previewImage, ...baseImages.filter((img) => img !== previewImage)]
+    : baseImages;
   const hasMultipleImages = images.length > 1;
 
   const goPrev = (e: React.MouseEvent) => {

@@ -242,6 +242,9 @@ export async function GET(request:NextRequest){
     prod_slug,
     prod_category,
     prod_images,
+    prod_preview_image,
+    hero_visible,
+    hero_order,
     product_variants (
       variant_id,
       prod_size,

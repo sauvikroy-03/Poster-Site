@@ -8,8 +8,48 @@ interface HeroProps {
   initialProducts?: ProjectDataInterface[];
 }
 
+function arrangeHeroSlots(heroProducts: ProjectDataInterface[]): Array<ProjectDataInterface | undefined> {
+  const HERO_SLOT_COUNT = 4;
+  const slots: Array<ProjectDataInterface | undefined> = Array(HERO_SLOT_COUNT).fill(undefined);
+
+  const numbered: ProjectDataInterface[] = [];
+  const unnumbered: ProjectDataInterface[] = [];
+
+  for (const product of heroProducts) {
+    if (typeof product.hero_order === "number" && product.hero_order >= 1) {
+      numbered.push(product);
+    } else {
+      unnumbered.push(product);
+    }
+  }
+
+  numbered.sort((a, b) => (a.hero_order ?? 0) - (b.hero_order ?? 0));
+
+  const overflow: ProjectDataInterface[] = [];
+
+  for (const product of numbered) {
+    const slotIndex = (product.hero_order as number) - 1;
+    if (slotIndex < HERO_SLOT_COUNT && !slots[slotIndex]) {
+      slots[slotIndex] = product;
+    } else {
+      overflow.push(product);
+    }
+  }
+
+  const remaining = [...overflow, ...unnumbered];
+  for (let i = 0; i < HERO_SLOT_COUNT && remaining.length > 0; i++) {
+    if (!slots[i]) {
+      slots[i] = remaining.shift();
+    }
+  }
+
+  return slots;
+}
+
 export default function Hero({ initialProducts = [] }: HeroProps) {
-  const products = initialProducts;
+  const products = arrangeHeroSlots(
+    initialProducts.filter((p) => p.hero_visible === true)
+  );
 
   return (
     <section className="w-full bg-background border-b-2 border-border">

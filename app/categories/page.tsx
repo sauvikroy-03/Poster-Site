@@ -71,6 +71,7 @@ async function getFilteredProducts({
       prod_slug,
       prod_category,
       prod_images,
+      prod_preview_image,
       ${variantsRelation} (
         variant_id,
         prod_size,

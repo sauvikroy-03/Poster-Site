@@ -28,13 +28,21 @@ export default function ProductCard({
   avgRating = 0,
   reviewCount = 0,
 }: ProductCardProps) {
-  const { prod_id, prod_name, prod_images, product_variants, prod_category } = product;
+  const {
+    prod_id,
+    prod_name,
+    prod_images,
+    prod_preview_image,
+    product_variants,
+    prod_category,
+  } = product;
 
   const [activeIndex, setActiveIndex] = useState(0);
   const { isWishlisted, toggleWishlist } = useWishlist();
   const liked = isWishlisted(prod_id);
 
   const images = prod_images?.length ? prod_images : ["/placeholder.png"];
+  const previewImage = prod_preview_image?.trim() || images[0];
   const hasMultipleImages = images.length > 1;
 
   const goPrev = (e: React.MouseEvent) => {
@@ -94,8 +102,8 @@ export default function ProductCard({
           </button>
 
           <Image
-            src={images[0]}
-            alt={`${prod_name} - image 1`}
+            src={previewImage}
+            alt={`${prod_name} - preview`}
             fill
             priority={priority}
             fetchPriority={priority ? "high" : "auto"}

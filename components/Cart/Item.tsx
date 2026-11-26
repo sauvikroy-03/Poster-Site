@@ -23,6 +23,7 @@ export interface CartItemData {
     prod_slug: string;
     prod_category: string;
     prod_images: string[];
+    prod_preview_image?: string | null;
   } | null;
   product_variants: {
     variant_id: string;
@@ -45,7 +46,9 @@ export default function Item({ item }: { item: CartItemData }) {
     : products?.prod_name ?? "Poster";
   const image = custom
     ? custom.preview_url || custom.original_url
-    : products?.prod_images?.[0] ?? "/placeholder.png";
+    : products?.prod_preview_image?.trim() ||
+      products?.prod_images?.[0] ||
+      "/placeholder.png";
   const sizeLabel = custom ? custom.size_label : product_variants?.prod_size ?? "Standard";
   const materialLabel = custom ? custom.material : product_variants?.prod_material ?? null;
   const price = custom
