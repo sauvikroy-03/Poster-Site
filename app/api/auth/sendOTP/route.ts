@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 // Validates E.164 format with country code (e.g., +919876543210)
-const PHONE_REGEX = /^\+[1-9]\d{7,14}$/;
+const PHONE_REGEX = /^\+91[6-9]\d{9}$/;
 
 function fail(message: string, status: number) {
   return NextResponse.json({ success: false, message }, { status });

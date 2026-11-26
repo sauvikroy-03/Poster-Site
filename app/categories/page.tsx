@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
-import { Search } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import CategoriesFilter from "@/components/CategoryPage/CategoriesFilter";
+import CategorySearch from "@/components/CategoryPage/CategorySearch";
 import PriceFilter from "@/components/CategoryPage/PriceFilter";
 import ProductCard from "@/components/ProductCard";
 import ProductCardSkeleton from "@/components/skeletons/SK_ProductCard";
@@ -28,13 +28,39 @@ async function getFilteredProducts({
   category,
   maxPrice,
   sort,
+  q,
 }: {
   category?: string;
   maxPrice?: string;
   sort?: string;
+  q?: string;
 }): Promise<ProjectDataInterface[]> {
   const supabase = getSupabaseClient();
   const variantsRelation = maxPrice ? "product_variants!inner" : "product_variants";
+  const trimmedQ = (q || "").trim().slice(0, 100);
+
+  let matchedOrder: string[] | null = null;
+
+  if (trimmedQ) {
+    const { data: searchRows, error: searchError } = await supabase.rpc(
+      "search_products",
+      {
+        search_query: trimmedQ,
+        result_limit: 100,
+      }
+    );
+
+    if (searchError) {
+      console.error("❌ Category Search RPC Error:", searchError.message);
+      return [];
+    }
+
+    const ids = (searchRows ?? []).map((r: { prod_id: string }) => r.prod_id);
+    if (ids.length === 0) {
+      return [];
+    }
+    matchedOrder = ids;
+  }
 
   let query = supabase
     .from("products")
@@ -58,7 +84,9 @@ async function getFilteredProducts({
     )
     .eq("prod_is_active", true);
 
-  if (category) {
+  if (matchedOrder) {
+    query = query.in("prod_id", matchedOrder);
+  } else if (category) {
     query = query.ilike("prod_category", category.replace(/-/g, " "));
   }
 
@@ -75,6 +103,13 @@ async function getFilteredProducts({
 
   let products = (data ?? []) as unknown as ProjectDataInterface[];
 
+  if (matchedOrder && sort !== "price-asc" && sort !== "price-desc") {
+    const rank = new Map(matchedOrder.map((id, idx) => [id, idx]));
+    products = [...products].sort(
+      (a, b) => (rank.get(a.prod_id) ?? 9999) - (rank.get(b.prod_id) ?? 9999)
+    );
+  }
+
   if (sort === "price-asc" || sort === "price-desc") {
     const minPrice = (p: ProjectDataInterface) =>
       Math.min(...p.product_variants.map((v) => Number(v.prod_price)));
@@ -90,10 +125,11 @@ async function getFilteredProducts({
 async function ProductResults({
   searchParamsPromise,
 }: {
-  searchParamsPromise: Promise<{ category?: string; sort?: string; maxPrice?: string }>;
+  searchParamsPromise: Promise<{ category?: string; sort?: string; maxPrice?: string; q?: string }>;
 }) {
-  const { category, maxPrice, sort } = await searchParamsPromise;
-  const products = await getFilteredProducts({ category, maxPrice, sort });
+  const { category, maxPrice, sort, q } = await searchParamsPromise;
+  const trimmedQ = (q || "").trim();
+  const products = await getFilteredProducts({ category, maxPrice, sort, q: trimmedQ });
 
   // One batched call for every product on the page (skipped when there are none)
   const ratings =
@@ -105,7 +141,8 @@ async function ProductResults({
     <>
       <div className="mb-6 flex items-center justify-between border-b-2 border-border pb-4">
         <span className="text-xs font-black uppercase tracking-wider text-foreground">
-          {products.length} posters
+          {products.length} {products.length === 1 ? "poster" : "posters"}
+          {trimmedQ ? ` for "${trimmedQ}"` : ""}
         </span>
 
         <div className="flex items-center gap-2 text-xs">
@@ -121,7 +158,9 @@ async function ProductResults({
       {products.length === 0 ? (
         <div className="flex h-64 flex-col items-center justify-center border-2 border-dashed border-border bg-card/60 p-8 text-center shadow-[3px_3px_0_0_var(--border)]">
           <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">
-            No posters found in this category
+            {trimmedQ
+              ? `No posters found for "${trimmedQ}"`
+              : "No posters found in this category"}
           </p>
         </div>
       ) : (
@@ -159,10 +198,10 @@ function ProductResultsSkeleton() {
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; sort?: string; maxPrice?: string }>;
+  searchParams: Promise<{ category?: string; sort?: string; maxPrice?: string; q?: string }>;
 }) {
   const resolvedParams = await searchParams;
-  const suspenseKey = `${resolvedParams.category || ""}-${resolvedParams.maxPrice || ""}-${resolvedParams.sort || ""}`;
+  const suspenseKey = `${resolvedParams.category || ""}-${resolvedParams.maxPrice || ""}-${resolvedParams.sort || ""}-${resolvedParams.q || ""}`;
 
   return (
     <div className="min-h-screen w-full bg-background text-foreground">
@@ -170,17 +209,13 @@ export default async function Page({
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-start gap-10 md:grid-cols-4">
           <aside className="col-span-1 flex flex-col gap-6">
-            <div className="relative w-full">
-              <Search
-                size={16}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-              />
-              <input
-                type="text"
-                placeholder="Search posters..."
-                className="w-full border-2 border-border bg-card py-2 pl-10 pr-4 text-xs font-bold uppercase tracking-wider text-foreground placeholder:text-muted-foreground outline-none shadow-[2px_2px_0_0_var(--border)] transition-all focus:bg-background"
-              />
-            </div>
+            <Suspense
+              fallback={
+                <div className="h-[38px] w-full animate-pulse border-2 border-border/40 bg-muted/60" />
+              }
+            >
+              <CategorySearch />
+            </Suspense>
 
             <Suspense
               fallback={

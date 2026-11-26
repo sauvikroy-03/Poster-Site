@@ -17,6 +17,7 @@ export default function CategoriesFilter() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentCategory = searchParams.get("category");
+  const currentQuery = searchParams.get("q")?.trim() || "";
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -37,20 +38,22 @@ export default function CategoriesFilter() {
   }, []);
 
   const handleSelect = (slug: string | null) => {
-    // Prevent duplicate triggers if already selected or currently pending
+    // Prevent duplicate triggers if already selected (and no search query is active) or currently pending
     const isCurrentlyActive = !slug
-      ? !currentCategory
-      : currentCategory?.toLowerCase() === slug;
+      ? !currentCategory && !currentQuery
+      : !currentQuery && currentCategory?.toLowerCase() === slug;
     if (isCurrentlyActive || isPending) return;
 
     setPendingSlug(slug);
 
     const params = new URLSearchParams(searchParams.toString());
+    params.delete("q");
     if (slug) params.set("category", slug);
     else params.delete("category");
 
     startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      const qs = params.toString();
+      router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     });
   };
 
@@ -79,7 +82,7 @@ export default function CategoriesFilter() {
           onClick={() => handleSelect(null)}
           disabled={isPending}
           className={`flex cursor-pointer items-center gap-2 border-2 border-border px-4 py-2 text-xs font-black uppercase tracking-wider transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
-            !currentCategory
+            !currentCategory && !currentQuery
               ? "bg-primary text-primary-foreground shadow-[3px_3px_0_0_var(--border)]"
               : "bg-card text-foreground shadow-[3px_3px_0_0_var(--border)] hover:-translate-y-0.5 hover:bg-muted active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
           }`}
@@ -104,7 +107,7 @@ export default function CategoriesFilter() {
           categories.map((c, idx) => {
             const slug = getSlug(c);
             const isActive =
-              !!currentCategory && currentCategory.toLowerCase() === slug;
+              !currentQuery && !!currentCategory && currentCategory.toLowerCase() === slug;
             const isButtonLoading = isPending && pendingSlug === slug;
 
             return (

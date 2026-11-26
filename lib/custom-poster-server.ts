@@ -22,11 +22,17 @@ import {
 
 export const PENDING_PREFIX = "custom/pending/";
 
+function cleanEnv(val: string | undefined): string {
+  return (val ?? "").trim().replace(/^["']|["']$/g, "").trim();
+}
+
 export function getR2Config() {
-  const bucketName =
-    process.env.CLOUDFLARE_R2_BUCKET_NAME || process.env.CLOUDFARE_R2_BUCKET_NAME;
-  const publicDomain =
-    process.env.CLOUDFLARE_PUBLIC_DOMAIN || process.env.CLOUDFARE_PUBLIC_DOMAIN;
+  const bucketName = cleanEnv(
+    process.env.CLOUDFLARE_R2_BUCKET_NAME || process.env.CLOUDFARE_R2_BUCKET_NAME
+  );
+  const publicDomain = cleanEnv(
+    process.env.CLOUDFLARE_PUBLIC_DOMAIN || process.env.CLOUDFARE_PUBLIC_DOMAIN
+  );
 
   if (!bucketName || !publicDomain) {
     return null;
