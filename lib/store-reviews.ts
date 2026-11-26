@@ -24,6 +24,8 @@ interface Row {
   rating: number;
   note: string | null;
   images: string[] | null;
+  displayed_images: string[] | null;
+  is_displayed: boolean | null;
   created_at: string;
   orders: {
     shipping_address: {
@@ -48,10 +50,12 @@ async function fetchPublicReviews(): Promise<PublicReviewData> {
   const [{ data: rows, error }, { data: summary }] = await Promise.all([
     admin
       .from("store_reviews")
-      .select("review_id, rating, note, images, created_at, orders(shipping_address)")
-      .not("note", "is", null)
+      .select(
+        "review_id, rating, note, images, displayed_images, is_displayed, created_at, orders(shipping_address)"
+      )
+      .or("is_displayed.eq.true,displayed_images.neq.{}")
       .order("created_at", { ascending: false })
-      .limit(12),
+      .limit(24),
     admin.rpc("get_store_rating").single(),
   ]);
 
@@ -60,22 +64,29 @@ async function fetchPublicReviews(): Promise<PublicReviewData> {
     return { reviews: [], avgRating: 0, reviewCount: 0 };
   }
 
-  const reviews = ((rows ?? []) as unknown as Row[]).map((r) => {
-    const addr = r.orders?.shipping_address;
-    return {
-      id: r.review_id,
-      rating: r.rating,
-      quote: r.note ?? "",
-      name: displayName(addr?.first_name, addr?.last_name),
-      location: addr?.city?.trim() ?? "",
-      date: new Date(r.created_at).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      }),
-      images: r.images ?? [],
-    };
-  });
+  const reviews = ((rows ?? []) as unknown as Row[])
+    .map((r) => {
+      const addr = r.orders?.shipping_address;
+      const selectedImages = Array.isArray(r.displayed_images)
+        ? r.displayed_images.filter(Boolean)
+        : [];
+      const showNote = r.is_displayed === true && Boolean(r.note?.trim());
+
+      return {
+        id: r.review_id,
+        rating: r.rating,
+        quote: showNote ? (r.note ?? "").trim() : "",
+        name: displayName(addr?.first_name, addr?.last_name),
+        location: addr?.city?.trim() ?? "",
+        date: new Date(r.created_at).toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }),
+        images: selectedImages,
+      };
+    })
+    .filter((r) => Boolean(r.quote) || r.images.length > 0);
 
   const s = summary as { avg_rating: number | string; review_count: number | string } | null;
 
@@ -86,7 +97,7 @@ async function fetchPublicReviews(): Promise<PublicReviewData> {
   };
 }
 
-// Cached for 5 minutes so the homepage doesn't hit the DB on every visit
+// Short cache window so admin review visibility toggles reflect quickly
 export const getPublicReviews = unstable_cache(fetchPublicReviews, ["public-store-reviews"], {
-  revalidate: 300,
+  revalidate: 15,
 });
