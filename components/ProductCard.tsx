@@ -13,6 +13,7 @@ interface ProductCardProps {
   priority?: boolean;
   avgRating?: number;
   reviewCount?: number;
+  variant?: "default" | "hero-side";
 }
 
 // 999 -> "999", 1000 -> "1k", 1250 -> "1.2k", 12000 -> "12k"
@@ -27,7 +28,9 @@ export default function ProductCard({
   priority = false,
   avgRating = 0,
   reviewCount = 0,
+  variant = "default",
 }: ProductCardProps) {
+  const isHeroSide = variant === "hero-side";
   const {
     prod_id,
     prod_name,
@@ -78,8 +81,12 @@ export default function ProductCard({
       className="group flex w-full flex-col overflow-hidden border-2 border-border bg-card shadow-[4px_4px_0_0_var(--border)] transition-transform duration-300 ease-out hover:-translate-y-1.5 hover:cursor-pointer"
     >
       {/* Image frame: Locks to 3/4 or 4/5 proportional aspect ratio with neutral containment background */}
-      <div className="p-2 pb-1.5 sm:p-3 sm:pb-2">
-        <div className="relative aspect-[5/6] w-full overflow-hidden border-2 border-border/20 bg-muted">
+      <div className={isHeroSide ? "p-2 pb-1.5" : "p-2 pb-1.5 sm:p-3 sm:pb-2"}>
+        <div
+          className={`relative w-full overflow-hidden border-2 border-border/20 bg-muted ${
+            isHeroSide ? "aspect-[5/6] lg:aspect-[5/4]" : "aspect-[5/6]"
+          }`}
+        >
           {/* Bestseller badge */}
           {/* <span className="absolute left-2 top-2 z-10 border-2 border-border bg-background px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-foreground shadow-[1px_1px_0_0_var(--border)] sm:text-[10px]">
             Bestseller
@@ -145,12 +152,22 @@ export default function ProductCard({
       </div>
 
       {/* Text block: Content naturally determines bottom height */}
-      <div className="flex items-start justify-between gap-2 border-t-2 border-border/15 px-2.5 py-2 sm:gap-4 sm:px-4 sm:py-3">
+      <div
+        className={`flex items-start justify-between gap-2 border-t-2 border-border/15 ${
+          isHeroSide
+            ? "px-2.5 py-2 sm:gap-3 sm:px-3 sm:py-2.5"
+            : "px-2.5 py-2 sm:gap-4 sm:px-4 sm:py-3"
+        }`}
+      >
         {/* Row 1: name (left) + category + rating */}
         <div className="flex min-w-0 flex-1 flex-col items-start justify-between gap-1">
           <h3
             title={prod_name}
-            className="w-full truncate text-xs font-black uppercase leading-tight text-foreground sm:text-sm md:text-base lg:text-lg"
+            className={`w-full font-black uppercase leading-tight text-foreground ${
+              isHeroSide
+                ? "line-clamp-2 text-xs sm:text-sm"
+                : "truncate text-xs sm:text-sm md:text-base lg:text-lg"
+            }`}
           >
             {prod_name}
           </h3>
@@ -170,16 +187,22 @@ export default function ProductCard({
               </span>
             </div>
           ) : (
-            <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground sm:text-xs">
-              No ratings yet
-            </span>
+            !isHeroSide && (
+              <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground sm:text-xs">
+                No ratings yet
+              </span>
+            )
           )}
         </div>
 
         {/* Row 2: price stack */}
         <div className="flex flex-shrink-0 flex-col items-end leading-none">
           {price !== null && (
-            <span className="whitespace-nowrap text-sm font-black text-foreground sm:text-base md:text-lg">
+            <span
+              className={`whitespace-nowrap font-black text-foreground ${
+                isHeroSide ? "text-sm sm:text-base" : "text-sm sm:text-base md:text-lg"
+              }`}
+            >
               ₹{price.toLocaleString()}
             </span>
           )}
