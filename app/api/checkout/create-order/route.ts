@@ -23,7 +23,8 @@ function fail(message: string, status: number) {
 
 async function getAuthedClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+  const supabaseAnonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) return null;
 
@@ -69,13 +70,12 @@ interface CartRow {
     prod_material: string | null;
     prod_price: number | string;
     sku: string | null;
-    is_in_stock: boolean;
+    is_in_stock: boolean | string;
   } | null;
 }
 
 export async function POST(request: NextRequest) {
   try {
-    // Client sends only a coupon code (or null). Never an amount.
     const body = await request.json().catch(() => ({}));
     const couponCode =
       typeof body?.couponCode === "string" && body.couponCode.trim()
@@ -92,7 +92,6 @@ export async function POST(request: NextRequest) {
 
     if (authError || !user) return fail("Please log in to checkout.", 401);
 
-    // ---- Default address: the only source of truth for shipping_address ----
     const { data: address, error: addressError } = await supabase
       .from("user_address")
       .select(
@@ -108,7 +107,6 @@ export async function POST(request: NextRequest) {
     }
     if (!address) return fail("Please add a delivery address before checking out.", 400);
 
-    // ---- Cart with live prices/stock: never trust a client-supplied cart or total ----
     const { data: cartItems, error: cartError } = await supabase
       .from("cart_items")
       .select(
@@ -130,9 +128,11 @@ export async function POST(request: NextRequest) {
 
     const rows = cartItems as unknown as CartRow[];
 
-    const outOfStock = rows.find(
-      (item) => !isCustomPosterConfig(item.custom_config) && !item.product_variants?.is_in_stock
-    );
+    const outOfStock = rows.find((item) => {
+      if (isCustomPosterConfig(item.custom_config)) return false;
+      const stock = item.product_variants?.is_in_stock;
+      return stock === false || stock === "false" || stock == null;
+    });
     if (outOfStock) {
       return fail(`"${outOfStock.products?.prod_name ?? "An item"}" is currently out of stock.`, 400);
     }
@@ -151,7 +151,6 @@ export async function POST(request: NextRequest) {
 
     if (subtotal <= 0) return fail("Invalid cart total.", 400);
 
-    // ---- Coupon: re-validated server-side against the DB subtotal ----
     let discount = 0;
     let appliedCoupon: CouponInfo | null = null;
 
@@ -167,7 +166,7 @@ export async function POST(request: NextRequest) {
     }
 
     const deliveryCharge = DELIVERY_CHARGE;
-    const totalAmount = subtotal - discount + deliveryCharge;
+    const totalAmount = Math.max(0, subtotal - discount + deliveryCharge);
     const orderNumber = generateOrderNumber();
 
     const shippingAddressSnapshot = {
@@ -188,7 +187,13 @@ export async function POST(request: NextRequest) {
 
     const admin = getSupabaseAdmin();
 
-    // ---- 1. Create the order (with discount details) ----
+    // Mark previous abandoned unpaid orders as failed/cancelled so retries don't leave clutter
+    await admin
+      .from("orders")
+      .update({ status: "cancelled", payment_status: "failed" })
+      .eq("user_id", user.id)
+      .eq("payment_status", "pending");
+
     const { data: order, error: orderError } = await admin
       .from("orders")
       .insert({
@@ -218,7 +223,6 @@ export async function POST(request: NextRequest) {
       return fail("Failed to create order.", 500);
     }
 
-    // ---- 2. Snapshot the line items ----
     const orderItemsPayload = rows.map((item) => {
       const qty = Math.min(item.quantity, MAX_QUANTITY);
 
@@ -266,11 +270,10 @@ export async function POST(request: NextRequest) {
 
     if (itemsError) {
       console.error("❌ Order Items Insert Error:", itemsError.message);
-      await admin.from("orders").delete().eq("order_id", order.order_id); // rollback
+      await admin.from("orders").delete().eq("order_id", order.order_id);
       return fail("Failed to save order items.", 500);
     }
 
-    // ---- 3. Create the Razorpay order (amount already includes the discount) ----
     let razorpayOrder;
     try {
       razorpayOrder = await createRazorpayOrder({
@@ -280,11 +283,10 @@ export async function POST(request: NextRequest) {
       });
     } catch (rzpError) {
       console.error("❌ Razorpay Order Error:", rzpError);
-      await admin.from("orders").delete().eq("order_id", order.order_id); // rollback
+      await admin.from("orders").delete().eq("order_id", order.order_id);
       return fail("Failed to initiate payment. Please try again.", 502);
     }
 
-    // ---- 4. Record the payment attempt ----
     const { error: paymentError } = await admin.from("payments").insert({
       order_id: order.order_id,
       user_id: user.id,
@@ -297,7 +299,7 @@ export async function POST(request: NextRequest) {
 
     if (paymentError) {
       console.error("❌ Payment Insert Error:", paymentError.message);
-      await admin.from("orders").delete().eq("order_id", order.order_id); // rollback
+      await admin.from("orders").delete().eq("order_id", order.order_id);
       return fail("Failed to initiate payment. Please try again.", 500);
     }
 
