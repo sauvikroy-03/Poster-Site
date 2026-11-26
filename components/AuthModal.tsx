@@ -358,7 +358,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   disabled={loading}
                   className={cn(
                     FOCUS,
-                    "h-11 w-full cursor-pointer rounded-none border-2 border-border bg-primary text-sm font-bold text-primary-foreground shadow-[4px_4px_0_0_var(--border)] transition-[transform,box-shadow] duration-100 hover:bg-primary active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_0_var(--border)] disabled:cursor-not-allowed disabled:opacity-50"
+                    "h-11 w-full cursor-pointer rounded-none border-2 border-border bg-accent text-sm font-bold text-primary-foreground shadow-[4px_4px_0_0_var(--border)] transition-[transform,box-shadow] duration-100 hover:bg-accent active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_0_var(--border)] disabled:cursor-not-allowed disabled:opacity-50"
                   )}
                 >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin text-current" /> : "Send code"}
@@ -431,7 +431,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                 disabled={otpCode.length < 6 || loading}
                 className={cn(
                   FOCUS,
-                  "h-11 w-full cursor-pointer rounded-none border-2 border-border bg-primary text-sm font-bold text-primary-foreground shadow-[4px_4px_0_0_var(--border)] transition-[transform,box-shadow] duration-100 hover:bg-primary active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_0_var(--border)] disabled:cursor-not-allowed disabled:opacity-50"
+                  "h-11 w-full cursor-pointer rounded-none border-2 border-border bg-accent text-sm font-bold text-primary-foreground shadow-[4px_4px_0_0_var(--border)] transition-[transform,box-shadow] duration-100 hover:bg-accent active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_0_var(--border)] disabled:cursor-not-allowed disabled:opacity-50"
                 )}
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin text-current" /> : "Verify code"}
