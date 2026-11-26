@@ -13,7 +13,6 @@ interface ProductCardProps {
   priority?: boolean;
   avgRating?: number;
   reviewCount?: number;
-  variant?: "default" | "hero-side";
 }
 
 // 999 -> "999", 1000 -> "1k", 1250 -> "1.2k", 12000 -> "12k"
@@ -28,9 +27,7 @@ export default function ProductCard({
   priority = false,
   avgRating = 0,
   reviewCount = 0,
-  variant = "default",
 }: ProductCardProps) {
-  const isHeroSide = variant === "hero-side";
   const {
     prod_id,
     prod_name,
@@ -78,15 +75,11 @@ export default function ProductCard({
   return (
     <Link
       href={`/product/${product.prod_slug}`}
-      className="group flex w-full flex-col overflow-hidden border-2 border-border bg-card shadow-[4px_4px_0_0_var(--border)] transition-transform duration-300 ease-out hover:-translate-y-1.5 hover:cursor-pointer"
+      className="@container group flex w-full flex-col overflow-hidden border-2 border-border bg-card shadow-[4px_4px_0_0_var(--border)] transition-transform duration-300 ease-out hover:-translate-y-1.5 hover:cursor-pointer"
     >
       {/* Image frame: Locks to 3/4 or 4/5 proportional aspect ratio with neutral containment background */}
-      <div className={isHeroSide ? "p-2 pb-1.5" : "p-2 pb-1.5 sm:p-3 sm:pb-2"}>
-        <div
-          className={`relative w-full overflow-hidden border-2 border-border/20 bg-muted ${
-            isHeroSide ? "aspect-[5/6] lg:aspect-[5/4]" : "aspect-[5/6]"
-          }`}
-        >
+      <div className="p-1.5 pb-1 @[230px]:p-2.5 @[230px]:pb-1.5 @[280px]:p-3 @[280px]:pb-2">
+        <div className="relative aspect-[5/6] w-full overflow-hidden border-2 border-border/20 bg-muted">
           {/* Bestseller badge */}
           {/* <span className="absolute left-2 top-2 z-10 border-2 border-border bg-background px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-foreground shadow-[1px_1px_0_0_var(--border)] sm:text-[10px]">
             Bestseller
@@ -152,29 +145,19 @@ export default function ProductCard({
       </div>
 
       {/* Text block: Content naturally determines bottom height */}
-      <div
-        className={`flex items-start justify-between gap-2 border-t-2 border-border/15 ${
-          isHeroSide
-            ? "px-2.5 py-2 sm:gap-3 sm:px-3 sm:py-2.5"
-            : "px-2.5 py-2 sm:gap-4 sm:px-4 sm:py-3"
-        }`}
-      >
+      <div className="flex items-start justify-between gap-1.5 border-t-2 border-border/15 px-2 py-2 @[230px]:gap-3 @[230px]:px-3 @[230px]:py-2.5 @[280px]:gap-4 @[280px]:px-4 @[280px]:py-3">
         {/* Row 1: name (left) + category + rating */}
         <div className="flex min-w-0 flex-1 flex-col items-start justify-between gap-1">
           <h3
             title={prod_name}
-            className={`w-full font-black uppercase leading-tight text-foreground ${
-              isHeroSide
-                ? "line-clamp-2 text-xs sm:text-sm"
-                : "truncate text-xs sm:text-sm md:text-base lg:text-lg"
-            }`}
+            className="w-full truncate text-[clamp(11px,5.8cqi,18px)] font-black uppercase leading-tight text-foreground"
           >
             {prod_name}
           </h3>
 
           <p
             title={prod_category}
-            className="w-full truncate text-[10px] font-bold uppercase tracking-wide text-muted-foreground sm:text-xs"
+            className="w-full truncate text-[clamp(9px,3.6cqi,12px)] font-bold uppercase tracking-wide text-muted-foreground"
           >
             {prod_category}
           </p>
@@ -182,32 +165,26 @@ export default function ProductCard({
           {reviewCount > 0 ? (
             <div className="flex items-center gap-1.5">
               <Stars rating={avgRating} size={14} />
-              <span className="text-[10px] font-bold text-muted-foreground sm:text-xs">
+              <span className="text-[clamp(9px,3.6cqi,12px)] font-bold text-muted-foreground">
                 ({formatCount(reviewCount)})
               </span>
             </div>
           ) : (
-            !isHeroSide && (
-              <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground sm:text-xs">
-                No ratings yet
-              </span>
-            )
+            <span className="text-[clamp(9px,3.6cqi,12px)] font-bold uppercase tracking-wide text-muted-foreground">
+              No ratings yet
+            </span>
           )}
         </div>
 
         {/* Row 2: price stack */}
         <div className="flex flex-shrink-0 flex-col items-end leading-none">
           {price !== null && (
-            <span
-              className={`whitespace-nowrap font-black text-foreground ${
-                isHeroSide ? "text-sm sm:text-base" : "text-sm sm:text-base md:text-lg"
-              }`}
-            >
+            <span className="whitespace-nowrap text-[clamp(12px,5.5cqi,18px)] font-black text-foreground">
               ₹{price.toLocaleString()}
             </span>
           )}
           {hasDiscount && (
-            <span className="-mt-0.5 whitespace-nowrap text-[9px] font-bold text-muted-foreground line-through sm:-mt-1 sm:text-[10px] md:text-sm">
+            <span className="-mt-0.5 whitespace-nowrap text-[clamp(9px,3.5cqi,14px)] font-bold text-muted-foreground line-through @[280px]:-mt-1">
               ₹{comparePrice!.toLocaleString()}
             </span>
           )}

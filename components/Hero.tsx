@@ -59,7 +59,7 @@ export default function Hero({ initialProducts = [] }: HeroProps) {
       <div className="mx-auto max-w-7xl px-4 pb-16 pt-10 sm:px-6 lg:py-14">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-center lg:gap-10">
           {/* Left column: Headline, copy, and Shop + Customize CTAs */}
-          <div className="flex flex-col items-start lg:col-span-5">
+          <div className="flex flex-col items-start lg:col-span-6">
             <div className="mb-6 flex items-center gap-3">
               {/* Burnt terracotta accent bar */}
               <span className="h-5 w-1 bg-accent" />
@@ -99,10 +99,10 @@ export default function Hero({ initialProducts = [] }: HeroProps) {
             </div>
           </div>
 
-          {/* Right column: 3-poster asymmetrical grid (2 cols on mobile, 1.45fr / 1fr on desktop) */}
-          <div className="grid grid-cols-2 items-start gap-4 lg:col-span-7 lg:grid-cols-[1.45fr_1fr]">
-            {/* Card 0: Full width on mobile, large spotlight card on desktop */}
-            <div className="col-span-2 lg:col-span-1 lg:row-span-2">
+          {/* Right column: 3-poster asymmetrical grid (2 cols on mobile, 3 cols on desktop) */}
+          <div className="grid grid-cols-2 items-start gap-4 lg:col-span-6 lg:grid-cols-3">
+            {/* Card 0: Full width on mobile, 2x2 large spotlight card on desktop */}
+            <div className="col-span-2 lg:col-span-2 lg:row-span-2">
               {products[0] ? (
                 <ProductCard product={products[0]} priority={true} />
               ) : (
@@ -113,7 +113,7 @@ export default function Hero({ initialProducts = [] }: HeroProps) {
             {/* Card 1: Top right on desktop, left half on mobile */}
             <div className="col-span-1">
               {products[1] ? (
-                <ProductCard product={products[1]} variant="hero-side" />
+                <ProductCard product={products[1]} />
               ) : (
                 <ProductCardSkeleton />
               )}
@@ -122,7 +122,7 @@ export default function Hero({ initialProducts = [] }: HeroProps) {
             {/* Card 2: Bottom right on desktop, right half on mobile */}
             <div className="col-span-1">
               {products[2] ? (
-                <ProductCard product={products[2]} variant="hero-side" />
+                <ProductCard product={products[2]} />
               ) : (
                 <ProductCardSkeleton />
               )}
