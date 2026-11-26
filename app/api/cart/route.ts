@@ -1,8 +1,17 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { isCustomPosterConfig } from "@/lib/custom-poster";
+import {
+  deleteR2Keys,
+  getR2Config,
+  keyFromPublicUrl,
+  PENDING_PREFIX,
+} from "@/lib/custom-poster-server";
 
 const MAX_QUANTITY = 99;
+
+export const dynamic = "force-dynamic";
 
 async function getSupabaseServerClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -23,6 +32,79 @@ async function getSupabaseServerClient() {
       },
     },
   });
+}
+
+export async function GET() {
+  try {
+    const supabase = await getSupabaseServerClient();
+
+    if (!supabase) {
+      return NextResponse.json(
+        { success: false, message: "Server configuration error: Missing environment variables." },
+        { status: 500 }
+      );
+    }
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, message: "You must be signed in to view your cart." },
+        { status: 401 }
+      );
+    }
+
+    const { data, error } = await supabase
+      .from("cart_items")
+      .select(`
+        cart_id,
+        quantity,
+        created_at,
+        updated_at,
+        custom_config,
+        products (
+          prod_id,
+          prod_name,
+          prod_slug,
+          prod_category,
+          prod_images
+        ),
+        product_variants (
+          variant_id,
+          prod_size,
+          prod_material,
+          prod_price,
+          compare_at_price,
+          sku,
+          is_in_stock
+        )
+      `)
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("❌ Cart Fetch Error:", error.message);
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { success: true, items: data ?? [] },
+      { status: 200 }
+    );
+  } catch (err: unknown) {
+    console.error("❌ Get Cart Route Catch:", err);
+    const message = err instanceof Error ? err.message : "Internal server error.";
+    return NextResponse.json(
+      { success: false, message },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request: Request) {
@@ -194,6 +276,19 @@ export async function DELETE(request: Request) {
         { success: false, message: "Cart item not found." },
         { status: 404 }
       );
+    }
+
+    // Clean up temporary R2 files if this was a pending custom poster
+    if (isCustomPosterConfig(data.custom_config)) {
+      const r2Cfg = getR2Config();
+      if (r2Cfg) {
+        const pendingKeys = [
+          keyFromPublicUrl(data.custom_config.original_url, r2Cfg.baseDomain),
+          keyFromPublicUrl(data.custom_config.preview_url, r2Cfg.baseDomain),
+        ].filter((k): k is string => !!k && k.startsWith(PENDING_PREFIX));
+
+        await deleteR2Keys(r2Cfg.bucketName, pendingKeys);
+      }
     }
 
     return NextResponse.json(

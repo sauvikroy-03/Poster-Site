@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/toast";
 import { useRouter } from "next/navigation";
 import { playMechanicalClick, playStampSound } from "@/lib/sounds";
+import { notifyCartUpdated } from "@/lib/cart-events";
 import { useCart } from "@/components/Cart/CartProvider";
 
 declare global {
@@ -28,18 +29,27 @@ function loadRazorpayScript(): Promise<boolean> {
   });
 }
 
-export default function CheckoutButton() {
+export default function CheckoutButton({
+  label = "PROCEED TO CHECKOUT",
+  onSuccess,
+}: {
+  label?: string;
+  onSuccess?: () => void;
+}) {
   const [isProcessing, setIsProcessing] = useState(false);
   const router = useRouter();
   const { flush, total, coupon, couponWarning } = useCart();
 
   // Always hold the latest on-screen values, even inside async callbacks
   const totalRef = useRef(total);
-  totalRef.current = total;
   const couponRef = useRef(coupon);
-  couponRef.current = coupon;
   const couponWarningRef = useRef(couponWarning);
-  couponWarningRef.current = couponWarning;
+
+  useEffect(() => {
+    totalRef.current = total;
+    couponRef.current = coupon;
+    couponWarningRef.current = couponWarning;
+  }, [total, coupon, couponWarning]);
 
   const handleCheckout = async () => {
     if (isProcessing) return;
@@ -141,7 +151,9 @@ export default function CheckoutButton() {
             }
 
             playStampSound();
+            notifyCartUpdated();
             toast.add({ type: "success", description: "Order placed successfully!" });
+            onSuccess?.();
             router.push(`/account?tab=orders`);
             router.refresh();
           } catch {
@@ -182,7 +194,7 @@ export default function CheckoutButton() {
         </>
       ) : (
         <>
-          PROCEED TO CHECKOUT
+          {label}
           <ChevronRight size={16} strokeWidth={2.5} />
         </>
       )}

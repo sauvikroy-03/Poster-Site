@@ -5,7 +5,7 @@ import { Pencil, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DummyArt from "./DummyArt";
 import FitFrame, { FrameShell } from "./FitFrame";
-import type { Fit, OrientationDef, PickedImage, SplitGuide } from "./shared";
+import { posterRatio, type Fit, type OrientationDef, type PickedImage, type SplitGuide } from "./shared";
 
 const FOCUS =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
@@ -20,8 +20,13 @@ interface FormatCardProps {
 
 export default function FormatCard({ orientation, split, image, fit, onOpen }: FormatCardProps) {
   const vertical = orientation.id === "vertical";
+  const ratio = posterRatio(orientation.id, !!split);
   // Caps the poster's height so it never gets taller than the screen allows
-  const maxHeight = vertical ? "min(380px, 52dvh)" : "min(300px, 40dvh)";
+  const maxHeight = vertical
+    ? split
+      ? "min(440px, 56dvh)"
+      : "min(380px, 52dvh)"
+    : "min(300px, 40dvh)";
 
   return (
     <div
@@ -45,7 +50,7 @@ export default function FormatCard({ orientation, split, image, fit, onOpen }: F
           <FitFrame
             image={image}
             fit={fit}
-            ratio={orientation.ratio}
+            ratio={ratio}
             split={split}
             maxHeight={maxHeight}
           />
@@ -55,8 +60,8 @@ export default function FormatCard({ orientation, split, image, fit, onOpen }: F
           </span>
         </>
       ) : (
-        <FrameShell ratio={orientation.ratio} split={split} maxHeight={maxHeight}>
-          <DummyArt ratio={orientation.ratio} />
+        <FrameShell ratio={ratio} split={split} maxHeight={maxHeight}>
+          <DummyArt ratio={ratio} />
           <span className="absolute inset-0 flex items-center justify-center">
             <span className="inline-flex items-center gap-1.5 border-2 border-border bg-card px-3 py-2 text-[11px] font-black uppercase tracking-[0.12em] text-foreground shadow-[2px_2px_0_0_var(--border)]">
               <Plus className="h-3.5 w-3.5" strokeWidth={3} />

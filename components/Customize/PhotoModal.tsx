@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -21,6 +21,7 @@ import {
   geometry,
   initialFit,
   loadPickedImage,
+  posterRatio,
   printQuality,
   sliderToZoom,
   zoomToSlider,
@@ -119,8 +120,12 @@ export default function PhotoModal({
   const [draftFit, setDraftFit] = useState<Fit>(fit);
   const [error, setError] = useState("");
   const draftRef = useRef(draft);
-  draftRef.current = draft;
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
   const originalUrl = image?.url ?? null;
+
+  const frameRatio = posterRatio(orientation.id, !!split);
 
   // A photo picked inside this modal is only ours until "Use photo" hands it to the page
   const discardDraft = () => {
@@ -131,7 +136,7 @@ export default function PhotoModal({
   const acceptImage = (next: PickedImage) => {
     discardDraft();
     setDraft(next);
-    setDraftFit(initialFit(next, orientation.ratio));
+    setDraftFit(initialFit(next, frameRatio));
     setError("");
     setStep("fit");
   };
@@ -212,11 +217,11 @@ export default function PhotoModal({
         ) : (
           /* ---------------- Step: fit the photo in the frame ---------------- */
           (() => {
-            const g = geometry(draft, draftFit.turns, orientation.ratio);
+            const g = geometry(draft, draftFit.turns, frameRatio);
             const sliderT = Math.min(1, Math.max(0, zoomToSlider(draftFit.zoom, g.maxZoom)));
-            const q = printQuality(draft, draftFit, orientation, size);
+            const q = printQuality(draft, draftFit, orientation, size, !!split);
 
-            const setFitSafe = (next: Fit) => setDraftFit(clampFit(next, draft, orientation.ratio));
+            const setFitSafe = (next: Fit) => setDraftFit(clampFit(next, draft, frameRatio));
 
             return (
               <div className="flex flex-col gap-4">
@@ -256,7 +261,7 @@ export default function PhotoModal({
                   <FitFrame
                     image={draft}
                     fit={draftFit}
-                    ratio={orientation.ratio}
+                    ratio={frameRatio}
                     split={split}
                     maxHeight="42dvh"
                     onFitChange={setDraftFit}
@@ -267,7 +272,7 @@ export default function PhotoModal({
                   <ToolButton
                     onClick={() =>
                       setDraftFit((f) =>
-                        initialFit(draft, orientation.ratio, f.turns + (f.flip ? -1 : 1), f.flip)
+                        initialFit(draft, frameRatio, f.turns + (f.flip ? -1 : 1), f.flip)
                       )
                     }
                   >

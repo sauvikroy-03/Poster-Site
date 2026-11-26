@@ -18,7 +18,8 @@ export type Database = {
         Row: {
           cart_id: string
           created_at: string | null
-          prod_id: string
+          custom_config: Json | null
+          prod_id: string | null
           quantity: number
           updated_at: string | null
           user_id: string
@@ -27,7 +28,8 @@ export type Database = {
         Insert: {
           cart_id?: string
           created_at?: string | null
-          prod_id: string
+          custom_config?: Json | null
+          prod_id?: string | null
           quantity?: number
           updated_at?: string | null
           user_id: string
@@ -36,7 +38,8 @@ export type Database = {
         Update: {
           cart_id?: string
           created_at?: string | null
-          prod_id?: string
+          custom_config?: Json | null
+          prod_id?: string | null
           quantity?: number
           updated_at?: string | null
           user_id?: string
@@ -200,6 +203,7 @@ export type Database = {
       order_items: {
         Row: {
           created_at: string
+          custom_config: Json | null
           line_total: number
           order_id: string
           order_item_id: string
@@ -215,6 +219,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          custom_config?: Json | null
           line_total: number
           order_id: string
           order_item_id?: string
@@ -230,6 +235,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          custom_config?: Json | null
           line_total?: number
           order_id?: string
           order_item_id?: string

@@ -6,6 +6,14 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { createRazorpayOrder, getRazorpayKeyId } from "@/lib/razorpay";
 import { DELIVERY_CHARGE, type CouponInfo } from "@/lib/coupons-shared";
 import { validateCoupon } from "@/lib/coupons";
+import {
+  formatCustomPosterName,
+  getCustomPosterPrice,
+  getCustomPosterSku,
+  isCustomPosterConfig,
+  toCustomConfigJson,
+  type CustomPosterConfig,
+} from "@/lib/custom-poster";
 
 const MAX_QUANTITY = 99;
 
@@ -48,6 +56,7 @@ function generateOrderNumber() {
 interface CartRow {
   cart_id: string;
   quantity: number;
+  custom_config: CustomPosterConfig | null;
   products: {
     prod_id: string;
     prod_name: string;
@@ -106,6 +115,7 @@ export async function POST(request: NextRequest) {
         `
         cart_id,
         quantity,
+        custom_config,
         products ( prod_id, prod_name, prod_slug, prod_images ),
         product_variants ( variant_id, prod_size, prod_material, prod_price, sku, is_in_stock )
       `
@@ -120,13 +130,21 @@ export async function POST(request: NextRequest) {
 
     const rows = cartItems as unknown as CartRow[];
 
-    const outOfStock = rows.find((item) => !item.product_variants?.is_in_stock);
+    const outOfStock = rows.find(
+      (item) => !isCustomPosterConfig(item.custom_config) && !item.product_variants?.is_in_stock
+    );
     if (outOfStock) {
       return fail(`"${outOfStock.products?.prod_name ?? "An item"}" is currently out of stock.`, 400);
     }
 
     const subtotal = rows.reduce((sum, item) => {
-      const price = Number(item.product_variants?.prod_price ?? 0);
+      const price = isCustomPosterConfig(item.custom_config)
+        ? getCustomPosterPrice({
+            sizeId: item.custom_config.size_id,
+            split: item.custom_config.split,
+            material: item.custom_config.material,
+          })
+        : Number(item.product_variants?.prod_price ?? 0);
       const qty = Math.min(item.quantity, MAX_QUANTITY);
       return sum + price * qty;
     }, 0);
@@ -202,8 +220,32 @@ export async function POST(request: NextRequest) {
 
     // ---- 2. Snapshot the line items ----
     const orderItemsPayload = rows.map((item) => {
-      const price = Number(item.product_variants?.prod_price ?? 0);
       const qty = Math.min(item.quantity, MAX_QUANTITY);
+
+      if (isCustomPosterConfig(item.custom_config)) {
+        const custom = item.custom_config;
+        const price = getCustomPosterPrice({
+          sizeId: custom.size_id,
+          split: custom.split,
+          material: custom.material,
+        });
+        return {
+          order_id: order.order_id,
+          product_id: null,
+          variant_id: null,
+          prod_name: formatCustomPosterName(custom),
+          prod_image: custom.preview_url || custom.original_url,
+          prod_size: custom.size_label,
+          prod_material: custom.material,
+          sku: getCustomPosterSku(custom),
+          unit_price: price,
+          quantity: qty,
+          line_total: price * qty,
+          custom_config: toCustomConfigJson(custom),
+        };
+      }
+
+      const price = Number(item.product_variants?.prod_price ?? 0);
       return {
         order_id: order.order_id,
         product_id: item.products?.prod_id ?? null,
@@ -216,6 +258,7 @@ export async function POST(request: NextRequest) {
         unit_price: price,
         quantity: qty,
         line_total: price * qty,
+        custom_config: null,
       };
     });
 

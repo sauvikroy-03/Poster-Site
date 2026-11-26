@@ -1,30 +1,13 @@
 // app/api/myorders/route.ts
 import { NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { getAuthedClient } from "@/lib/supabase-server";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
-async function getSupabaseServerClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) return null;
-
-  const cookieStore = await cookies();
-  return createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      getAll: () => cookieStore.getAll(),
-      setAll: (cookiesToSet) => {
-        cookiesToSet.forEach(({ name, value, options }) =>
-          cookieStore.set(name, value, options)
-        );
-      },
-    },
-  });
-}
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const supabase = await getSupabaseServerClient();
+    const supabase = await getAuthedClient();
 
     if (!supabase) {
       return NextResponse.json(
@@ -45,7 +28,9 @@ export async function GET() {
       );
     }
 
-    const { data, error } = await supabase
+    const admin = getSupabaseAdmin();
+
+    const { data, error } = await admin
       .from("orders")
       .select(`
         order_id,
@@ -71,7 +56,8 @@ export async function GET() {
           sku,
           unit_price,
           quantity,
-          line_total
+          line_total,
+          custom_config
         ),
         order_status_history (
           status,

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -15,7 +15,10 @@ import { useTheme } from "next-themes";
 import AuthModal from "@/components/AuthModal";
 import SearchModal from "@/components/Search/SearchModal";
 import AccountMenu from "@/components/Profile/AccountMenu";
+import CartDrawer from "@/components/Cart/CartDrawer";
+import type { CartItemData } from "@/components/Cart/Item";
 import { createClient } from "@/lib/client";
+import { CART_UPDATED_EVENT } from "@/lib/cart-events";
 import type { User } from "@supabase/supabase-js";
 import { playMechanicalClick } from "@/lib/sounds";
 
@@ -32,10 +35,19 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [cartItems, setCartItems] = useState<CartItemData[]>([]);
+  const [isCartLoading, setIsCartLoading] = useState(false);
+  const [drawerSession, setDrawerSession] = useState(0);
+  const [prevPathname, setPrevPathname] = useState(pathname);
   const [user, setUser] = useState<User | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -43,19 +55,47 @@ export default function Navbar() {
 
   const supabase = createClient();
 
-  useEffect(() => {
-    setMounted(true);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    if (isCartOpen) setIsCartOpen(false);
+  }
+
+  const fetchCartItems = useCallback(async (showLoader = false) => {
+    if (showLoader) setIsCartLoading(true);
+    try {
+      const res = await fetch("/api/cart", { cache: "no-store" });
+      if (!res.ok) {
+        if (res.status === 401) setCartItems([]);
+        return;
+      }
+      const data = await res.json();
+      if (data.success && Array.isArray(data.items)) {
+        setCartItems(data.items as CartItemData[]);
+      }
+    } catch {
+      // Keep existing cart count on transient network error
+    } finally {
+      if (showLoader) setIsCartLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
       setAuthChecked(true);
+      if (data.user) void fetchCartItems();
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       setAuthChecked(true);
+
+      if (session?.user) {
+        void fetchCartItems();
+      } else {
+        setCartItems([]);
+        setIsCartOpen(false);
+      }
 
       if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "TOKEN_REFRESHED") {
         router.refresh();
@@ -63,7 +103,16 @@ export default function Navbar() {
     });
 
     return () => listener.subscription.unsubscribe();
-  }, [supabase, router]);
+  }, [supabase, router, fetchCartItems]);
+
+  useEffect(() => {
+    if (!user) return;
+    const onCartUpdated = () => {
+      void fetchCartItems();
+    };
+    window.addEventListener(CART_UPDATED_EVENT, onCartUpdated);
+    return () => window.removeEventListener(CART_UPDATED_EVENT, onCartUpdated);
+  }, [user, fetchCartItems]);
 
   useEffect(() => {
     if (!isDropdownOpen) return;
@@ -87,6 +136,15 @@ export default function Navbar() {
 
   const showCart = authChecked && !!user;
   const themeInCartSlot = authChecked && !user;
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const cartBadgeText = cartCount > 9 ? "9+" : String(cartCount);
+
+  const handleOpenCartDrawer = () => {
+    playMechanicalClick();
+    setDrawerSession((n) => n + 1);
+    setIsCartOpen(true);
+    void fetchCartItems(cartItems.length === 0);
+  };
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
@@ -172,11 +230,37 @@ export default function Navbar() {
               </Link>
             )}
 
-            {/* Cart slot */}
+            {/* Cart slot: mobile opens /cart directly, PC opens slide-in drawer */}
             {showCart && (
-              <Link href="/cart" aria-label="Cart" className={iconBtn}>
-                <ShoppingBag className="h-[18px] w-[18px]" strokeWidth={2.5} />
-              </Link>
+              <>
+                <Link
+                  href="/cart"
+                  aria-label="Cart"
+                  className={`${iconBtn} md:hidden`}
+                >
+                  <ShoppingBag className="h-[18px] w-[18px]" strokeWidth={2.5} />
+                  {cartCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center border border-border bg-accent px-1 font-mono text-[10px] font-black leading-none text-foreground">
+                      {cartBadgeText}
+                    </span>
+                  )}
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={handleOpenCartDrawer}
+                  aria-label="Open cart"
+                  aria-expanded={isCartOpen}
+                  className={`${iconBtn} hidden md:flex`}
+                >
+                  <ShoppingBag className="h-[18px] w-[18px]" strokeWidth={2.5} />
+                  {cartCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center border border-border bg-accent px-1 font-mono text-[10px] font-black leading-none text-foreground">
+                      {cartBadgeText}
+                    </span>
+                  )}
+                </button>
+              </>
             )}
             {themeInCartSlot && themeButton("")}
 
@@ -222,6 +306,14 @@ export default function Navbar() {
           </div>
         </div>
       </header>
+
+      <CartDrawer
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        items={cartItems}
+        isLoading={isCartLoading}
+        sessionKey={drawerSession}
+      />
 
       <SearchModal
         isOpen={isSearchOpen}

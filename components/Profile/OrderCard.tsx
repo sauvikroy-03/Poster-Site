@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import toast from "react-hot-toast";
 import OrderTracker, { type StatusHistoryRow } from "@/components/Profile/OrderTracker";
+import { isCustomPosterConfig, type CustomPosterConfig } from "@/lib/custom-poster";
 
 interface OrderItem {
   order_item_id: string;
@@ -26,6 +27,7 @@ interface OrderItem {
   unit_price: number;
   quantity: number;
   line_total: number;
+  custom_config?: CustomPosterConfig | null;
 }
 
 interface ShippingAddress {
@@ -177,9 +179,23 @@ export default function OrderCard({ order }: OrderCardProps) {
                               />
                             )}
                           </div>
-                          <span className="text-xs font-bold uppercase tracking-tight text-foreground">
-                            {item.prod_name}
-                          </span>
+                          <div className="flex flex-col gap-0.5">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="text-xs font-bold uppercase tracking-tight text-foreground">
+                                {item.prod_name}
+                              </span>
+                              {isCustomPosterConfig(item.custom_config) && (
+                                <span className="border border-border bg-accent px-1.5 py-0.5 font-mono text-[9px] font-black uppercase tracking-wider text-foreground">
+                                  Custom
+                                </span>
+                              )}
+                            </div>
+                            {item.prod_material && (
+                              <span className="font-mono text-[10px] text-muted-foreground">
+                                {item.prod_material}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell className="font-mono text-xs font-medium text-muted-foreground">
@@ -221,12 +237,20 @@ export default function OrderCard({ order }: OrderCardProps) {
 
                   <div className="flex min-w-0 flex-1 flex-col justify-between">
                     <div>
-                      <span className="line-clamp-1 text-xs font-extrabold uppercase tracking-tight text-foreground">
-                        {item.prod_name}
-                      </span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="line-clamp-1 text-xs font-extrabold uppercase tracking-tight text-foreground">
+                          {item.prod_name}
+                        </span>
+                        {isCustomPosterConfig(item.custom_config) && (
+                          <span className="border border-border bg-accent px-1 py-0.5 font-mono text-[9px] font-black uppercase text-foreground">
+                            Custom
+                          </span>
+                        )}
+                      </div>
                       {item.prod_size && (
                         <span className="font-mono text-[11px] font-semibold text-muted-foreground">
                           SIZE: {item.prod_size}
+                          {item.prod_material ? ` · ${item.prod_material}` : ""}
                         </span>
                       )}
                     </div>

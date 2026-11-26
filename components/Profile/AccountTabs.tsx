@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import AccountSidebar, { type AccountTab } from "@/components/Profile/AccountSidebar";
 import OrdersPanel from "@/components/Profile/OrdersPanel";
@@ -16,11 +16,13 @@ export default function AccountTabs({ profile }: AccountTabsProps) {
 
   const urlTab: AccountTab = searchParams.get("tab") === "orders" ? "orders" : "profile";
   const [activeTab, setActiveTab] = useState<AccountTab>(urlTab);
+  const [prevUrlTab, setPrevUrlTab] = useState<AccountTab>(urlTab);
 
   // Keep in sync when the URL changes from outside (links, back/forward button)
-  useEffect(() => {
+  if (urlTab !== prevUrlTab) {
+    setPrevUrlTab(urlTab);
     setActiveTab(urlTab);
-  }, [urlTab]);
+  }
 
   const handleTabChange = (tab: AccountTab) => {
     if (tab === activeTab) return;
@@ -37,7 +39,7 @@ export default function AccountTabs({ profile }: AccountTabsProps) {
       {/* Both panels stay mounted, so their data is already loaded when you switch */}
       <div className="min-w-0 flex-1">
         <div className={activeTab === "orders" ? "" : "hidden"}>
-          <OrdersPanel />
+          <OrdersPanel isActive={activeTab === "orders"} />
         </div>
         <div className={activeTab === "profile" ? "" : "hidden"}>{profile}</div>
       </div>

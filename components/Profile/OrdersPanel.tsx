@@ -4,32 +4,44 @@ import React, { useEffect, useState } from "react";
 import { PackageOpen, Loader2 } from "lucide-react";
 import OrderCard, { Order } from "@/components/Profile/OrderCard";
 
-export default function OrdersPanel() {
+export default function OrdersPanel({ isActive = true }: { isActive?: boolean }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchOrders = async () => {
+    if (!isActive) return;
+    let cancelled = false;
+
+    const loadOrders = async () => {
       try {
-        const res = await fetch("/api/myorders");
+        const res = await fetch("/api/myorders", { cache: "no-store" });
         const data = await res.json();
+        if (cancelled) return;
 
         if (!res.ok || !data.success) {
           setError(data.message || "Failed to load orders.");
           return;
         }
 
+        setError("");
         setOrders(data.orders);
       } catch {
-        setError("Something went wrong while loading your orders.");
+        if (!cancelled) {
+          setError("Something went wrong while loading your orders.");
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchOrders();
-  }, []);
+    void loadOrders();
+    return () => {
+      cancelled = true;
+    };
+  }, [isActive]);
 
   if (loading) {
     return (

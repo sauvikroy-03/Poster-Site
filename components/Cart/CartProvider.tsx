@@ -3,6 +3,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -15,6 +16,8 @@ import {
   checkCouponForSubtotal,
   type CouponInfo,
 } from "@/lib/coupons-shared";
+import { getCustomPosterPrice, isCustomPosterConfig } from "@/lib/custom-poster";
+import { notifyCartUpdated } from "@/lib/cart-events";
 
 const DEBOUNCE_MS = 200;
 
@@ -56,7 +59,9 @@ export function CartProvider({
   const [coupon, setCoupon] = useState<CouponInfo | null>(null);
 
   const itemsRef = useRef(items);
-  itemsRef.current = items;
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
 
   // Per-item bookkeeping, keyed by cart_id
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
@@ -107,6 +112,7 @@ export function CartProvider({
 
         if (requestSeq.current.get(cartId) === seq) {
           lastSynced.current.set(cartId, quantity);
+          notifyCartUpdated();
         }
         return true;
       } catch {
@@ -196,6 +202,7 @@ export function CartProvider({
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message);
+      notifyCartUpdated();
       toast.add({ type: "success", description: "Item removed from cart" });
     } catch (e) {
       toast.add({
@@ -244,10 +251,16 @@ export function CartProvider({
   const removeCoupon = useCallback(() => setCoupon(null), []);
 
   const value = useMemo<CartContextValue>(() => {
-    const subtotal = items.reduce(
-      (sum, i) => sum + Number(i.product_variants.prod_price) * i.quantity,
-      0
-    );
+    const subtotal = items.reduce((sum, i) => {
+      const unitPrice = isCustomPosterConfig(i.custom_config)
+        ? getCustomPosterPrice({
+            sizeId: i.custom_config.size_id,
+            split: i.custom_config.split,
+            material: i.custom_config.material,
+          })
+        : Number(i.product_variants?.prod_price ?? 0);
+      return sum + unitPrice * i.quantity;
+    }, 0);
     // re-checked on every change, so lowering quantities below the
     // coupon's minimum drops the discount and shows a warning
     const check = coupon ? checkCouponForSubtotal(coupon, subtotal) : null;

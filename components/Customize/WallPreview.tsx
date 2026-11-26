@@ -8,6 +8,7 @@ import DummyArt from "./DummyArt";
 import FitFrame, { FrameShell } from "./FitFrame";
 import {
   WALL,
+  posterRatio,
   printMm,
   printQuality,
   type Fit,
@@ -44,10 +45,12 @@ export default function WallPreview({
   onReplace,
   onRemove,
 }: WallPreviewProps) {
-  const [wMm, hMm] = printMm(orientation.id, size);
-  // Width as a share of the wall: this is what makes A5 look small and A3 look big
-  const widthPct = (wMm / WALL.widthMm) * 100;
-  const q = image ? printQuality(image, fit, orientation, size) : null;
+  const frameRatio = posterRatio(orientation.id, !!split);
+  const [wMm] = printMm(orientation.id, size, !!split);
+  // Split posters span 3 full A3/A4 sheets, so use a slightly wider wall scale so they look larger without clipping
+  const effectiveWallMm = split ? 1700 : WALL.widthMm;
+  const widthPct = (wMm / effectiveWallMm) * 100;
+  const q = image ? printQuality(image, fit, orientation, size, !!split) : null;
 
   return (
     <div className="border-2 border-border bg-card shadow-[4px_4px_0_0_var(--border)]">
@@ -83,13 +86,13 @@ export default function WallPreview({
                 plain
                 image={image}
                 fit={fit}
-                ratio={orientation.ratio}
+                ratio={frameRatio}
                 split={split}
                 guideStyle="solid"
               />
             ) : (
-              <FrameShell plain ratio={orientation.ratio} split={split} guideStyle="solid">
-                <DummyArt ratio={orientation.ratio} />
+              <FrameShell plain ratio={frameRatio} split={split} guideStyle="solid">
+                <DummyArt ratio={frameRatio} />
               </FrameShell>
             )}
             {/* A touch of light so the print doesn't look flat */}

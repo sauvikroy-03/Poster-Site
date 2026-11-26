@@ -4,19 +4,26 @@ import Image from "next/image";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { playMechanicalClick, playStampSound } from "@/lib/sounds";
 import { useCart } from "@/components/Cart/CartProvider";
+import {
+  formatCustomPosterName,
+  getCustomPosterPrice,
+  isCustomPosterConfig,
+  type CustomPosterConfig,
+} from "@/lib/custom-poster";
 
 export interface CartItemData {
   cart_id: string;
   quantity: number;
   created_at: string;
   updated_at: string;
+  custom_config?: CustomPosterConfig | null;
   products: {
     prod_id: string;
     prod_name: string;
     prod_slug: string;
     prod_category: string;
     prod_images: string[];
-  };
+  } | null;
   product_variants: {
     variant_id: string;
     prod_size: string;
@@ -25,15 +32,29 @@ export interface CartItemData {
     compare_at_price: string;
     sku: string;
     is_in_stock: string;
-  };
+  } | null;
 }
 
 export default function Item({ item }: { item: CartItemData }) {
   const { updateQuantity, removeItem } = useCart();
   const { quantity, products, product_variants } = item;
+  const custom = isCustomPosterConfig(item.custom_config) ? item.custom_config : null;
 
-  const image = products.prod_images?.[0] ?? "/placeholder.png";
-  const price = Number(product_variants.prod_price);
+  const title = custom
+    ? formatCustomPosterName(custom)
+    : products?.prod_name ?? "Poster";
+  const image = custom
+    ? custom.preview_url || custom.original_url
+    : products?.prod_images?.[0] ?? "/placeholder.png";
+  const sizeLabel = custom ? custom.size_label : product_variants?.prod_size ?? "Standard";
+  const materialLabel = custom ? custom.material : product_variants?.prod_material ?? null;
+  const price = custom
+    ? getCustomPosterPrice({
+        sizeId: custom.size_id,
+        split: custom.split,
+        material: custom.material,
+      })
+    : Number(product_variants?.prod_price ?? 0);
 
   const handleIncrease = () => {
     playMechanicalClick();
@@ -57,7 +78,7 @@ export default function Item({ item }: { item: CartItemData }) {
       <div className="relative h-20 w-20 flex-shrink-0 border-2 border-border bg-muted sm:h-24 sm:w-24">
         <Image
           src={image}
-          alt={products.prod_name}
+          alt={title}
           fill
           className="object-cover"
           sizes="96px"
@@ -67,9 +88,16 @@ export default function Item({ item }: { item: CartItemData }) {
       {/* Details */}
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="truncate font-mono text-sm font-black uppercase tracking-tight text-foreground sm:text-base">
-            {products.prod_name}
-          </h3>
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <h3 className="truncate font-mono text-sm font-black uppercase tracking-tight text-foreground sm:text-base">
+              {title}
+            </h3>
+            {custom && (
+              <span className="border border-border bg-accent px-1.5 py-0.5 font-mono text-[10px] font-black uppercase tracking-wider text-foreground">
+                Custom
+              </span>
+            )}
+          </div>
           <button
             type="button"
             onClick={handleRemove}
@@ -81,7 +109,12 @@ export default function Item({ item }: { item: CartItemData }) {
         </div>
 
         <p className="font-mono text-xs text-muted-foreground">
-          SIZE: <span className="font-bold text-foreground">{product_variants.prod_size}</span>
+          SIZE: <span className="font-bold text-foreground">{sizeLabel}</span>
+          {materialLabel ? (
+            <>
+              {" · "}PAPER: <span className="font-bold text-foreground">{materialLabel}</span>
+            </>
+          ) : null}
         </p>
 
         <div className="mt-1 flex items-end justify-between gap-3">

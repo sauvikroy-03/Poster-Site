@@ -8,7 +8,7 @@ export const MAX_MB = 20;
 export const A_RATIO = 1 / Math.SQRT2;
 
 /** false = photos start fully visible (white borders possible). true = start zoomed to cover the poster. */
-export const START_FILLED = false;
+export const START_FILLED = true;
 
 export interface OrientationDef {
   id: Orientation;
@@ -46,6 +46,17 @@ export const splitGuide = (o: Orientation): SplitGuide => ({
   pieces: SPLIT_PIECES,
 });
 
+/**
+ * Total poster aspect ratio (width / height).
+ * When split is enabled, each individual panel is an A-series sheet (1 : 1.414 or 1.414 : 1):
+ * - horizontal split ("vertical" cut lines): 3 portrait A-series panels side-by-side -> ratio = 3 * A_RATIO
+ * - vertical split ("horizontal" cut lines): 3 landscape A-series panels stacked -> ratio = (1 / A_RATIO) / 3
+ */
+export function posterRatio(o: Orientation, split: boolean): number {
+  if (!split) return o === "vertical" ? A_RATIO : 1 / A_RATIO;
+  return SPLIT_LINES[o] === "vertical" ? SPLIT_PIECES * A_RATIO : (1 / A_RATIO) / SPLIT_PIECES;
+}
+
 /* ---------- Sizes ---------- */
 
 export interface SizeDef {
@@ -61,14 +72,22 @@ export const SIZES: SizeDef[] = [
   { id: "a3", label: "A3", mm: [297, 420], splitOk: true },
 ];
 
-/** Print size in mm for the chosen orientation */
-export const printMm = (o: Orientation, size: SizeDef): [number, number] =>
-  o === "vertical" ? [size.mm[0], size.mm[1]] : [size.mm[1], size.mm[0]];
+/**
+ * One panel of a split print, in mm.
+ * Each panel is a full A-series sheet (portrait when side-by-side, landscape when stacked).
+ */
+export const panelMm = (o: Orientation, size: SizeDef): [number, number] =>
+  SPLIT_LINES[o] === "vertical" ? [size.mm[0], size.mm[1]] : [size.mm[1], size.mm[0]];
 
-/** One panel of a split print, in mm */
-export const panelMm = (o: Orientation, size: SizeDef): [number, number] => {
-  const [w, h] = printMm(o, size);
-  return SPLIT_LINES[o] === "vertical" ? [w / SPLIT_PIECES, h] : [w, h / SPLIT_PIECES];
+/** Total print size in mm for the chosen orientation and split setting */
+export const printMm = (o: Orientation, size: SizeDef, split = false): [number, number] => {
+  if (!split) {
+    return o === "vertical" ? [size.mm[0], size.mm[1]] : [size.mm[1], size.mm[0]];
+  }
+  const [pw, ph] = panelMm(o, size);
+  return SPLIT_LINES[o] === "vertical"
+    ? [pw * SPLIT_PIECES, ph]
+    : [pw, ph * SPLIT_PIECES];
 };
 
 /* ---------- The wall used in the preview ---------- */
@@ -90,6 +109,7 @@ export interface PickedImage {
   width: number;
   height: number;
   source: Source;
+  file?: File;
 }
 
 /**
@@ -143,10 +163,17 @@ export const sliderToZoom = (t: number, maxZoom: number) => Math.pow(maxZoom, t)
 
 export type QualityLevel = "good" | "soft" | "low";
 
-export function printQuality(img: Dims, fit: Fit, o: OrientationDef, size: SizeDef) {
-  const g = geometry(img, fit.turns, o.ratio);
+export function printQuality(
+  img: Dims,
+  fit: Fit,
+  o: OrientationDef,
+  size: SizeDef,
+  split = false
+) {
+  const ratio = posterRatio(o.id, split);
+  const g = geometry(img, fit.turns, ratio);
   const scale = g.containScale * fit.zoom; // frame widths per photo pixel
-  const widthIn = printMm(o.id, size)[0] / 25.4;
+  const widthIn = printMm(o.id, size, split)[0] / 25.4;
   const dpi = 1 / scale / widthIn; // photo pixels per printed inch
   const level: QualityLevel = dpi >= 150 ? "good" : dpi >= 100 ? "soft" : "low";
   const covers = fit.zoom >= g.coverZoom - 0.005;
@@ -173,6 +200,7 @@ export function loadPickedImage(file: File, source: Source): Promise<PickedImage
         width: probe.naturalWidth,
         height: probe.naturalHeight,
         source,
+        file,
       });
     probe.onerror = () => {
       URL.revokeObjectURL(url);
@@ -180,4 +208,53 @@ export function loadPickedImage(file: File, source: Source): Promise<PickedImage
     };
     probe.src = url;
   });
+}
+
+/**
+ * Renders the user's framed/cropped/rotated/flipped poster into a WebP Blob
+ * using the exact same geometry as FitFrame so thumbnails match the preview.
+ */
+export async function renderPosterPreview(
+  image: PickedImage,
+  fit: Fit,
+  ratio: number,
+  maxDim = 1200
+): Promise<Blob | null> {
+  try {
+    const imgEl = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new window.Image();
+      el.onload = () => resolve(el);
+      el.onerror = reject;
+      el.src = image.url;
+    });
+
+    const frameW = ratio >= 1 ? maxDim : Math.round(maxDim * ratio);
+    const frameH = ratio >= 1 ? Math.round(maxDim / ratio) : maxDim;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = frameW;
+    canvas.height = frameH;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, frameW, frameH);
+
+    const g = geometry(image, fit.turns, ratio);
+    const drawW = image.width * g.containScale * fit.zoom * frameW;
+    const drawH = image.height * g.containScale * fit.zoom * frameW;
+
+    ctx.save();
+    ctx.translate(frameW / 2 + fit.x * frameW, frameH / 2 + fit.y * frameW);
+    if (fit.flip) ctx.scale(-1, 1);
+    ctx.rotate((fit.turns * Math.PI) / 2);
+    ctx.drawImage(imgEl, -drawW / 2, -drawH / 2, drawW, drawH);
+    ctx.restore();
+
+    return await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/webp", 0.85)
+    );
+  } catch {
+    return null;
+  }
 }

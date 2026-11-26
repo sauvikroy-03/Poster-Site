@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { validateCoupon } from "@/lib/coupons";
+import { getCustomPosterPrice, isCustomPosterConfig } from "@/lib/custom-poster";
 
 const MAX_QUANTITY = 99;
 
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
     // Subtotal from the DB, never from the client
     const { data: rows, error: cartError } = await supabase
       .from("cart_items")
-      .select("quantity, product_variants ( prod_price )")
+      .select("quantity, custom_config, product_variants ( prod_price )")
       .eq("user_id", user.id);
 
     if (cartError) return fail("Could not read your cart.", 400);
@@ -55,12 +56,18 @@ export async function POST(request: NextRequest) {
 
     const subtotal = (rows as unknown as {
       quantity: number;
+      custom_config: unknown;
       product_variants: { prod_price: number | string } | null;
-    }[]).reduce(
-      (sum, r) =>
-        sum + Number(r.product_variants?.prod_price ?? 0) * Math.min(r.quantity, MAX_QUANTITY),
-      0
-    );
+    }[]).reduce((sum, r) => {
+      const unitPrice = isCustomPosterConfig(r.custom_config)
+        ? getCustomPosterPrice({
+            sizeId: r.custom_config.size_id,
+            split: r.custom_config.split,
+            material: r.custom_config.material,
+          })
+        : Number(r.product_variants?.prod_price ?? 0);
+      return sum + unitPrice * Math.min(r.quantity, MAX_QUANTITY);
+    }, 0);
 
     const result = await validateCoupon({ code: promoCode, userId: user.id, subtotal });
     if (!result.ok) return fail(result.message, 400);

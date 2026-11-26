@@ -5,6 +5,7 @@ import { Heart, Minus, Plus, Truck, ShieldCheck, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/toast";
 import ProjectDataInterface from "@/types/ItemDetails";
 import { playMechanicalClick, playStampSound } from "@/lib/sounds";
+import { notifyCartUpdated } from "@/lib/cart-events";
 import Stars from "@/components/Utility/Stars";
 import { useWishlist } from "@/components/Wishlist/WishlistProvider";
 
@@ -115,6 +116,7 @@ export default function AddToCartForm({
 
       // 2. Play archival rubber stamp thump when confirmed
       playStampSound();
+      notifyCartUpdated();
       toast.add({
         type: "success",
         title: "Item added to cart",

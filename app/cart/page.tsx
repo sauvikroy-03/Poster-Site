@@ -39,6 +39,7 @@ async function getCartItems(): Promise<CartItemData[]> {
       quantity,
       created_at,
       updated_at,
+      custom_config,
       products (
         prod_id,
         prod_name,
