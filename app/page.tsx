@@ -63,17 +63,29 @@ async function getProducts(): Promise<ProjectDataInterface[]> {
 
 async function getCategories(): Promise<CategoryInterface[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://posterly.co.in";
-    const res = await fetch(`${baseUrl}/api/category`, {
-      next: { revalidate: 60 },
-    });
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+    const key =
+      process.env.SUPABASE_SECRET_KEY ||
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (!res.ok) {
-      console.error("Failed to fetch categories, status:", res.status);
+    if (!url || !key) {
+      console.error("Missing Supabase URL or Key environment variables.");
       return [];
     }
 
-    return (await res.json()) as CategoryInterface[];
+    const supabase = createClient(url, key);
+    const { data, error } = await supabase
+      .from("categories")
+      .select("id, category_name, slug, category_thumbnail, is_promoted")
+      .order("category_name", { ascending: true });
+
+    if (error) {
+      console.error("Failed to fetch categories:", error.message);
+      return [];
+    }
+
+    return (data ?? []) as unknown as CategoryInterface[];
   } catch (err) {
     console.error("Error fetching categories:", err);
     return [];

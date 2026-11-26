@@ -11,7 +11,8 @@ interface FeaturedCategoriesProps {
 export default function FeaturedCategories({
   initialCategories = [],
 }: FeaturedCategoriesProps) {
-  const categories = initialCategories;
+  const promoted = initialCategories.filter((c) => c.is_promoted === true);
+  const categories = promoted.length > 0 ? promoted : initialCategories;
   const loading = !categories || categories.length === 0;
 
   return (

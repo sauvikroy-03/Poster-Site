@@ -10,7 +10,11 @@ interface categoriesProps {
 }
 
 export default function FeaturedCard({ category }: categoriesProps) {
-  const { category_name, slug } = category;
+  const { category_name, slug, category_thumbnail, is_promoted } = category;
+  const thumbnailSrc =
+    is_promoted && category_thumbnail?.trim()
+      ? category_thumbnail.trim()
+      : placeholderImg;
 
   return (
     <Link
@@ -22,7 +26,7 @@ export default function FeaturedCard({ category }: categoriesProps) {
       <div className="p-2 pb-1.5 sm:p-3 sm:pb-2">
         <div className="relative aspect-[5/6] w-full overflow-hidden border-2 border-border/20 bg-muted">
           <Image
-            src={placeholderImg}
+            src={thumbnailSrc}
             alt={category_name || "CategoryImage"}
             fill
             className="object-cover transition-all duration-500 ease-out md:grayscale group-hover:scale-110 group-hover:grayscale-0"
