@@ -3,6 +3,7 @@ import ProjectDataInterface from "@/types/ItemDetails";
 import ProductCard from "./ProductCard";
 import ProductCardSkeleton from "./skeletons/SK_ProductCard";
 import Link from "next/link";
+import { getProductRatings } from "@/lib/product-ratings";
 
 interface HeroProps {
   initialProducts?: ProjectDataInterface[];
@@ -49,9 +50,12 @@ function arrangeHeroSlots(
   return slots;
 }
 
-export default function Hero({ initialProducts = [] }: HeroProps) {
+export default async function Hero({ initialProducts = [] }: HeroProps) {
   const products = arrangeHeroSlots(
     initialProducts.filter((p) => p.hero_visible === true)
+  );
+  const ratings = await getProductRatings(
+    products.filter((p): p is ProjectDataInterface => Boolean(p)).map((p) => p.prod_id)
   );
 
   return (
@@ -104,7 +108,12 @@ export default function Hero({ initialProducts = [] }: HeroProps) {
             {/* Card 0: Full width on mobile, 2x2 large spotlight card on desktop */}
             <div className="col-span-2 lg:col-span-2 lg:row-span-2">
               {products[0] ? (
-                <ProductCard product={products[0]} priority={true} />
+                <ProductCard
+                  product={products[0]}
+                  priority={true}
+                  avgRating={ratings[products[0].prod_id]?.avgRating}
+                  reviewCount={ratings[products[0].prod_id]?.reviewCount}
+                />
               ) : (
                 <ProductCardSkeleton />
               )}
@@ -113,7 +122,11 @@ export default function Hero({ initialProducts = [] }: HeroProps) {
             {/* Card 1: Top right on desktop, left half on mobile */}
             <div className="col-span-1">
               {products[1] ? (
-                <ProductCard product={products[1]} />
+                <ProductCard
+                  product={products[1]}
+                  avgRating={ratings[products[1].prod_id]?.avgRating}
+                  reviewCount={ratings[products[1].prod_id]?.reviewCount}
+                />
               ) : (
                 <ProductCardSkeleton />
               )}
@@ -122,7 +135,11 @@ export default function Hero({ initialProducts = [] }: HeroProps) {
             {/* Card 2: Bottom right on desktop, right half on mobile */}
             <div className="col-span-1">
               {products[2] ? (
-                <ProductCard product={products[2]} />
+                <ProductCard
+                  product={products[2]}
+                  avgRating={ratings[products[2].prod_id]?.avgRating}
+                  reviewCount={ratings[products[2].prod_id]?.reviewCount}
+                />
               ) : (
                 <ProductCardSkeleton />
               )}
