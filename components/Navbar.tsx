@@ -26,8 +26,8 @@ const FOCUS =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
 const NAV_LINKS = [
-  { href: "/", label: "Shop" },
   { href: "/categories", label: "Categories" },
+  { href: "/customize", label: "Customize" },
   { href: "/about", label: "About" },
 ];
 
