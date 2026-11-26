@@ -250,7 +250,7 @@ export async function POST(request: Request) {
             <p><strong>Customer Email:</strong> ${user.email || "N/A"}</p>
             <p><strong>Customer Phone:</strong> ${user.phone ? `+${user.phone}` : "N/A"}</p>
             <p><strong>Razorpay Payment ID:</strong> ${razorpay_payment_id}</p>
-            ${customItemsHtml ? `<hr style="border: 0; border-top: 1px solid #eee;" /><h3>Custom Poster Print Specs</h3>${customItemsHtml}` : ""}
+            <p><strong>Order Link:</strong> <a href="https://posterly-admin.vercel.app/order/${orderId}">View Order Details </a></p>
             <hr style="border: 0; border-top: 1px solid #eee;" />
             <p style="font-size: 12px; color: #888;">Automated notification from your Posterly backend.</p>
           </div>
