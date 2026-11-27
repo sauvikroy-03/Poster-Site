@@ -4,6 +4,7 @@ import { CategoryInterface } from "@/types/categoryDetails";
 import Hero from "@/components/Hero";
 import FeaturedCategories from "@/components/FeaturedCategories";
 import TrendingPosters from "@/components/TrendingPosters";
+import Showcase from "@/components/Showcase/Showcase";
 import WhyPosterly from "@/components/WhyPosterly";
 import ReviewsSection from "@/components/ReviewsSection";
 import CustomPosterBanner from "@/components/CustomPosterBanner";
@@ -105,6 +106,7 @@ export default async function Home() {
       <CustomPosterBanner href='/customize'/>
       <FeaturedCategories initialCategories={categories} />
       <TrendingPosters products={products} />
+      <Showcase />
       {/* <WhyPosterly /> */}
       <ReviewsSection />
     </div>

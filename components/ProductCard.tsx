@@ -155,12 +155,12 @@ export default function ProductCard({
             {prod_name}
           </h3>
 
-          <p
+          {/* <p
             title={prod_category}
             className="w-full truncate text-[clamp(9px,3.6cqi,12px)] font-bold uppercase tracking-wide text-muted-foreground"
           >
             {prod_category}
-          </p>
+          </p> */}
 
           {reviewCount > 0 ? (
             <div className="flex items-center gap-1.5">
