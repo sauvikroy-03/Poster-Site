@@ -179,12 +179,12 @@ export default function ProductCard({
         {/* Row 2: price stack */}
         <div className="flex flex-shrink-0 flex-col items-end leading-none">
           {price !== null && (
-            <span className="whitespace-nowrap text-[clamp(12px,5.5cqi,18px)] font-black text-foreground">
+            <span className="whitespace-nowrap text-sm font-black text-foreground @[220px]:text-base @[270px]:text-lg">
               ₹{price.toLocaleString()}
             </span>
           )}
           {hasDiscount && (
-            <span className="-mt-0.5 whitespace-nowrap text-[clamp(9px,3.5cqi,14px)] font-bold text-muted-foreground line-through @[280px]:-mt-1">
+            <span className="mt-0.5 whitespace-nowrap text-[11px] font-bold text-muted-foreground line-through @[220px]:text-xs @[270px]:text-sm">
               ₹{comparePrice!.toLocaleString()}
             </span>
           )}
