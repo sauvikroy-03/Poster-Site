@@ -321,7 +321,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                     htmlFor="auth-phone"
                     className="font-mono text-[11px] font-bold uppercase tracking-[0.05em] text-foreground"
                   >
-                    Mobile number
+                    Whatsapp number
                   </label>
                   <div className="flex gap-2">
                     <div

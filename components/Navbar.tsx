@@ -175,7 +175,7 @@ export default function Navbar() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
           {/* Logo */}
           <Link href="/" className={`${FOCUS} flex items-center gap-2.5`}>
-            <span className="flex h-8 w-8 items-center justify-center border-2 border-border bg-primary text-sm font-extrabold text-primary-foreground shadow-[3px_3px_0_0_#9e9b93] dark:shadow-[3px_3px_0_0_#7c7f99]">
+            <span className="flex h-8 w-8 items-center justify-center border-2 border-border bg-primary text-sm font-extrabold text-primary-foreground shadow-[3px_3px_0_0_#696969] dark:shadow-[3px_3px_0_0_#7c7f99]">
               P
             </span>
             <span className="text-lg font-extrabold tracking-tight text-foreground">
