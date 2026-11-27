@@ -51,9 +51,9 @@ export default function ProductImage({ product }: ProductCardProps) {
         <div className="p-2 sm:p-3">
           <div className="relative aspect-[5/6] w-full overflow-hidden border-2 border-border/20 bg-muted">
             {/* Bestseller badge */}
-            <span className="absolute left-2 top-2 z-10 border-2 border-border bg-background px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-foreground shadow-[1px_1px_0_0_var(--border)] sm:text-[10px]">
+            {/* <span className="absolute left-2 top-2 z-10 border-2 border-border bg-background px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-foreground shadow-[1px_1px_0_0_var(--border)] sm:text-[10px]">
               Bestseller
-            </span>
+            </span> */}
 
             <Image
               src={images[activeIndex]}

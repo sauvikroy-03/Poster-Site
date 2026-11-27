@@ -70,6 +70,7 @@ export async function GET(request: Request) {
         created_at,
         products (
           prod_id,
+          created_at,
           prod_name,
           prod_slug,
           prod_category,

@@ -6,6 +6,7 @@
     prod_description:string,
     prod_images:string[],
     prod_preview_image?:string | null,
+    created_at?:string | null,
     is_trending:boolean,
     hero_visible:boolean,
     hero_order?:number | null,

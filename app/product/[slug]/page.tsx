@@ -46,6 +46,7 @@ async function getProductBySlug(slug: string): Promise<ProjectDataInterface | nu
     .from("products")
     .select(`
       prod_id,
+      created_at,
       prod_name,
       prod_slug,
       prod_category,
@@ -91,6 +92,7 @@ async function getRelatedProducts(
     .select(
       `
       prod_id,
+      created_at,
       prod_name,
       prod_slug,
       prod_category,

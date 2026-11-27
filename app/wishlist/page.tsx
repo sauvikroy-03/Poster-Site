@@ -50,6 +50,7 @@ async function getWishlistProducts(): Promise<{
       created_at,
       products!inner (
         prod_id,
+        created_at,
         prod_name,
         prod_slug,
         prod_category,

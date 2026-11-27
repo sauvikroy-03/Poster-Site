@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import ProjectDataInterface from "@/types/ItemDetails";
 import Link from "next/link";
 import Stars from "@/components/Utility/Stars";
 import { useWishlist } from "@/components/Wishlist/WishlistProvider";
+
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 interface ProductCardProps {
   product: ProjectDataInterface;
@@ -33,13 +35,26 @@ export default function ProductCard({
     prod_name,
     prod_images,
     prod_preview_image,
+    created_at,
     product_variants,
     prod_category,
   } = product;
 
   const [activeIndex, setActiveIndex] = useState(0);
+  const [nowMs, setNowMs] = useState<number | null>(null);
   const { isWishlisted, toggleWishlist } = useWishlist();
   const liked = isWishlisted(prod_id);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setNowMs(Date.now()));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const createdAtMs = created_at ? Date.parse(created_at) : NaN;
+  const isNew =
+    nowMs !== null &&
+    !Number.isNaN(createdAtMs) &&
+    nowMs - createdAtMs <= SEVEN_DAYS_MS;
 
   const images = prod_images?.length ? prod_images : ["/placeholder.png"];
   const previewImage = prod_preview_image?.trim() || images[0];
@@ -80,10 +95,11 @@ export default function ProductCard({
       {/* Image frame: Locks to 3/4 or 4/5 proportional aspect ratio with neutral containment background */}
       <div className="p-1.5 pb-1 @[230px]:p-2.5 @[230px]:pb-1.5 @[280px]:p-3 @[280px]:pb-2">
         <div className="relative aspect-[5/6] w-full overflow-hidden border-2 border-border/20 bg-muted">
-          {/* Bestseller badge */}
-          {/* <span className="absolute left-2 top-2 z-10 border-2 border-border bg-background px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-foreground shadow-[1px_1px_0_0_var(--border)] sm:text-[10px]">
-            Bestseller
-          </span> */}
+          {isNew && (
+            <span className="pointer-events-none absolute left-2 top-2 z-10 border-2 border-border bg-accent px-1.5 py-0.5 font-mono text-[9px] font-black uppercase tracking-wider text-foreground shadow-[1px_1px_0_0_var(--border)] @[230px]:px-2 @[230px]:text-[10px]">
+              New
+            </span>
+          )}
 
           {/* Wishlist button */}
           <button
