@@ -292,7 +292,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                 </p>
               </div>
 
-              <Button
+              {/* <Button
                 type="button"
                 variant="outline"
                 onClick={() => {
@@ -313,7 +313,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                 <span className="absolute bg-card px-3 font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                   or continue with phone
                 </span>
-              </div>
+              </div> */}
 
               <form onSubmit={handlePhoneSubmit} noValidate className="space-y-3.5">
                 <div className="space-y-1.5">
@@ -366,7 +366,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               </form>
 
               <p className="pt-1 text-center text-[11px] leading-relaxed text-muted-foreground">
-                By continuing, you agree to Postercult&apos;s Terms and Privacy Policy.
+                By continuing, you agree to Posterly&apos;s Terms and Privacy Policy.
               </p>
             </motion.div>
           )}
