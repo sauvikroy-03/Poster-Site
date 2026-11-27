@@ -120,9 +120,27 @@ export default function CheckoutButton({
         amount: createData.amount,
         currency: createData.currency,
         order_id: createData.razorpayOrderId,
-        name: "Your Store",
+        name: "Posterly",
         description: `Order ${createData.orderNumber}`,
         prefill: createData.prefill,
+        config: {
+          display: {
+            blocks: {
+              upi_only: {
+                name: "Pay via UPI",
+                instruments: [
+                  {
+                    method: "upi",
+                  },
+                ],
+              },
+            },
+            sequence: ["block.upi_only"],
+            preferences: {
+              show_default_blocks: false,
+            },
+          },
+        },
         theme: { color: "#000000" },
         handler: async (response: {
           razorpay_order_id: string;
