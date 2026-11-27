@@ -287,9 +287,9 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                 <h2 className="text-[22px] font-black tracking-tight text-foreground">
                   Sign in or create account
                 </h2>
-                <p className="text-[13px] text-muted-foreground">
+                {/* <p className="text-[13px] text-muted-foreground">
                   Join Postercult to save your custom prints.
-                </p>
+                </p> */}
               </div>
 
               {/* <Button
@@ -477,7 +477,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               <h2 className="text-[20px] font-black tracking-tight text-foreground">
                 You&apos;re all set
               </h2>
-              <p className="text-xs text-muted-foreground">Welcome to Postercult.</p>
+              <p className="text-xs text-muted-foreground">Welcome to Posterly.</p>
             </motion.div>
           )}
         </AnimatePresence>
