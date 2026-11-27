@@ -96,7 +96,7 @@ export default function ProductCard({
       <div className="p-1.5 pb-1 @[230px]:p-2.5 @[230px]:pb-1.5 @[280px]:p-3 @[280px]:pb-2">
         <div className="relative aspect-[5/6] w-full overflow-hidden border-2 border-border/20 bg-muted">
           {isNew && (
-            <span className="pointer-events-none absolute left-2 top-2 z-10 border-2 border-border bg-accent px-1.5 py-0.5 font-mono text-[9px] font-black uppercase tracking-wider text-foreground shadow-[1px_1px_0_0_var(--border)] @[230px]:px-2 @[230px]:text-[10px]">
+            <span className="pointer-events-none absolute left-2 top-2 z-10 border-2 border-border bg-accent px-2 py-0.5 font-mono text-[11px] font-black uppercase tracking-wider text-foreground shadow-[1px_1px_0_0_var(--border)] @[230px]:px-2.5 @[230px]:py-1 @[230px]:text-xs">
               New
             </span>
           )}
