@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ClipboardCheck, Package, Truck, PackageCheck, XCircle } from "lucide-react";
+import { ClipboardCheck, Package, PackageCheck, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -15,9 +15,8 @@ const STEPS: {
   statuses: string[];
   timeStatuses?: string[];
 }[] = [
-  { key: "placed", label: "Placed", icon: ClipboardCheck, statuses: ["pending", "confirmed", "processing"], timeStatuses: ["confirmed"] },
-  { key: "shipped", label: "Shipped", icon: Package, statuses: ["shipped"] },
-  { key: "out_for_delivery", label: "Out for delivery", icon: Truck, statuses: ["out_for_delivery"] },
+  { key: "placed", label: "Placed", icon: ClipboardCheck, statuses: ["confirmed"], timeStatuses: ["confirmed"] },
+  { key: "packed", label: "Packed", icon: Package, statuses: ["packed"] },
   { key: "delivered", label: "Delivered", icon: PackageCheck, statuses: ["delivered"] },
 ];
 
@@ -91,7 +90,7 @@ export default function OrderTracker({ status, history = [] }: OrderTrackerProps
   return (
     <div className="w-full">
       {/* Compact stepper: capped width, left-aligned */}
-      <ol className="grid max-w-[26rem] grid-cols-4" aria-label="Order progress">
+      <ol className="grid max-w-[26rem] grid-cols-3" aria-label="Order progress">
         {stepData.map(({ step, isDone, isCurrent, isReached, when }, i) => {
           const Icon = step.icon;
           const isLast = i === STEPS.length - 1;

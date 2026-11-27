@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { validateCoupon } from "@/lib/coupons";
+import { getAvailableCoupons, validateCoupon } from "@/lib/coupons";
 import { getCustomPosterPrice, isCustomPosterConfig } from "@/lib/custom-poster";
 
 const MAX_QUANTITY = 99;
@@ -30,6 +30,25 @@ async function getSupabaseServerClient() {
 
 const fail = (message: string, status: number) =>
   NextResponse.json({ success: false, message }, { status });
+
+export async function GET() {
+  try {
+    const supabase = await getSupabaseServerClient();
+    if (!supabase) return fail("Server configuration error: Missing environment variables.", 500);
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) return fail("Please log in to view coupons.", 401);
+
+    const coupons = await getAvailableCoupons(user.id);
+    return NextResponse.json({ success: true, coupons });
+  } catch (err: unknown) {
+    console.error("❌ Coupon GET error:", err);
+    return fail(err instanceof Error ? err.message : "Internal server error.", 500);
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {

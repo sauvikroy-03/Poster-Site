@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2, Maximize2, ShoppingBag, Tag, X } from "lucide-react";
+import { Loader2, Maximize2, ShoppingBag, X } from "lucide-react";
 import Item, { type CartItemData } from "@/components/Cart/Item";
 import DefaultAddress from "@/components/Cart/DefaultAddress";
 import CheckoutButton from "@/components/Cart/CheckoutButton";
+import CouponSection from "@/components/Cart/CouponSection";
 import { CartProvider, useCart } from "@/components/Cart/CartProvider";
-import { toast } from "@/components/ui/toast";
 import { DELIVERY_CHARGE } from "@/lib/coupons-shared";
 import { playMechanicalClick } from "@/lib/sounds";
 
@@ -25,34 +25,7 @@ interface CartDrawerProps {
 }
 
 function CartDrawerContent({ onClose }: { onClose: () => void }) {
-  const {
-    items,
-    itemCount,
-    subtotal,
-    discount,
-    total,
-    coupon,
-    couponWarning,
-    applyCoupon,
-    removeCoupon,
-  } = useCart();
-
-  const [promoCode, setPromoCode] = useState("");
-  const [isApplying, setIsApplying] = useState(false);
-
-  const handleApply = async () => {
-    if (isApplying || !promoCode.trim()) return;
-    setIsApplying(true);
-    const result = await applyCoupon(promoCode);
-    setIsApplying(false);
-
-    if (result.ok) {
-      setPromoCode("");
-      toast.add({ type: "success", description: result.message });
-    } else {
-      toast.add({ type: "error", description: result.message });
-    }
-  };
+  const { items, itemCount, subtotal, discount, total, coupon } = useCart();
 
   if (items.length === 0) {
     return (
@@ -134,52 +107,7 @@ function CartDrawerContent({ onClose }: { onClose: () => void }) {
             </div>
           </div>
 
-          {coupon ? (
-            <div className="flex flex-col gap-1.5 border-t-2 border-border pt-3">
-              <div className="flex items-center justify-between border-2 border-border bg-muted/40 px-3 py-2 font-mono text-xs">
-                <span className="flex items-center gap-2 font-black uppercase tracking-wider text-foreground">
-                  <Tag size={13} />
-                  {coupon.coupon_code}
-                </span>
-                <button
-                  type="button"
-                  onClick={removeCoupon}
-                  aria-label="Remove coupon"
-                  className="cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <X size={14} strokeWidth={2.5} />
-                </button>
-              </div>
-              {couponWarning && (
-                <p className="font-mono text-[11px] text-destructive">{couponWarning}</p>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 border-t-2 border-border pt-3">
-              <div className="relative flex-1">
-                <Tag
-                  size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                />
-                <input
-                  type="text"
-                  placeholder="PROMO CODE"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleApply()}
-                  className="w-full border-2 border-border bg-background py-2 pl-8 pr-2.5 font-mono text-xs uppercase tracking-wider text-foreground placeholder:text-muted-foreground/60 focus:bg-card focus:outline-none"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={handleApply}
-                disabled={isApplying}
-                className="flex-shrink-0 cursor-pointer border-2 border-border bg-secondary px-4 py-2 font-mono text-xs font-black uppercase tracking-wider text-secondary-foreground shadow-[2px_2px_0_0_var(--border)] transition-transform hover:bg-muted active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-50"
-              >
-                {isApplying ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
-              </button>
-            </div>
-          )}
+          <CouponSection compact />
         </div>
       </div>
 

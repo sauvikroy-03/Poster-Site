@@ -1,8 +1,9 @@
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 import { r2 } from "@/lib/r2";
+import { deleteR2Keys, getR2Config } from "@/lib/custom-poster-server";
 import { getAuthedClient } from "@/lib/supabase-server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin"; // adjust path
 
@@ -18,8 +19,7 @@ function fail(message: string, status: number) {
 
 export async function POST(req: NextRequest) {
   const uploadedKeys: string[] = [];
-  const bucketName =
-    process.env.CLOUDFLARE_R2_BUCKET_NAME || process.env.CLOUDFARE_R2_BUCKET_NAME;
+  const r2Config = getR2Config();
 
   try {
     const supabase = await getAuthedClient();
@@ -76,8 +76,9 @@ export async function POST(req: NextRequest) {
     if (existing) return fail("You've already reviewed this order.", 409);
 
     // ---- Compress + upload photos to R2 (compressed only, no raw copy) ----
-    const publicDomain =
-      process.env.CLOUDFLARE_PUBLIC_DOMAIN || process.env.CLOUDFARE_PUBLIC_DOMAIN;
+    if (files.length > 0 && !r2Config) {
+      return fail("Server storage configuration error.", 500);
+    }
     const imageUrls: string[] = [];
 
     for (const file of files) {
@@ -97,14 +98,14 @@ export async function POST(req: NextRequest) {
 
       await r2.send(
         new PutObjectCommand({
-          Bucket: bucketName,
+          Bucket: r2Config!.bucketName,
           Key: key,
           Body: compressed,
           ContentType: "image/webp",
         })
       );
       uploadedKeys.push(key);
-      if (publicDomain) imageUrls.push(`${publicDomain}/${key}`);
+      imageUrls.push(`${r2Config!.baseDomain}/${key}`);
     }
 
     // ---- Save the review ----
@@ -119,9 +120,9 @@ export async function POST(req: NextRequest) {
     if (insertError) {
       console.error("❌ Store Review Insert Error:", insertError.message);
       // Don't leave orphaned uploads behind
-      await Promise.allSettled(
-        uploadedKeys.map((Key) => r2.send(new DeleteObjectCommand({ Bucket: bucketName, Key })))
-      );
+      if (r2Config && uploadedKeys.length > 0) {
+        await deleteR2Keys(r2Config.bucketName, uploadedKeys);
+      }
       // 23505 = unique violation (double-submit race)
       if (insertError.code === "23505") return fail("You've already reviewed this order.", 409);
       return fail("Failed to save your review.", 500);
@@ -130,9 +131,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, message: "Thanks for your review!" }, { status: 201 });
   } catch (err: unknown) {
     console.error("❌ Store Review Route Catch:", err);
-    await Promise.allSettled(
-      uploadedKeys.map((Key) => r2.send(new DeleteObjectCommand({ Bucket: bucketName, Key })))
-    );
+    if (r2Config && uploadedKeys.length > 0) {
+      await deleteR2Keys(r2Config.bucketName, uploadedKeys);
+    }
     return fail(err instanceof Error ? err.message : "Internal server error.", 500);
   }
 }

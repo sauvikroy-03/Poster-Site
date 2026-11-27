@@ -21,6 +21,13 @@ import { notifyCartUpdated } from "@/lib/cart-events";
 
 const DEBOUNCE_MS = 200;
 
+async function requestAvailableCoupons(signal?: AbortSignal): Promise<CouponInfo[] | null> {
+  const res = await fetch("/api/coupon", { cache: "no-store", signal });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.success && Array.isArray(data.coupons) ? (data.coupons as CouponInfo[]) : null;
+}
+
 type CartContextValue = {
   items: CartItemData[];
   subtotal: number;
@@ -36,6 +43,8 @@ type CartContextValue = {
   discount: number;
   total: number;
   couponWarning: string | null;
+  availableCoupons: CouponInfo[];
+  couponsLoading: boolean;
   applyCoupon: (code: string) => Promise<{ ok: boolean; message: string }>;
   removeCoupon: () => void;
 };
@@ -50,13 +59,21 @@ export function useCart() {
 
 export function CartProvider({
   initialItems,
+  initialAvailableCoupons,
   children,
 }: {
   initialItems: CartItemData[];
+  initialAvailableCoupons?: CouponInfo[];
   children: React.ReactNode;
 }) {
   const [items, setItems] = useState(initialItems);
   const [coupon, setCoupon] = useState<CouponInfo | null>(null);
+  const [availableCoupons, setAvailableCoupons] = useState<CouponInfo[]>(
+    initialAvailableCoupons ?? []
+  );
+  const [couponsLoading, setCouponsLoading] = useState(
+    initialAvailableCoupons === undefined && initialItems.length > 0
+  );
 
   const itemsRef = useRef(items);
   useEffect(() => {
@@ -219,6 +236,26 @@ export function CartProvider({
     }
   }, []);
 
+  useEffect(() => {
+    if (initialAvailableCoupons !== undefined || initialItems.length === 0) return;
+    const controller = new AbortController();
+
+    requestAvailableCoupons(controller.signal)
+      .then((list) => {
+        if (!controller.signal.aborted && list) {
+          setAvailableCoupons(list);
+        }
+      })
+      .catch(() => {
+        // Ignore abort or transient coupon-list fetch error; manual code entry still works
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCouponsLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [initialAvailableCoupons, initialItems.length]);
+
   const applyCoupon = useCallback(
     async (code: string) => {
       // make sure the server sees the same quantities as the screen
@@ -237,6 +274,11 @@ export function CartProvider({
         });
         const data = await res.json();
         if (!res.ok || !data.success) {
+          void requestAvailableCoupons()
+            .then((list) => {
+              if (list) setAvailableCoupons(list);
+            })
+            .catch(() => {});
           return { ok: false, message: data.message || "Invalid promo code." };
         }
         setCoupon(data.coupon as CouponInfo);
@@ -277,6 +319,8 @@ export function CartProvider({
       coupon,
       discount,
       couponWarning: check && !check.valid ? check.reason ?? null : null,
+      availableCoupons,
+      couponsLoading,
       total: subtotal - discount + delivery,
       applyCoupon,
       removeCoupon,
@@ -284,6 +328,8 @@ export function CartProvider({
   }, [
     items,
     coupon,
+    availableCoupons,
+    couponsLoading,
     updateQuantity,
     removeItem,
     flush,
